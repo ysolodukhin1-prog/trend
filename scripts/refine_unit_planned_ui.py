@@ -1,0 +1,10 @@
+from pathlib import Path
+p=Path('ozon_category_dashboard/frontend/src/dashboards/ProductEconomicsDashboard.tsx')
+s=p.read_text(encoding='utf-8')
+s=s.replace("pricingBasis: result.pricingBasis === 'yandex_quote' ? 'Тарифы Яндекса + расходы периода' : 'Расходы периода'", "pricingBasis: result.pricingBasis === 'yandex_quote' ? 'Тарифы Яндекса + расходы периода' : assumptions.eventCostMode === 1 ? 'Ручные тарифы + хранение и прочее периода' : 'Расходы периода'")
+s=s.replace("['planCogs','Себестоимость, ₽']","['planCogs','Себес и списания, ₽']")
+s=s.replace("{field('inbound','Поставка на склад, ₽/продажу')}{field('other','Прочие расходы, ₽/продажу')}","{field('inbound','Поставка на склад, ₽/продажу')}{field('externalFulfillment','Внешний фулфилмент, ₽/продажу')}{field('externalDelivery','Внешняя доставка, ₽/продажу')}{field('other','Прочие расходы, ₽/продажу')}")
+s=s.replace("(status === 'missing' && !r.result.valid)","(status === 'missing' && (!r.result.valid || (view === 'prices' && (r.planMissing.length > 0 || r.planPrice == null))))")
+s=s.replace('[evaluated, market, cabinet, search, status, selected, sort]);','[evaluated, market, cabinet, search, status, selected, sort, view]);')
+s=s.replace("{r.result.valid ? <>{r.planMissing.length", "{r.result.valid ? <>{view === 'prices' && !r.planMissing.length && r.planPrice == null && <p className=\"text-amber-800\">{r.result.quotePricing?.message || 'Цель недостижима в пределах 100 млн ₽ при этих расходах.'}</p>}{r.planMissing.length")
+p.write_text(s,encoding='utf-8')
