@@ -1,0 +1,35 @@
+# Credentials and local settings
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+secrets*.json
+
+# Local agent memory
+.codex-memory/
+
+# Runtime and build outputs
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+node_modules/
+dist/
+build/
+*.log
+*.tmp
+
+# Database snapshots
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.bak
+
+# OS files
+Thumbs.db
+.DS_Store
