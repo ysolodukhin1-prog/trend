@@ -1,0 +1,1200 @@
+{
+  "snapshot_date": "2026-09-18",
+  "live_vps_verified": false,
+  "files": [
+    {
+      "path": "Dockerfile",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "requirements.txt",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "rebuild_ozon_adv_daily_category_view.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "build_product_abc_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_ozon_finance_readiness.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/capture_claude_window.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/continue_pulse_qa_2026_09_13.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/apply_pulse_ui_evidence.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/build_final_dataset.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_refresh_result.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/collect_joma_pants_ozon_evidence.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/check_km_import_errors.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/dashboard_performance_audit.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/build_toptop_seasonality.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/build_dashboard_aggregates.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_inventory_history.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/build_pulse_function_matrix.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/collect_toptop_seasonality.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_client_export_schemas.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/build_ozon_abc_materialized_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_ozon_api_state.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_trade_readiness.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/audit_km_marketplace_freshness.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_build_v16_title_audience.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/migrate_km_inventory_history_metadata.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/inspect_wb_stock_zip.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/ensure_km_compatibility.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_back_to_school_collection_tags.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_ozon_funnel_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_wb_adv_daily_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/finish_unit_planned_ui.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_unit_operating_costs.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_wb_media_adv_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/finalize_pulse_qa_matrix.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_ozon_media_adv_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/fix_unit48_review.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/inspect_ozon_women_sport_pants_v13.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_wb_search_queries.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_ozon_fin_sales.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_sku_mapping_gj.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_planfact_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/finalize_pulse_qa_2026_09_12.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_seo_may_2026_tags.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/health_check_runtime_check.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_ozon_adv_daily_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_wb_products_with_characteristics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_boiron_ozon_adv_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_ozon_stock_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_ozon_product_categories.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_ozon_stock_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_ozon_funnel_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_wb_stock_history_zip.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_wb_funnel_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_total_sku_reference_tag.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_km_initial_load.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/import_ozon_product_categories.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/inspect_xlsx_head.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_verify_v17_empty_target.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_verify_v16_target_audience.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/planfact_primary_sources.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_verify_v16_coverage_order.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_prepare_v16_global.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_build_v16_idempotent.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/mark_seo_tags_in_total_file.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/patch_build_v16_baseline_counts.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/probe_km_ozon_finance_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/probe_wb_public_card.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/publish_km_wb_current_stock_snapshot.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_yandex_quote_persistence.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/validate_km_ozon_finance.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_unit_economics_workspace.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_yandex_quoted_income.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_unit_yandex_services.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_marketplace_pl.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_unit_yandex_tariffs.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_yandex_analytics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_unit_hypotheses48.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_km_dashboard_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_unit_contribution_sql.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_wb_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_inventory_history.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_wb_detail_history_csv.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_ozon_finance.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/run_seo_generation_keyword_analysis.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_ozon_assortment.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_ozon_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_api_planfact_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_ozon_stock_snapshots.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/react_api_smoke.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_category_market_trends.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_km_ozon_api_export.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_wb_extended_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_wb_dashboard_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_ozon_category_stock_materialized_view.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_wb_assortment.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_ozon_seo_catalog_positions.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_client_assortment.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_review_reply_lifecycle.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/run_seo_generation_product_intents.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/refine_unit_planned_ui.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_health_check_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_km_marketplace_reviews.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_back_to_school_season.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/smoke_legacy_dashboard_matrix.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/update_unit_planned_ui.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_ozon_sku_scoring_view.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/rebuild_wb_assortment_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/sync_ozon_assortment_soft.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/qa_all_registered_report_apis.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/verify_review_reply_draft.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/wb_search_query_classifier.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/wb_rate_limit.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/update_unit_reports48.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sales_planning_workbench.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sales_activity.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_report_cache.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_vps_admin.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/marketplace_reviews_dashboard.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_delegation.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_multi_model.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/ozon_ad_search_queries.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_consent.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_entitlement.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/content_scoring.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_monthly_budgets.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/export_data.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_jobs.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/km_trade_planfact.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/client_registry.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/api_completeness.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_financial_model.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_optimizer.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/konstex_dashboard_server.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_engine.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/app.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_exchange_http.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/km_trade_media_plan.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/inventory_history.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_authorization_codes.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/ad_search_filtering.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/order_feed.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/avito_ads_dashboard.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_expense_analysis.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/km_trade_finance.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_laptop_scoped.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/planfact_sales_plan.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_store.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_forecast.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_reports.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_supporting_market.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/marketplace_pl.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/inventory_management.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/km_trade_sales_planning.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_model_providers.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_cost_registry.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_sources.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/km_trade_planning_pl.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_category_diagnostics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_code_exchange.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/client_onboarding.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/ozon_adv_campaign_metrics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_financial_model.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_portfolio.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/client_onboarding_runtime.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pl_workbench.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/admin_all_clients_runtime.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_inventory.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_identity.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_routes.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_model.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/cluster_supply_export.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/content_scoring_store.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/galactica_startup.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/review_replies.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/refresh_materialized_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sportmaster_run_rate.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sales_orders.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/run_dashboard_with_konstex.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sales_coefficient_forecast.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/search_demand.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_supply.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_vps_scoped.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/pulse_sales_model.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/sales_planning_seasonality.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/review_workbench.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_logistics_tariffs.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_economics_workspace.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_cost_basis.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_current_stocks.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_order_activity.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/seo_projects.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_contributions.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_cost_allocation.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_economics_engine.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_yandex_tariffs.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_price_conditions.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_planner_settings.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_price_api.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/wb_search_queries_dashboard.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_result_contract.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_yandex_prices.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_hypotheses.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_ozon_cluster_mix.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/weekly_decisions.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/wb_advertising_view.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/user_registry.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/unit_yandex_services.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/yandex_market_history.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/yandex_planfact.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/yandex_analytics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/wb_ad_search_queries_dashboard.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/wb_entrance_dashboard.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/weekly_sku_advertising.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/yandex_analytics_ingest.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/wb_market_search_comparison.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/policies.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/routes.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/repository.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/worker.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/domain.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/__init__.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/metrics.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/autobidder/adapters.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/scaffold_client.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/bootstrap_vps_superuser.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/build_ozon_crossdock_snapshot.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/import_vps_scoped_registry.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/run_client_pipeline.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/repair_local_login_origin.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/bootstrap_vps_schema.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/seo_queries_parser.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/sync_avito_ads.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/scripts/sync_yandex_market.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/health_check_hypotheses.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/plan_fact_matrix.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/collect_plan_fact_funnel.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/build_daily_client_radar.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/health_check_runtime/artifacts/bi-planfact-integration/planfact_funnel_matrix_runtime.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/static/react/index.html",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "ozon_category_dashboard/static/react/assets/index-C_wZPg4q.js",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/wb_screening/health_check_hypotheses.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/clients/lera_nena/run_daily.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/clients/lera_nena/rebuild_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/clients/toptop/run_daily.py",
+      "source": "deployed snapshot 2026-09-18"
+    },
+    {
+      "path": "scripts/clients/toptop/rebuild_views.py",
+      "source": "deployed snapshot 2026-09-18"
+    }
+  ],
+  "excluded_other_client_scripts": [
+    "scripts/build_sportmaster_fila_hoodies_ozon_v21.py",
+    "scripts/audit_sportmaster_dashboard_readiness.py",
+    "scripts/discover_demix_leggings_ozon_alias_v13.py",
+    "scripts/analyze_cached_demix_tshirts_ozon.py",
+    "scripts/audit_fila_tshirts_women_ozon_local_v23.py",
+    "scripts/audit_fila_hoodies_ozon_local_v21.py",
+    "scripts/build_sportmaster_no_classic_v17.py",
+    "scripts/build_sportmaster_relevance_visual_v8.py",
+    "scripts/build_sportmaster_category_whitespace.py",
+    "scripts/analyze_demix_hoodies_ozon_v15.py",
+    "scripts/check_sportmaster_import_status.py",
+    "scripts/collect_demix_pants_ozon_pool.py",
+    "scripts/build_sportmaster_demix_ozon_v9.py",
+    "scripts/audit_fila_summer_ozon_v20.py",
+    "scripts/analyze_gloria_advertising_case.py",
+    "scripts/collect_sportmaster_intent_competitors.py",
+    "scripts/build_sportmaster_demix_canvas_ozon_v14.py",
+    "scripts/build_demix_suits_visual_contact_sheet.py",
+    "scripts/build_sportmaster_raw_intent_min3_pool_v24.py",
+    "scripts/build_sportmaster_fila_tshirts_women_ozon_v23.py",
+    "scripts/audit_fila_tracksuits_ozon_local_v22.py",
+    "scripts/enrich_demix_ozon_expansion_v9.py",
+    "scripts/analyze_gloria_wb_product_ads_active.py",
+    "scripts/collect_sportmaster_ozon_details_resume_v24.py",
+    "scripts/collect_fila_swim_ozon_v19.py",
+    "scripts/audit_fila_hoodies_ozon_v21.py",
+    "scripts/analyze_sportmaster_intent_competitors.py",
+    "scripts/collect_sportmaster_mpstats_reviews.py",
+    "scripts/analyze_gloria_wb_product_ads.py",
+    "scripts/audit_gloria_seo_live.py",
+    "scripts/audit_sportmaster_review_sources.py",
+    "scripts/build_sportmaster_demix_leggings_ozon_v13.py",
+    "scripts/collect_demix_canvas_vans_details_v14.py",
+    "scripts/audit_sportmaster_relevance_v8.py",
+    "scripts/diagnose_sportmaster_adv_sku.py",
+    "scripts/collect_demix_leggings_ozon_v13.py",
+    "scripts/analyze_sportmaster_mpstats_reviews.py",
+    "scripts/build_sportmaster_search_intent_data.py",
+    "scripts/audit_sportmaster_adv_directories.py",
+    "scripts/build_sportmaster_fila_canvas_ozon_v18.py",
+    "scripts/enrich_sportmaster_product_meanings_v2.py",
+    "scripts/collect_demix_hoodies_ozon_v15.py",
+    "scripts/build_sportmaster_hero_brand_integrity_v24.py",
+    "scripts/enrich_sportmaster_whitespace_images.py",
+    "scripts/build_sportmaster_fila_swim_ozon_v19.py",
+    "scripts/diagnose_sportmaster_demix_ozon_pool.py",
+    "scripts/build_sportmaster_demix_hoodies_ozon_v15.py",
+    "scripts/collect_demix_pants_ozon_targeted_v10.py",
+    "scripts/discover_demix_leggings_ozon_v13.py",
+    "scripts/analyze_gloria_wb_media_case.py",
+    "scripts/analyze_gloria_advertising_case_v2.py",
+    "scripts/build_sportmaster_fila_tracksuits_ozon_v22.py",
+    "scripts/audit_demix_tshirts_ozon_current.py",
+    "scripts/analyze_gloria_wb_media_case_v2.py",
+    "scripts/build_sportmaster_min3_triaxis_local_pool_v24.py",
+    "scripts/collect_fila_canvas_ozon_v18.py",
+    "scripts/build_sportmaster_brand_cards_data_corrected.py",
+    "scripts/build_sportmaster_demix_suits_ozon_v12.py",
+    "scripts/audit_sportmaster_min3_triaxis_v24.py",
+    "scripts/build_sportmaster_demix_pants_ozon_v10.py",
+    "scripts/audit_sportmaster_classic_pool_v17.py",
+    "scripts/collect_sportmaster_weak_ozon_niches_v16.py",
+    "scripts/build_sportmaster_fila_summer_ozon_v20.py",
+    "scripts/build_sportmaster_brand_cards_data.py",
+    "scripts/audit_fila_swim_ozon_v19.py",
+    "scripts/enrich_sportmaster_product_meanings.py",
+    "scripts/collect_demix_tshirts_ozon_competitors.py",
+    "scripts/audit_demix_leggings_ozon_v13.py",
+    "scripts/download_konstex_wb_daily.py",
+    "scripts/build_sportmaster_full_quality_v16.py",
+    "scripts/build_sportmaster_demix_tshirts_ozon_v11.py",
+    "scripts/build_gloria_advertising_case_report.py",
+    "scripts/enrich_sportmaster_whitespace_images_v2.py",
+    "scripts/patch_memory_sportmaster_v16.py",
+    "scripts/make_fila_tracksuits_contact_sheet_v22.py",
+    "scripts/list_sportmaster_tables.py",
+    "scripts/konstex_paths.py",
+    "scripts/inventory_fila_tshirts_ozon_v23.py",
+    "scripts/inspect_fila_tracksuits_ozon_v22.py",
+    "scripts/import_sportmaster_wb_entrance_reports.py",
+    "scripts/import_sportmaster_wb_stock_reports.py",
+    "scripts/extract_demix_suits_ozon_v12_sources.py",
+    "scripts/export_sportmaster_brand_tops.py",
+    "scripts/import_sportmaster_wb_funnel_reports.py",
+    "scripts/extract_sportmaster_wb_public_reviews.py",
+    "scripts/inspect_sportmaster_db_schema.py",
+    "scripts/import_sportmaster_wb_adv_daily_reports.py",
+    "scripts/inspect_fila_hoodies_ozon_v21.py",
+    "scripts/extract_sportmaster_whitespace_local.py",
+    "scripts/inspect_demix_canvas_ozon_v14.py",
+    "scripts/find_sportmaster_brands_in_xlsx_archives.py",
+    "scripts/export_sportmaster_brand_tops_v2.py",
+    "scripts/filter_sportmaster_cross_brand_search.py",
+    "scripts/filter_sportmaster_review_excerpt_spam.py",
+    "scripts/import_konstex_wb_reports.py",
+    "scripts/extend_gloria_advertising_case.py",
+    "scripts/finalize_sportmaster_competitor_analysis.py",
+    "scripts/inspect_fila_tshirts_audience_v23.py",
+    "scripts/import_sportmaster_wb_adv_campaign_reports.py",
+    "scripts/find_sportmaster_demount_matrix_in_xlsx_archives.py",
+    "scripts/import_sportmaster_ozon_funnel_reports.py",
+    "scripts/finalize_demix_tshirts_ozon_evidence.py",
+    "scripts/export_sportmaster_brand_tops_corrected.py",
+    "scripts/import_sportmaster_ozon_adv_daily_reports.py",
+    "scripts/import_sportmaster_ozon_stock_reports.py",
+    "scripts/finalize_sportmaster_hero_brand_integrity_v24.py",
+    "scripts/extract_sportmaster_tz.py",
+    "scripts/inspect_fila_profile_schema_v22.py",
+    "scripts/ensure_sportmaster_mapping_compatibility.py",
+    "scripts/import_sportmaster_wb_market_search_queries.py",
+    "scripts/inspect_sportmaster_table.py",
+    "scripts/import_sportmaster_initial_load.py",
+    "scripts/export_sportmaster_cross_brand_search.py",
+    "scripts/import_sportmaster_wb_product_categories.py",
+    "scripts/extract_sportmaster_product_cards.py",
+    "scripts/import_sportmaster_wb_media_adv_reports.py",
+    "scripts/extract_sportmaster_mpstats_brand_history.py",
+    "scripts/finalize_sportmaster_competitor_analysis_v2.py",
+    "scripts/inspect_demix_tshirts_profile.py",
+    "scripts/inspect_gloria_wb_product_ads.py",
+    "scripts/inspect_demix_hoodies_profile_v15.py",
+    "scripts/extend_gloria_advertising_case_v2.py",
+    "scripts/inspect_demix_leggings_segment_v13.py",
+    "scripts/import_sportmaster_ozon_product_categories.py",
+    "scripts/inspect_fila_summer_ozon_v20.py",
+    "scripts/inspect_fila_tshirts_ozon_v23.py",
+    "scripts/inspect_demix_hoodies_ozon_v15.py",
+    "scripts/list_demix_canvas_ozon_v14_own.py",
+    "scripts/polish_sportmaster_business_conclusions.py",
+    "scripts/make_fila_tshirts_contact_sheets_v23.py",
+    "scripts/prepare_demix_hoodies_ozon_v15_evidence.py",
+    "scripts/probe_fila_swim_known_skus_v19.py",
+    "scripts/prepare_sportmaster_full_candidates_v16.py",
+    "scripts/prepare_demix_canvas_ozon_v14_evidence.py",
+    "scripts/prepare_sportmaster_client_reviews_ndjson.py",
+    "scripts/polish_sportmaster_business_conclusions_v2.py",
+    "scripts/probe_gloria_ads_db.py",
+    "scripts/probe_demix_canvas_ozon_v14_page.py",
+    "scripts/qa_sportmaster_competitor_analysis_v3.py",
+    "scripts/import_sportmaster_ozon_media_adv_reports.py",
+    "scripts/watch_sportmaster_job_once.py",
+    "scripts/refill_sportmaster_review_summary_excerpts.py",
+    "scripts/run_sportmaster_visual_similarity_poc_v3.py",
+    "scripts/run_sportmaster_competitor_analysis_v3.py",
+    "scripts/update_sportmaster_v17_memory.py",
+    "scripts/run_sportmaster_visual_similarity_poc_v2.py",
+    "scripts/run_demix_tshirts_ozon_competitors_contract.py",
+    "scripts/run_build_sportmaster_demix_hoodies_ozon_v15.py",
+    "scripts/sportmaster_paths.py",
+    "scripts/run_sportmaster_competitor_collection_v2.py",
+    "scripts/score_demix_ozon_candidate_images.py",
+    "scripts/run_sportmaster_competitor_analysis_v6.py",
+    "scripts/run_sportmaster_competitor_collection_v5.py",
+    "scripts/rebuild_sportmaster_wb_base_views.py",
+    "scripts/run_sportmaster_min3_triaxis_local_pool_v24b.py",
+    "scripts/run_demix_ozon_visual_expansion_v9.py",
+    "scripts/validate_demix_tshirts_ozon_evidence.py",
+    "scripts/score_fila_canvas_ozon_v18.py",
+    "scripts/run_demix_tshirts_ozon_competitors_resilient.py",
+    "scripts/run_sportmaster_competitor_analysis_v4.py",
+    "scripts/sportmaster_wb_category_mapping.py",
+    "scripts/run_sportmaster_ozon_details_resume_v24b.py",
+    "scripts/run_build_sportmaster_demix_canvas_ozon_v14.py",
+    "scripts/qa_sportmaster_competitor_marketplace_v2.py",
+    "scripts/run_build_sportmaster_demix_leggings_ozon_v13.py",
+    "scripts/run_sportmaster_visual_similarity_poc_strict.py",
+    "scripts/run_sportmaster_visual_similarity_poc_selfcontained.py",
+    "scripts/run_sportmaster_competitor_collection_v4.py",
+    "scripts/run_sportmaster_competitor_analysis_v8.py",
+    "scripts/run_sportmaster_full_candidate_visual_review_v16.py",
+    "scripts/smoke_sportmaster_legacy_api.py",
+    "scripts/run_sportmaster_competitor_analysis_v5.py",
+    "scripts/run_demix_pants_ozon_visual_v10.py",
+    "scripts/run_konstex_wb_bootstrap.py",
+    "scripts/rebuild_sportmaster_wb_funnel_views.py",
+    "scripts/query_sportmaster_matrix_demount.py",
+    "scripts/run_sportmaster_competitor_analysis_v7.py",
+    "scripts/run_sportmaster_competitor_analysis_triaxis_v24.py",
+    "scripts/rebuild_sportmaster_dashboard_views.py",
+    "scripts/qa_sportmaster_competitor_analysis_v4.py",
+    "scripts/run_sportmaster_competitor_analysis_v2.py",
+    "scripts/run_sportmaster_visual_review_v8.py",
+    "scripts/refine_gloria_semantic_conflicts.py",
+    "scripts/run_sportmaster_competitor_collection_safe.py",
+    "scripts/run_sportmaster_competitor_collection_v3.py",
+    "scripts/qa_sportmaster_competitor_analysis.py",
+    "scripts/_tmp_patch_v11_builder.py",
+    "scripts/_tmp_patch_v11_overlay_reference.py",
+    "scripts/clients/delikateks/run_daily.py",
+    "scripts/clients/delikateks/rebuild_views.py",
+    "scripts/clients/divan_ru_self/rebuild_views.py",
+    "scripts/clients/divan_ru_self/run_daily.py",
+    "scripts/clients/delicatex/rebuild_views.py",
+    "scripts/clients/delicatex/run_daily.py",
+    "scripts/clients/tsvet_divanov/rebuild_views.py",
+    "scripts/clients/tsvet_divanov/run_daily.py",
+    "scripts/clients/na100proext/run_daily.py",
+    "scripts/clients/na100proext/rebuild_views.py",
+    "scripts/clients/ozon_bank_b2c/run_daily.py",
+    "scripts/clients/ozon_bank_b2c/rebuild_views.py",
+    "scripts/clients/yasno/run_daily.py",
+    "scripts/clients/yasno/rebuild_views.py",
+    "scripts/clients/detskiy_mir/run_daily.py",
+    "scripts/clients/detskiy_mir/rebuild_views.py",
+    "scripts/clients/ametist/run_daily.py",
+    "scripts/clients/ametist/rebuild_views.py",
+    "scripts/clients/divan_ru_avito_ext/rebuild_views.py",
+    "scripts/clients/divan_ru_avito_ext/run_daily.py"
+  ]
+}
