@@ -4,987 +4,1238 @@
   "files": [
     {
       "path": "Dockerfile",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "79e0a0ba5ac100d58931791a1caaa16c81907cbe0d24bfcb8ef7d22e7c3da8db"
     },
     {
       "path": "requirements.txt",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9f14a18bd64c1ff191861cf0ac7457f64adc150c5c8a9747448145aacf39d1b5"
     },
     {
       "path": "rebuild_ozon_adv_daily_category_view.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ce96e652a892dabce1a1746a8c7c6762c22d4d295e851de7110e33a4ecd318d1"
     },
     {
       "path": "build_product_abc_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "45800562bb0840bb9ee7e013f4ab037d0734b6d1eeb037d6fbfa25d033794359"
     },
     {
       "path": "scripts/audit_km_ozon_finance_readiness.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "7a5b5e91e36cd9d709c95dcdb9fae398601bd615473555c5462365ab707bbb48"
     },
     {
       "path": "scripts/capture_claude_window.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "43f30bcdf1d2d5ccb0cdae3cdd16081ef8eec3ad69d3264c648bfd6ae18b0a64"
     },
     {
       "path": "scripts/continue_pulse_qa_2026_09_13.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "4a299974980a5a99d3001d1a4b62a45e4ad1bbdda88404224caaf652130c74f2"
     },
     {
       "path": "scripts/apply_pulse_ui_evidence.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a587a6cdedf65f833aabe7ff62c3918865b20012a7258fee69d8aaee546da566"
     },
     {
       "path": "scripts/build_final_dataset.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5f1db496d6680c81153c610fa1e167c49bee2f5849b8eb80ca41ec3a16141310"
     },
     {
       "path": "scripts/audit_km_refresh_result.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "057ef1ef0efb6f0da14082f4fcf4836d8e4de1fa6b637b14ee9c1661d4769ae2"
     },
     {
       "path": "scripts/collect_joma_pants_ozon_evidence.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "99161c610a8031cc11865ac10e0dd75ea4e95d3250f43528207bf3f3bb7f405b"
     },
     {
       "path": "scripts/check_km_import_errors.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "32530f040e33bb33b4a6dbf138319684ac29bb1545ac5c96e493d90af36bdbc6"
     },
     {
       "path": "scripts/dashboard_performance_audit.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "dc36a2147447c44d4d69c0b22966fed61f9659aac2656bb9fe9405e04600f511"
     },
     {
       "path": "scripts/build_toptop_seasonality.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "7217588fe0ad1dde38bc37dc67641dee640d34cb73a58957381ba7b7bfd51ab9"
     },
     {
       "path": "scripts/build_dashboard_aggregates.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8e272a0689003d37dab990a82f943cd7c29537ef9c493e8df0e9db7d596256f2"
     },
     {
       "path": "scripts/audit_km_inventory_history.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5dcdac2f4d51dd04a854310fe50fc6827eb904d355269e91ac2a66a6dc7c77e0"
     },
     {
       "path": "scripts/build_pulse_function_matrix.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "66f39996b69ccb12a9354eca08076508d75f8a8e56a7ced9b16685237564da70"
     },
     {
       "path": "scripts/collect_toptop_seasonality.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "28b49d45f85997a6f58235b307d5f47d82cb29abb4135cc2ddfecc169b267cee"
     },
     {
       "path": "scripts/audit_client_export_schemas.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3e867d7ce2e621585fed27db670b4277b12fd2f802c39f0a9150edba283dbd81"
     },
     {
       "path": "scripts/build_ozon_abc_materialized_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9e2d28ed8cbe14431a94ff6d25fe24a296e17d7975ac918bcc9a1ebeb340027d"
     },
     {
       "path": "scripts/audit_km_ozon_api_state.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "60b8126ec7c9333adc898d93fedb1631fc3a5473d2881f3d3bf952b762cff50d"
     },
     {
       "path": "scripts/audit_km_trade_readiness.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a0696a8aae9abe223adb3ed1fb4cd7d8935cf0ae9616ee2757e1b7b2aedc07a5"
     },
     {
       "path": "scripts/audit_km_marketplace_freshness.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6084c577ac47a7cfd0480dc1547759a0c0cc2f7f7c7f5f411b1e3930c1034fd4"
     },
     {
       "path": "scripts/patch_build_v16_title_audience.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fda4d9a01d674d80e4b5f30b92daed0ff52d7fd65dbc2f6fe9529421b0773c05"
     },
     {
       "path": "scripts/migrate_km_inventory_history_metadata.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1201815301e24c7495696c2d821b1f2794ea120e5c81bd7a426546bfaf2e06b5"
     },
     {
       "path": "scripts/inspect_wb_stock_zip.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "45ca77af4947a815a8cc4a8de3f9067df4fceb0bdc195c3c85827927a5ab63e0"
     },
     {
       "path": "scripts/ensure_km_compatibility.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5056a4db7e90d8689d89fc683bcaebaf776b5514442978682e88b29da063bafa"
     },
     {
       "path": "scripts/import_back_to_school_collection_tags.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6ba9269d7bc283134aa06724afb09a79993e90dee966ebe90908107cccdbdd8e"
     },
     {
       "path": "scripts/import_km_ozon_funnel_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b333e66a84327a4c79892f61bcfdf16593a9eaa55e29a2344a85989a2738f7b4"
     },
     {
       "path": "scripts/import_wb_adv_daily_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "96b7d0aeb66711545001b78c50ddafd79e374a671c2145df97ee866805a3c5ee"
     },
     {
       "path": "scripts/finish_unit_planned_ui.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "06432189b48ed25c609e4163f8bfd4b62ca26c38b9065d4d12484a352ab6160f"
     },
     {
       "path": "scripts/import_unit_operating_costs.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "548c0efb86f370dea0620fe4963cf9082e9c644ca5e863d7a2c894cdb2d4718b"
     },
     {
       "path": "scripts/import_wb_media_adv_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d0cf0558a33a03c6d374dafb69d7e1fdb5d2a1bfdd4ac2baa9b1075bcf4309ff"
     },
     {
       "path": "scripts/finalize_pulse_qa_matrix.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "02a7c22ad58b777628451b08b8b6caab435c65d4bf36afd18a92491115e059ca"
     },
     {
       "path": "scripts/import_ozon_media_adv_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b2243a04baaa5565e2c7aa0044c8eb937a8b89ac12610801284ed8208fe71eb0"
     },
     {
       "path": "scripts/fix_unit48_review.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "78cf2598747b29c7b9bc13b008f024ebf78b3992c5b85ce1291746f1482fd182"
     },
     {
       "path": "scripts/inspect_ozon_women_sport_pants_v13.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fc1a13c1df15e5a1edf5c2a291775f884b6f885b6635bb38316c6a6437ff70c3"
     },
     {
       "path": "scripts/import_wb_search_queries.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8bdd83281323387206fbb7b24a4a614a1141fb5bac662e71120f402f0c657af5"
     },
     {
       "path": "scripts/import_km_ozon_fin_sales.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "63455a2d4c3a42341ea5dc3386faeaddca1be8ab098248f28178fe146316d576"
     },
     {
       "path": "scripts/import_sku_mapping_gj.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "107dd75c51c51ff83d910937e7f8b246babc1e35ee34b2d51bc120dd106a98ee"
     },
     {
       "path": "scripts/import_planfact_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "aa7736d187478e7cbd3e7389e95bd3500f1dcbd216e4801e6091557ae1879974"
     },
     {
       "path": "scripts/finalize_pulse_qa_2026_09_12.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0dd82fce68f0bfab638fded3c6f58c1591ac329364d97010ccbc0b7b3d85b38f"
     },
     {
       "path": "scripts/import_seo_may_2026_tags.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "65b7bb81ea891e624f2a18bc234c64ab3b0d27f59e536c7720ddafcea621857a"
     },
     {
       "path": "scripts/health_check_runtime_check.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5cc9e39c2b8cb22bccd6007fffc6b87c8f9e7b211b3c5669ba2c6f83ed4644d0"
     },
     {
       "path": "scripts/import_km_ozon_adv_daily_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "905e4d88f9064790a62f7511bd4d56d1cd094be999ccd5023ac73fd63e7b240b"
     },
     {
       "path": "scripts/import_wb_products_with_characteristics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a0e5b71d36bcb8b71f6f951340fbf8a1ad72034d93d26cd0b90b6e29e6013d78"
     },
     {
       "path": "scripts/import_boiron_ozon_adv_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0222969c4358faec4c90ab4be838f818e5b0f470cbc6dc144d4307af45fe86ab"
     },
     {
       "path": "scripts/import_ozon_stock_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "46b7fe0a7dc0c8029bd87b1c058296b0954eef99368034442910cdbe50f9e6a3"
     },
     {
       "path": "scripts/import_km_ozon_product_categories.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "e69ea32523640559c59c6734a6a3e1389872c2b87cf6e85e02a4cd59aa1bd202"
     },
     {
       "path": "scripts/import_km_ozon_stock_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0fada2071460501ea441ee1c6f642d4389da5140544e44d8f1c310465138ea46"
     },
     {
       "path": "scripts/import_ozon_funnel_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "040d35904e1dc657371c2b971d360cc39eaf4b847aa6ce3842a410c19740dedc"
     },
     {
       "path": "scripts/import_km_wb_stock_history_zip.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d6f55a315ad3480509e3ad9bf1135e1faf589d21c24764868e957fdd9895a69c"
     },
     {
       "path": "scripts/import_wb_funnel_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "60d1571f4ac069766689837c50a24c59b712a4cc725dfeffeecb2a4618d5f22d"
     },
     {
       "path": "scripts/import_total_sku_reference_tag.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "44d5f51106fb64c6ffefa747ec2db57d319dbb0748f82449085605e89dcb7260"
     },
     {
       "path": "scripts/import_km_initial_load.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d33fab6588d1b0d48dbb348b1de154a89e8882af6149d22f52c562087edccb05"
     },
     {
       "path": "scripts/import_ozon_product_categories.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "dc43b6035446aa6b682b3ede41a3a70601f5be7f956b40ea67c4d726665a349f"
     },
     {
       "path": "scripts/inspect_xlsx_head.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "407b72c069eb5bfac40c232100f858f21395828f64a33afb7941d8e297fd0231"
     },
     {
       "path": "scripts/patch_verify_v17_empty_target.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c260aa02ac1b91d0aed161b781073c3edd50d09345852dd4dc487b9088e4cd0a"
     },
     {
       "path": "scripts/patch_verify_v16_target_audience.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "91c613e527439ad6c62015a66fd8b98f5b18b8a5a2dc85549abfcc6a702596f1"
     },
     {
       "path": "scripts/planfact_primary_sources.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "330db0c3213732be7bc92fe9ac4f6757ebec4c34352d8b94c49ccf31e25a0b0e"
     },
     {
       "path": "scripts/patch_verify_v16_coverage_order.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "adb94a8b133947706e885051bc8afe1843e70697db6ed7c86f74a633d5d79065"
     },
     {
       "path": "scripts/patch_prepare_v16_global.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c758f0940562128d7cdf0b073f5dcccb6c7d23b0f867f16284082309e0fc01cd"
     },
     {
       "path": "scripts/patch_build_v16_idempotent.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ca2409ab766b367da3c81ed0eb1ca2201ee9074ed94a4006a61911dc19218d0c"
     },
     {
       "path": "scripts/mark_seo_tags_in_total_file.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "532d01bad86286cb1dede24769ffd9b10f26e14d826c8ce9d764bff3419a6ff7"
     },
     {
       "path": "scripts/patch_build_v16_baseline_counts.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ab96d9faa8f2e59c1d64456a4d2d717d9d1a36700cbec8d3f632fbcf287db77e"
     },
     {
       "path": "scripts/probe_km_ozon_finance_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0e8bc1cf5e47137f8f583b19ba48f394962e3b5614fa5edfc3970da58bafe980"
     },
     {
       "path": "scripts/probe_wb_public_card.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "62a1645c17e9e756c898fec1b0d4b5ae32ecbe44aca79618ad083b0aa3b44310"
     },
     {
       "path": "scripts/publish_km_wb_current_stock_snapshot.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a82cf8eec1f0b35e7e862939b4c20eaa206ce256ea29b3942c3bcf83b916862c"
     },
     {
       "path": "scripts/verify_yandex_quote_persistence.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "4e6c84e4ec1907e2d0ddee10a58eee4437ce507d6973c9532446b0ffe4f3ea64"
     },
     {
       "path": "scripts/validate_km_ozon_finance.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b733d103da8bae3a2c7a20191d225410c3eb06e3583c0515705032a7f6468271"
     },
     {
       "path": "scripts/verify_unit_economics_workspace.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "48c29005120cd5903d94af566035264972e3818d6303d4f538553f7ea8031291"
     },
     {
       "path": "scripts/verify_yandex_quoted_income.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "736fd4f37388d9a41bc5e700dbe2ee8c49f133ae32dbf5c3a97d8d8dc0b65795"
     },
     {
       "path": "scripts/verify_unit_yandex_services.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "cbb55af2bc41cf9f52886e33d09ca5a5e3375b624f4873cf270ee5c9090b5832"
     },
     {
       "path": "scripts/verify_marketplace_pl.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c03359d292ee369ef909b4d738af11eb6d1e8cf994131238625cb70a35e7da3a"
     },
     {
       "path": "scripts/verify_unit_yandex_tariffs.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "adfbec1641a7723ff2856938e3de0fc8a1015973c14c988832b226f8e6e320e6"
     },
     {
       "path": "scripts/verify_yandex_analytics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "dfa88d0509965c31e5c8c95704710b2640277b31cfc11bcc6d1240a071cfef10"
     },
     {
       "path": "scripts/verify_unit_hypotheses48.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c8c278e6d947c35beb5e0199d281f6c428e3913233734ed90708880e3db013f2"
     },
     {
       "path": "scripts/rebuild_km_dashboard_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "12f1b2dd77307fd315b00bdbe94db9b1dcbf05c41117f3dabd90e2e94fc87eff"
     },
     {
       "path": "scripts/verify_unit_contribution_sql.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9996cdcbe9611cb75b5d145457b4f9d2c4b2d523360b974923284f8e02a68d57"
     },
     {
       "path": "scripts/sync_km_wb_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fc6cf987c82eb633d1d8c21d0ae7e6bde8f17683491ad4f7123d3a8178846ea9"
     },
     {
       "path": "scripts/sync_inventory_history.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "779784456ed082dc17cc107ddef31c2a55e67995b8d39c346924c4790ae049f5"
     },
     {
       "path": "scripts/sync_wb_detail_history_csv.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "17838863154512a4f34528786523a65d24a87279d4af6454912e9a864904bfd8"
     },
     {
       "path": "scripts/sync_km_ozon_finance.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "adf12250e45a40007f42154fdbbcf3f6722a80b9a20f4f3e82665480e78ea478"
     },
     {
       "path": "scripts/run_seo_generation_keyword_analysis.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "2aca4fd3b899e5f5c0aa029c0a03e13034793e07a8c543dd0f2462ed72bca3d5"
     },
     {
       "path": "scripts/sync_ozon_assortment.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "eeb290efc09300fa6f74fc16c13f43276092113e3cc4f78d16cebe5204154ab1"
     },
     {
       "path": "scripts/sync_km_ozon_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ac01d2c88a6a77a84d113542b94d1dbf5c0464838a16c3b637f813aa6add1483"
     },
     {
       "path": "scripts/rebuild_api_planfact_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8ef68c61af9f804bda2de1bf4c6827cbb66f416f74ba7993eff4149cac3289b8"
     },
     {
       "path": "scripts/sync_ozon_stock_snapshots.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b01c7ea4b388e90a5fe2e3c8235248ce09febf68b89ec620ae3a90f8cdfd73af"
     },
     {
       "path": "scripts/react_api_smoke.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "484c8576b5ce3feae9c6a3d0c309e20492f64b5d99d32d292c915003d4150669"
     },
     {
       "path": "scripts/sync_km_category_market_trends.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9277e7c1a0551f59c964e626422bb24da811f784faa4b2cc502a866756307025"
     },
     {
       "path": "scripts/verify_km_ozon_api_export.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "2e7207353b95cffa387216df7dbb2dfdc439287ac13068b19251a318e495c528"
     },
     {
       "path": "scripts/sync_km_wb_extended_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "cb165a3784631f198ada358be9c8d3394e36b9c345f487e138ae321070530e0c"
     },
     {
       "path": "scripts/rebuild_wb_dashboard_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "139994f1548e010e01128a059db9f88c51b3feec17b37c22313603bb8c82dd74"
     },
     {
       "path": "scripts/rebuild_ozon_category_stock_materialized_view.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c81c8739bbdddb9eb1906e9fdbf448f9cae81a728a9ba88999347bae851d0268"
     },
     {
       "path": "scripts/sync_wb_assortment.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fdda11244f5d5e52854151ea3699ed57630d6accbe3090985e77c71da4145c1e"
     },
     {
       "path": "scripts/sync_ozon_seo_catalog_positions.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "197eb6faa660cd12a33d76befc6d128063f5b94ecd86a4a69e0383dd9de77f17"
     },
     {
       "path": "scripts/sync_client_assortment.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "83176905b7adb4695aca8b5e58cbc28ae9d7d0ecf530035001acf84f6032f48e"
     },
     {
       "path": "scripts/verify_review_reply_lifecycle.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5fef0eeaf18154736ce1de98353684bfd51231555d28fa2e156e55907cb04918"
     },
     {
       "path": "scripts/run_seo_generation_product_intents.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "bae147e88ab38d5a0492e1dcbbf3f219bfa667b02f983e0020f72d08ad2236cc"
     },
     {
       "path": "scripts/refine_unit_planned_ui.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "29b99e90debb4718909d1f02927744a8bfd1cf8c03aab5b41f9398b8d94643a1"
     },
     {
       "path": "scripts/verify_health_check_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d7017198278ea8eaf49799d8babf5856d3ebe61a3abbfdb52a54acba66c44082"
     },
     {
       "path": "scripts/sync_km_marketplace_reviews.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5da2fc7c5c8afd5b1de84d823c7c66efcd1d8bb1bb207a0f7c0ba4fccfb1e4c4"
     },
     {
       "path": "scripts/sync_back_to_school_season.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fdf2717aefb2f1855a8e83c1abe2e6281ab509019cf93661b03d4982c3c9bb19"
     },
     {
       "path": "scripts/smoke_legacy_dashboard_matrix.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "e999332cbd504b2dae012927ef8ad321eba14948fa97e91dcc45bfbd423a8efb"
     },
     {
       "path": "scripts/update_unit_planned_ui.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "dd37bec6de664e9e74e6a457a21dbe402c71552a3c8962f8695d485d46e584ab"
     },
     {
       "path": "scripts/rebuild_ozon_sku_scoring_view.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6c21bbb6979ef7c853e6a4978eaf762c3c13f586ffb1686e9950cb9d68b09d09"
     },
     {
       "path": "scripts/rebuild_wb_assortment_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "27f672780716912c8dda5e763d72a34973a270e8f31cf4785f62a2b42b1fa7d6"
     },
     {
       "path": "scripts/sync_ozon_assortment_soft.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "60804bc7358bc0c1bc4ac9093cef7ae52c6d98bdbba20f2e50bc8afac9a3032c"
     },
     {
       "path": "scripts/qa_all_registered_report_apis.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "f3cb776cfb689ee506d959d96c944d88828f6e1a0a7444ce19770b67c3a1d730"
     },
     {
       "path": "scripts/verify_review_reply_draft.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "eac98baf8d5a34a4f507f3910ad97474453b7cdb3b2a4c44fe0aa48c3b113e23"
     },
     {
       "path": "scripts/wb_search_query_classifier.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "56017fd537f90ec3bb767add475d8711315eef517b823c8edc52d08f5d283a71"
     },
     {
       "path": "scripts/wb_rate_limit.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "debe1a4a5218124665223a4317fd69e156af0f8d734eb0050d48d7a900e67051"
     },
     {
       "path": "scripts/update_unit_reports48.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6253e5a02d1387451ede890f0ebb78c4a66693005ddd499f50d800ac8f53e724"
     },
     {
       "path": "ozon_category_dashboard/sales_planning_workbench.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6afea4d50ba2c5382ac2c23ac63e9d9c61f5e055b471d801dc60b26227f0d3f1"
     },
     {
       "path": "ozon_category_dashboard/sales_activity.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ed4c542087653b710a402e7bd946bc444c31f685dca31412b537b50ec47e17e2"
     },
     {
       "path": "ozon_category_dashboard/pulse_report_cache.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "035faca44471ee88e02715a38eb4977351b4f01710d314071ed74c95fb19aa0e"
     },
     {
       "path": "ozon_category_dashboard/pulse_vps_admin.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "15f2bc20ae8483a3b5fa6a693ee429403fd2b043d766858df3725b6a454d4e4c"
     },
     {
       "path": "ozon_category_dashboard/marketplace_reviews_dashboard.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "824d1c8d66c5c6e2f9c94925b97332867216eda1086e51e983898ab7358d72e2"
     },
     {
       "path": "ozon_category_dashboard/galactica_delegation.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b81d60e6f991b1c38ddba729c38b39307438a7c6abcf5f725e909a3a8ebc11e0"
     },
     {
       "path": "ozon_category_dashboard/pl_multi_model.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "7f6d92f8af35f6d4fb0623ac5a3409e290ef9c6663d02368cc456d97253d0a20"
     },
     {
       "path": "ozon_category_dashboard/ozon_ad_search_queries.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "aee7b19c2fecc499a439936fe0c167d0c47cd2d09a92af77ff1ac3aa187ff5b0"
     },
     {
       "path": "ozon_category_dashboard/galactica_consent.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "149e3cd3845b7a909b233adc256f1ad48738523a1bad8c9653555d652f346a2e"
     },
     {
       "path": "ozon_category_dashboard/galactica_entitlement.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c67bf125dcb81dcdae2f1819790f497b53926123150cb887c27a66ba4bca3282"
     },
     {
       "path": "ozon_category_dashboard/content_scoring.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "19ea4959bc9c374b9228bc882f0a0ede99c29488134810d075416054814306e9"
     },
     {
       "path": "ozon_category_dashboard/pl_monthly_budgets.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "61a6a55dd557f1dd01916e099beeb9ce8d3514c462e3d33e393b7d2bbe949592"
     },
     {
       "path": "ozon_category_dashboard/export_data.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "f46f9f68b32b62e3c13951639aa55e46da4309f94805e1c3efe2286cbf000a85"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_jobs.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1b83e25d99e486b38a5de46d8c76054f68e02f7f0f35f5661d2d61a1fdd01324"
     },
     {
       "path": "ozon_category_dashboard/km_trade_planfact.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "abdc39ee137379948115a5cb065d26404847a28779387b8c81c6c7589c291692"
     },
     {
       "path": "ozon_category_dashboard/client_registry.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "31c4ffa2db74dffa688b12b5c2304994d963e9b14190fa9fdeefe3b4957568e0"
     },
     {
       "path": "ozon_category_dashboard/api_completeness.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3ff76637b137040eb9585725e95d3ca9ee999fbbd7f199a0f4187bb047fb4026"
     },
     {
       "path": "ozon_category_dashboard/pl_financial_model.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "97e9a52c485ed347330d2829019285b4161915659d89063b4aa1a2a710d4d0f0"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_optimizer.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "778555b49bd5b51405029cce8fbe7e267d063a38e51cfddcde808fe8773529c8"
     },
     {
       "path": "ozon_category_dashboard/konstex_dashboard_server.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "e081e579b4e825cf71370fc641c51395c7a332d084def1f5458cf977312755e1"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_engine.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5d0d378f4c07b0ad5dc6b9dd258f74da1015ad45a3b7b4361ac730a65ef782c3"
     },
     {
       "path": "ozon_category_dashboard/app.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "53af7e1ac723d9bb88fdd20e153f9c67ae93479bbc0af3a882b341c1b97475c2"
     },
     {
       "path": "ozon_category_dashboard/galactica_exchange_http.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "774e804ac79e1eecdf618d8c962bcb4575e44411b71f209dbed6b1e552baf7c7"
     },
     {
       "path": "ozon_category_dashboard/km_trade_media_plan.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a8e3cc8d99a5dbf6ae857b5a1de35ee70a33521f71558333c4ee19f396cbebc9"
     },
     {
       "path": "ozon_category_dashboard/inventory_history.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "63660d3c6962e5999c7d81858acb2bc66f1aa4f67d17164a51dc6c94d00c3e20"
     },
     {
       "path": "ozon_category_dashboard/galactica_authorization_codes.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "93cb9d0f8cfcc272b638d4d4b3174e0c292f1df47f58104107bfd7ec248226bb"
     },
     {
       "path": "ozon_category_dashboard/ad_search_filtering.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fa476b2895d012b8da9f90e08b1bf78cb1644b1917a66937646fc86ccfbd19a1"
     },
     {
       "path": "ozon_category_dashboard/order_feed.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "10a4de8dda691195787ad0671d683117ccb2c740de9df5c200fac921b7ae3c2e"
     },
     {
       "path": "ozon_category_dashboard/avito_ads_dashboard.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "67fe14039d4de017e47e38d1fb9985c9a3012c43e28cfd8c658d517cf01b2832"
     },
     {
       "path": "ozon_category_dashboard/pl_expense_analysis.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "95294bc352d05fc5c50f64ae953e3ed333928947f121183747c93ad6e26c80b3"
     },
     {
       "path": "ozon_category_dashboard/km_trade_finance.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b1012961e89854ab4bac82d247b95a1bd3191f4dd378d2e85e61fd483ce1e81d"
     },
     {
       "path": "ozon_category_dashboard/pulse_laptop_scoped.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "adb51445de904dc9e9eb7614732c22cb5511832c61de8c1406647ca39792eec9"
     },
     {
       "path": "ozon_category_dashboard/planfact_sales_plan.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0e90dd8e8dff3bc2f8a5221e0b615e98c76a22f6f6475843e1b709b45d32d81e"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_store.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "08687c8965e4e766467a3a3a8d6abe2a6c12240b5bac36afd5a7d9a2875af8a7"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_forecast.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c24059f7cca441e65c46a4861224f8c9e2e610de87d9ca2f67db34b26120d9e6"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "665b910ab818a2000765d57061400238b77ee82987195c2bb340a92dd9d400dd"
     },
     {
       "path": "ozon_category_dashboard/galactica_reports.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "623401f0d309bdd8cda4b9827d4df9eb9925ee3d739e3da8ace3ced067a85ab0"
     },
     {
       "path": "ozon_category_dashboard/health_supporting_market.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9c6e2b409b7972ef80b4b02284681d9d79c437d295b6274f2db47bff0d0f6add"
     },
     {
       "path": "ozon_category_dashboard/marketplace_pl.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5ddabf7be7740885c511f33061a00d2a64c5fdd3ada5718744e0100dc64cdd5a"
     },
     {
       "path": "ozon_category_dashboard/inventory_management.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a3fd80749ed0ecfb32a63e62f9cd6fbbae8f28ddff2744f0fd3d7de1b0daf561"
     },
     {
       "path": "ozon_category_dashboard/km_trade_sales_planning.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "85daf3b3ff131862bf45f74cf1d8f8fe3ac219c598af5db6f9e21825db5b43d4"
     },
     {
       "path": "ozon_category_dashboard/health_check_model_providers.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "894692b8bc9ff6abfee6d7c11da4597fdc594817dc986c03977ca11a669acb87"
     },
     {
       "path": "ozon_category_dashboard/pl_cost_registry.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c4c1cd9581644707962ac509cf87551c4beabe79f9891845b2cb62acd5d19002"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_sources.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3c3f5cfaee2f195c3cb0782d02bfeed063426338377577fcbbb995a81d8921cf"
     },
     {
       "path": "ozon_category_dashboard/km_trade_planning_pl.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "96f62a7c9fce255b640f944a71905b94c6fae54ca0ed795fdea3f63fa2fb6b4e"
     },
     {
       "path": "ozon_category_dashboard/health_check_category_diagnostics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "46704f98a96b75ed0b951732ef5b6d0b4d80d8565faef115812cda97c25fcbb6"
     },
     {
       "path": "ozon_category_dashboard/galactica_code_exchange.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "f1a641efcba0772ee8b698465ed6a9927ead1d2f52d40eb262a231f3b8335a51"
     },
     {
       "path": "ozon_category_dashboard/client_onboarding.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "61f5bb76ea4a4a9af68a49c2283d89698c97f0faeed33d85361acf356e084176"
     },
     {
       "path": "ozon_category_dashboard/ozon_adv_campaign_metrics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a3bc6d3a60018e8c8e536d9261d51a3f369ad90cf1f4e9d866a9f5cc266b2ab0"
     },
     {
       "path": "ozon_category_dashboard/pulse_financial_model.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1fadf1343f1acddf8ee43b06201aa22caa28b866b5c1d07c90986a5a828ef441"
     },
     {
       "path": "ozon_category_dashboard/pulse_portfolio.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b03dbf2ebef165591b18a7ebe052c184440973fc93c480e48cd9cd907459233e"
     },
     {
       "path": "ozon_category_dashboard/client_onboarding_runtime.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "94b4cf97ffacce053e2dcf03837fc0e85fe62df3e981d7b0f8870f4188386f1d"
     },
     {
       "path": "ozon_category_dashboard/pl_workbench.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "97fd2744daddd3863469e1ff6ea403b8a82b30137779c4900fa686b8296838ef"
     },
     {
       "path": "ozon_category_dashboard/admin_all_clients_runtime.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fc7fcec83d55fa9baa8d5f119f323c6b8be78e90bc27542df00a03200d1d98d2"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_inventory.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "02dc7cd4da2f09fbd4fb6864c766c351ae3d877e6e9cbe0fbbfc4e0a79ed5387"
     },
     {
       "path": "ozon_category_dashboard/galactica_identity.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1cf8c290898d1cefd6375bf4cb6875e1dbd59a4664f5a2cdfdec20d8a3569d82"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_routes.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "6b78ecc93a4e806387eefad3b2e8d74c3d04bb57376b1a53bb712c8caa65f4ac"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_model.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "78dae865068a13678e04e3f9eeb4fcec9b78641f8cadd72eb17caa6050a89a57"
     },
     {
       "path": "ozon_category_dashboard/cluster_supply_export.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "4f7a0168be9ad45aa531436fb2859468dee543128a9c797ed8e1cf78fa955bfa"
     },
     {
       "path": "ozon_category_dashboard/content_scoring_store.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ac174459c21e5d088cc6bea3e806b1310e66c22ffe4f36823b55c74e7f6f037b"
     },
     {
       "path": "ozon_category_dashboard/galactica_startup.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "06e509a15b8f9ad946d419d33980bfafd065a9084237f666a8af4add12b2f3cd"
     },
     {
       "path": "ozon_category_dashboard/review_replies.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "71f32c2cc280a5d63f08cb026fc723953f7fdde94a1c199269ac823eab8962b2"
     },
     {
       "path": "ozon_category_dashboard/refresh_materialized_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b9211503413ce2ae2c82417eec3d498151a72603877e30698282f00c9361551e"
     },
     {
       "path": "ozon_category_dashboard/sportmaster_run_rate.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a65757c109c965b1891f7b5db28c443ab2a37a72520fb72062126558cfaa084f"
     },
     {
       "path": "ozon_category_dashboard/sales_orders.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5ffe156b3a514da26565f3d071bb3974fc98151238ed16c7824a8f2cbcab83d0"
     },
     {
       "path": "ozon_category_dashboard/run_dashboard_with_konstex.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8e1001eab72789fc8f7ba3b2ca2f6aa8f7a9c8be4080724b3523b84500a33d2b"
     },
     {
       "path": "ozon_category_dashboard/sales_coefficient_forecast.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3278aaa5938ec226e7cb6f4994a997401b0df2ebec58362fc57030bfa6ee1d51"
     },
     {
       "path": "ozon_category_dashboard/search_demand.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "7d68b13b591d112cd5b85c0fdcc1035f7ddfa7bcf715aa3e1f5fedaf841fd40a"
     },
     {
       "path": "ozon_category_dashboard/pulse_supply.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fe9f5de8e3aa7e58926ae565a76c8ed5a4f5cc247fa6cde3f6e46d77c4a2b1f3"
     },
     {
       "path": "ozon_category_dashboard/pulse_vps_scoped.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1854e381867a993ec1e905aa05c1cceb191101f5832106a5db9ffb0e30a388d0"
     },
     {
       "path": "ozon_category_dashboard/pulse_sales_model.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "19205e3a0436e7ebd0bfd4e4a8fa121642613ac0455b8ba82557e7f2500b48ed"
     },
     {
       "path": "ozon_category_dashboard/sales_planning_seasonality.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "053e85c5ed31dac88cf0211ff86a9d431a77e34e0fa7f1f22e2d18fb03540d69"
     },
     {
       "path": "ozon_category_dashboard/review_workbench.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8d0a6c166dec5773775e1aaafa62168fcee974a656fbaf5d7917d689db76dd73"
     },
     {
       "path": "ozon_category_dashboard/unit_logistics_tariffs.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "476a9ee096584b82c1fc31a270f31bd25986135f2083e65b58969a40fbfb753d"
     },
     {
       "path": "ozon_category_dashboard/unit_economics_workspace.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ad42bc4570fa7e4029a67a47654986c61c4e4c5e2b68a69ae4900a414fb1e4ff"
     },
     {
       "path": "ozon_category_dashboard/unit_cost_basis.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1b57b85fdd75571e70e81dc3fb600d1cfc083bb6d844097b5f79aefa2993952a"
     },
     {
       "path": "ozon_category_dashboard/unit_current_stocks.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "8efa0f2356577510504eff3348194787361d72a45729ee465145036e82aeb639"
     },
     {
       "path": "ozon_category_dashboard/unit_order_activity.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "97887adf9fc04fe95961e267e1e6a7a97f862737522080a8c0886cf37f175ef4"
     },
     {
       "path": "ozon_category_dashboard/seo_projects.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "cb464e2320a0c9813305127b32dfbd73acd9331f17f26081ae4f6768d5f9914c"
     },
     {
       "path": "ozon_category_dashboard/unit_contributions.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "82792efa02bf60fd0ead68ec3f7df0d76dbe3411e6ac45b9a45d7ef9ca1cd8d1"
     },
     {
       "path": "ozon_category_dashboard/unit_cost_allocation.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "0ca495242f5783c968c6bc1d5ece99423d94f3587de177d753e61f0be3b402ea"
     },
     {
       "path": "ozon_category_dashboard/unit_economics_engine.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "46e37fc6ee49f6b1992f3d4a3276a79b8c5319c8528a8e841150ff67ee2ddb39"
     },
     {
       "path": "ozon_category_dashboard/unit_yandex_tariffs.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "074b241f2eafcc92f828a97173853d8a3929be92a4709856866237919f558c6a"
     },
     {
       "path": "ozon_category_dashboard/unit_price_conditions.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9105365784e69dd75bd0d2b3d5534ff2aab5451825a9fc6a02eb934997d30729"
     },
     {
       "path": "ozon_category_dashboard/unit_planner_settings.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "f1206fdaf694e85e3d8f5f26d5d2f7a54365451b3d90f1b89aea633813d5322b"
     },
     {
       "path": "ozon_category_dashboard/unit_price_api.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ea48417af88a42a44a7588b469fab80af27ca6d350dda141ef3f10d94e83e3c0"
     },
     {
       "path": "ozon_category_dashboard/wb_search_queries_dashboard.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "f21bbcd3b2d2ab5085a1c13baff6ad14bba91e0859d718ec89fd57ef2f264bac"
     },
     {
       "path": "ozon_category_dashboard/unit_result_contract.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d9a27da1e3242a50cf1a50a37b4832f403ebd4fbdb690921fd66f080c50897d1"
     },
     {
       "path": "ozon_category_dashboard/unit_yandex_prices.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "b18768babcc7ed88724c12b71be758d0bf13e84629233dbd1e34d40518a812d5"
     },
     {
       "path": "ozon_category_dashboard/unit_hypotheses.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "4b442fe22a95fc7a88bca68a5d71392c98a97342d002b30f4fe31592cde3880f"
     },
     {
       "path": "ozon_category_dashboard/unit_ozon_cluster_mix.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "57fb76b0f69fb861b229a32c5df3c8eaf7ad7ee6f3e391a65b7e04bf8c8ca717"
     },
     {
       "path": "ozon_category_dashboard/weekly_decisions.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5d69d1ba134a3dcdc125d931ed69ef17da08ab976b08c35b51c5466d39fbe9a6"
     },
     {
       "path": "ozon_category_dashboard/wb_advertising_view.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "38b7017b286d10ecff33a9f4afc3f9ef32d4854e862495cfa6086bf3688a1ec1"
     },
     {
       "path": "ozon_category_dashboard/user_registry.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "be9fb51347eb58a68327df2925fc79f9ef1c20fa3e7536d16388faceda3c59c4"
     },
     {
       "path": "ozon_category_dashboard/unit_yandex_services.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "519b729f99c8e19dae790208fe245ba776e7372f6fccc75ffead3e55aa44ee20"
     },
     {
       "path": "ozon_category_dashboard/yandex_market_history.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "9516e38885603636de60429ce9a9d0075c92923bf7da8f218f6fe905cb2c38f1"
     },
     {
       "path": "ozon_category_dashboard/yandex_planfact.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "7c2b75f9c1438ec5e777513985bd662fa531697e7b4659c8df22232c6d3b5676"
     },
     {
       "path": "ozon_category_dashboard/yandex_analytics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "743f640a25d39057a0269ac1307cb76112fbbcc2941624c3721bdfb2573e048e"
     },
     {
       "path": "ozon_category_dashboard/wb_ad_search_queries_dashboard.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5a48c929ea002364d43a069f9c5187c33e62e09ea5a6afdbe27c667619307d41"
     },
     {
       "path": "ozon_category_dashboard/wb_entrance_dashboard.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "386689921d83787d9de32a395000ac3e2db9c65d8923a1a75b11839f71b2ab7b"
     },
     {
       "path": "ozon_category_dashboard/weekly_sku_advertising.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "5505359c5330dcf3e3504b494b3d3707fe277746507dd9de36a2e79ecc002030"
     },
     {
       "path": "ozon_category_dashboard/yandex_analytics_ingest.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "856e08b5d0415d9aa460599cfda96e25ab0aaf75bf3b0e0032cef63c93cee0a6"
     },
     {
       "path": "ozon_category_dashboard/wb_market_search_comparison.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3707104ebd67a60b8779de78a4a219b5494922a6234870939b8935b4b7907d05"
     },
     {
       "path": "ozon_category_dashboard/autobidder/policies.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "58f7fe3eca8fe419ce218469f666dac3f61998a4355ac8b06dca687c194fdec0"
     },
     {
       "path": "ozon_category_dashboard/autobidder/routes.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "cf59ac8eedae5590685bb9e78490982fe9966f22a9e22f6dd55a1c16d9d13916"
     },
     {
       "path": "ozon_category_dashboard/autobidder/repository.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "66233dd404c8f583ab68a7001bba49d2a5729012ab42d9620ed54c4c362329db"
     },
     {
       "path": "ozon_category_dashboard/autobidder/worker.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "040299d83b53dbfbf9cb4065694ef7bec92edbe524658c813e44d74d398f194a"
     },
     {
       "path": "ozon_category_dashboard/autobidder/domain.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "92fd30e7966c1e0b8d8cf3858a1b8120007c0117a57f91a39fad640d66d0ed64"
     },
     {
       "path": "ozon_category_dashboard/autobidder/__init__.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "02a479f8ee25889282744a97f4cf0fb9cffd241253a2726c5eaca14c56b65ec2"
     },
     {
       "path": "ozon_category_dashboard/autobidder/metrics.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "17c64bf373b7464b4252a9842cf87d826561dfe65e9eb23540dfccbc81379e51"
     },
     {
       "path": "ozon_category_dashboard/autobidder/adapters.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "849094c62eeb58598d435fffe2bc34ec821f05d20339d2fabbda92a0ae3c541e"
     },
     {
       "path": "ozon_category_dashboard/scripts/scaffold_client.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a03a002e73371553508c8ad4fd8fb1e1c8d832c279e4920ed5fba9437bd336fa"
     },
     {
       "path": "ozon_category_dashboard/scripts/bootstrap_vps_superuser.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "3934d0602ab19f988918878d953f5e7949f09cbc51827f818919b2694fe3dd47"
     },
     {
       "path": "ozon_category_dashboard/scripts/build_ozon_crossdock_snapshot.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1e85836d5fa6d23559b075c33bf04ae9cbc8bcc9e6a2df59619b7429432bd004"
     },
     {
       "path": "ozon_category_dashboard/scripts/import_vps_scoped_registry.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "062ade6fb1c7128fcadcb338724da7d26bac606a95c059ef04dd75031ace8a07"
     },
     {
       "path": "ozon_category_dashboard/scripts/run_client_pipeline.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "c640d7774544d8097e587a11df509cc2f8ee9426bd06eaa03ff9ecf5f96311ff"
     },
     {
       "path": "ozon_category_dashboard/scripts/repair_local_login_origin.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "62b6f251fed02adeb288b2d001a3512fe6e0d4fa0a7ce4ae65d344fddfc21809"
     },
     {
       "path": "ozon_category_dashboard/scripts/bootstrap_vps_schema.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "35e25c5a1e654334eccc7720f527eb02796a8a4fc0287a8a4ec2d481ca91426d"
     },
     {
       "path": "ozon_category_dashboard/scripts/seo_queries_parser.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "d440d8fea30f3bdcae08334750892390fe8b48e74025c29e8586cb953c083b32"
     },
     {
       "path": "ozon_category_dashboard/scripts/sync_avito_ads.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "41281c622db77ac21a646d044fe8b8526774a7d6ecad940ad2793d1d1c112524"
     },
     {
       "path": "ozon_category_dashboard/scripts/sync_yandex_market.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "fe5a105476d5720a2b9194cea6dc7a4f4881a5f342540f14271f66dbd49c93bc"
     },
     {
       "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/health_check_hypotheses.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "37911da7ee3006584a37b8c94e6853e553fb7ca39764508fc9cff5a0c0f8aeec"
     },
     {
       "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/plan_fact_matrix.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "bd27f6e5f0eab0014eec7de7e1e2a3cd368299651192525c88501edbdab1bc97"
     },
     {
       "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/collect_plan_fact_funnel.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "ef1a07912aa222cf6710d028b31dc584ad82577a0694534a799abdd9255f6bd7"
     },
     {
       "path": "ozon_category_dashboard/health_check_runtime/scripts/wb_screening/build_daily_client_radar.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "1c61fc8fd9c55b56bbd79b5285299b3d5ebdb06cf56dc0e02391df1feefb09c6"
     },
     {
       "path": "ozon_category_dashboard/health_check_runtime/artifacts/bi-planfact-integration/planfact_funnel_matrix_runtime.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "48175375487c0995137306b4eb94670bb8376b296420bccc7c5c9dbeb760d1ee"
     },
     {
       "path": "ozon_category_dashboard/static/react/index.html",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "eda6b12b83ee007f8305d62c8cd473240659ce28adfd5cc281193a5d4e06a20c"
     },
     {
       "path": "ozon_category_dashboard/static/react/assets/index-C_wZPg4q.js",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "98fba7abc33f9ccbe03beb58117a9418086337f39d81509309be468de9fc1192"
     },
     {
       "path": "scripts/wb_screening/health_check_hypotheses.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "909fa2d759f09600710ee76b16d7b7081468c8238a9abb91170d5c3512d424ef"
     },
     {
       "path": "scripts/clients/lera_nena/run_daily.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "a928644a6c326a14ab8a618b2cec3c98ab5799c8b0b948989391ccb2816ee729"
     },
     {
       "path": "scripts/clients/lera_nena/rebuild_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "26aa0eee325789f58a72c3c2fbfaf2bbbf3e80f492e14c9f721d1938f8204e0e"
     },
     {
       "path": "scripts/clients/toptop/run_daily.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "544ff995dc3e1432c7c0b2e4184cb9ad4e5afab8efb7d3b15cba6bd025d7e83a"
     },
     {
       "path": "scripts/clients/toptop/rebuild_views.py",
-      "source": "deployed snapshot 2026-09-18"
+      "source": "deployed snapshot 2026-09-18",
+      "sha256": "befc675c92bdc2f7ccbbc38fd10989f10da6c797a127e0b665077a549dbf4d9c"
+    },
+    {
+      "path": "ozon_category_dashboard/static/react/assets/index-DiYCDwWw.css",
+      "source": "deployment/seo-yandex-20260918 (matches r41-registry-db stylesheet)",
+      "sha256": "3166e2df3e67345202a8b8f4ee74676e5fb4b91614ec4a38675765b124274ee1"
     }
   ],
   "excluded_other_client_scripts": [
@@ -1196,5 +1447,10 @@
     "scripts/clients/ametist/rebuild_views.py",
     "scripts/clients/divan_ru_avito_ext/rebuild_views.py",
     "scripts/clients/divan_ru_avito_ext/run_daily.py"
+  ],
+  "known_limitations": [
+    "Live VPS source could not be read: SSH banner timeout.",
+    "Later r154 deployment is not represented by this 2026-09-18 snapshot.",
+    "Shared editable frontend contains unrelated client proposals and is not included in this import."
   ]
 }

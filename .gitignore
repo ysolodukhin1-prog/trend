@@ -33,3 +33,6 @@ build/
 # OS files
 Thumbs.db
 .DS_Store
+
+# Local import staging
+.trend-source-upload/
