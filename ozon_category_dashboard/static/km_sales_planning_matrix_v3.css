@@ -1,0 +1,1144 @@
+/*
+ * KM Trade sales-planning matrix v3.
+ * Shared sticky/interactive header contract and collapsible actual months.
+ */
+
+.sales-planning-matrix-scroll {
+  position: relative;
+  height: clamp(360px, 58vh, 520px);
+  max-height: 72vh;
+  overflow: auto !important;
+  scrollbar-gutter: stable both-edges;
+}
+
+.sales-planning-matrix {
+  min-width: 1460px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sales-planning-matrix.is-fact-collapsed {
+  min-width: 1040px;
+}
+
+.sales-planning-matrix thead th {
+  height: 38px;
+  border-right: 1px solid #2d2d2d;
+  background: #000000 !important;
+  color: #ffffff !important;
+  vertical-align: middle;
+}
+
+.sales-planning-matrix thead tr:first-child th {
+  top: 0;
+  z-index: 7;
+}
+
+.sales-planning-matrix thead tr:nth-child(2) th {
+  top: 38px;
+  z-index: 6;
+}
+
+.sales-planning-matrix .sales-planning-article-head {
+  left: 0;
+  z-index: 10 !important;
+  min-width: 245px;
+  border-right: 2px solid #52625f !important;
+  text-align: left;
+}
+
+.sales-planning-matrix tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  min-width: 245px;
+  border-right: 2px solid #bfd2cf;
+  background: #f2fbfa !important;
+  color: #173c3a !important;
+  text-align: left;
+}
+
+.sales-planning-matrix .sales-planning-future-boundary {
+  border-left: 1px dashed #91aaa6 !important;
+}
+
+.sales-planning-fact-group {
+  min-width: 150px;
+  padding: 4px 6px !important;
+  text-align: center !important;
+}
+
+.sales-planning-fact-group button {
+  display: inline-flex;
+  width: 100%;
+  min-height: 30px;
+  height: auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255, 255, 255, .32);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .10);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sales-planning-fact-group button:hover {
+  border-color: var(--kokoc-mint, #06e19b);
+  background: rgba(6, 225, 155, .18);
+}
+
+.sales-planning-fact-group button small {
+  color: rgba(255, 255, 255, .66);
+  font-size: 9px;
+}
+
+.sales-planning-column-header {
+  min-width: 94px;
+  text-align: right !important;
+  user-select: none;
+}
+
+.sales-planning-column-header .table-header-label {
+  display: inline-block;
+  text-transform: capitalize;
+}
+
+.sales-planning-drag-handle {
+  display: inline-block;
+  margin-left: 6px;
+  color: rgba(255, 255, 255, .56);
+  font-size: 11px;
+  letter-spacing: -3px;
+}
+
+.sales-planning-column-header.drag-over {
+  box-shadow: inset 3px 0 0 var(--kokoc-mint, #06e19b);
+}
+
+.sales-planning-fact-summary,
+.sales-planning-fact-group-collapsed {
+  display: none;
+}
+
+.sales-planning-matrix.is-fact-collapsed .sales-planning-fact-month,
+.sales-planning-matrix.is-fact-collapsed .sales-planning-fact-group-expanded {
+  display: none;
+}
+
+.sales-planning-matrix.is-fact-collapsed .sales-planning-fact-summary,
+.sales-planning-matrix.is-fact-collapsed .sales-planning-fact-group-collapsed {
+  display: table-cell;
+}
+
+.sales-planning-matrix .sales-planning-fact-summary {
+  min-width: 100px;
+  background: #eef9f7;
+  font-weight: 500;
+}
+
+.sales-planning-matrix thead .sales-planning-fact-summary {
+  background: #171717 !important;
+}
+
+.sales-planning-tree-scroll {
+  height: clamp(620px, 82vh, 960px);
+  max-height: 86vh;
+  border: 1px solid #d9e8e6;
+  border-radius: 10px;
+}
+
+.sales-planning-category-list {
+  display: block !important;
+}
+
+.sales-planning-value-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
+  padding: 2px;
+  border: 1px solid #d4e2e0;
+  border-radius: 8px;
+  background: #f2f8f7;
+}
+
+.sales-planning-value-toggle button {
+  min-width: 34px;
+  min-height: 28px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #49615e;
+  font-size: 10px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.sales-planning-value-toggle button:hover {
+  background: #e2f3f0;
+}
+
+.sales-planning-value-toggle button.active,
+.sales-planning-value-toggle button[aria-pressed="true"] {
+  background: #111111;
+  color: #ffffff;
+}
+
+.sales-planning-tree-matrix .sales-planning-article-head,
+.sales-planning-tree-matrix tbody th {
+  width: 230px;
+  min-width: 230px;
+  max-width: 230px;
+}
+
+.sales-planning-tree-row > td,
+.sales-planning-tree-row > th {
+  border-top: 1px solid #cfe2df;
+  font-weight: 850;
+}
+
+.sales-planning-category-row > th,
+.sales-planning-category-row > td {
+  background: #dff4f0 !important;
+  color: #143d39 !important;
+}
+
+.sales-planning-product-row > th,
+.sales-planning-product-row > td {
+  background: #f5faf4 !important;
+  color: #173c3a !important;
+}
+
+.sales-planning-tree-label {
+  padding: 0 !important;
+}
+
+.sales-planning-tree-label button {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sales-planning-tree-label button:hover {
+  background: rgba(6, 225, 155, .10);
+}
+
+.sales-planning-tree-label button > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.sales-planning-tree-label strong,
+.sales-planning-tree-label small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sales-planning-tree-label strong {
+  color: inherit;
+  font-size: 11px;
+}
+
+.sales-planning-tree-label small {
+  color: #607a77;
+  font-size: 8px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.sales-planning-tree-caret {
+  display: inline-grid;
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  place-items: center;
+  border: 1px solid #aacdc8;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .72);
+  color: #173c3a;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.sales-planning-tree-level-product button {
+  padding-left: 28px;
+}
+
+.sales-planning-tree-metric-label {
+  color: #45625f !important;
+  font-size: 9px;
+  font-weight: 600 !important;
+}
+
+.sales-planning-category-metric-row th {
+  padding-left: 30px !important;
+  background: #edf8f6 !important;
+}
+
+.sales-planning-category-metric-row td {
+  background: #f8fcfb;
+  font-weight: 400;
+}
+
+.sales-planning-product-metric-row th {
+  padding-left: 55px !important;
+  background: #f5faf4 !important;
+}
+
+.sales-planning-product-metric-row td {
+  background: #ffffff;
+}
+
+.sales-planning-pivot-table tbody td,
+.sales-planning-tree-metric-row > td {
+  font-weight: 400 !important;
+}
+
+.sales-planning-tree-row > td {
+  font-weight: 800 !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-planning-coefficient-row > td,
+.sales-planning-tree-metric-row.sales-planning-planning-coefficient-row > td,
+.sales-planning-pivot-table tbody td.sales-planning-stock-negative,
+.sales-planning-tree-metric-row > td.sales-planning-stock-negative {
+  font-weight: 700 !important;
+}
+
+.sales-planning-category-row > th,
+.sales-planning-category-row > td {
+  border-top: 3px solid #6fae9f !important;
+}
+
+.sales-planning-product-row > th,
+.sales-planning-product-row > td {
+  border-top: 2px solid #c2d8d4 !important;
+}
+
+.sales-planning-tree-metric-row > th,
+.sales-planning-tree-metric-row > td {
+  height: 27px;
+  border-bottom: 1px solid #e2ecea !important;
+}
+
+.sales-planning-tree-metric-row.is-group-first > th,
+.sales-planning-tree-metric-row.is-group-first > td {
+  border-top: 2px solid var(--sales-planning-group-border, #afc9c4) !important;
+}
+
+.sales-planning-tree-metric-row.is-group-last > th,
+.sales-planning-tree-metric-row.is-group-last > td {
+  border-bottom: 2px solid var(--sales-planning-group-border, #afc9c4) !important;
+}
+
+.sales-planning-metric-group-sales {
+  --sales-planning-group-border: #83b8ad;
+}
+
+.sales-planning-metric-group-inventory {
+  --sales-planning-group-border: #9dbbd0;
+}
+
+.sales-planning-metric-group-coefficients {
+  --sales-planning-group-border: #dfb96f;
+}
+
+.sales-planning-pivot-table tbody tr.is-group-first > th,
+.sales-planning-pivot-table tbody tr.is-group-first > td {
+  border-top: 2px solid var(--sales-planning-group-border, #afc9c4) !important;
+}
+
+.sales-planning-pivot-table tbody tr.is-group-last > th,
+.sales-planning-pivot-table tbody tr.is-group-last > td {
+  border-bottom: 2px solid var(--sales-planning-group-border, #afc9c4) !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-sales:not(.is-zebra) > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-sales:not(.is-zebra) > td {
+  background: #fbfefd !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-sales.is-zebra > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-sales.is-zebra > td {
+  background: #f2f8f6 !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-coefficients:not(.is-zebra) > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-coefficients:not(.is-zebra) > td {
+  background: #fffdf8 !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-coefficients.is-zebra > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-coefficients.is-zebra > td {
+  background: #fff8ec !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-inventory:not(.is-zebra) > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-inventory:not(.is-zebra) > td {
+  background: #fafcfe !important;
+}
+
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-inventory.is-zebra > th,
+.sales-planning-pivot-table tbody tr.sales-planning-metric-group-inventory.is-zebra > td {
+  background: #f2f7fa !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-sales:not(.is-zebra) > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-sales:not(.is-zebra) > td {
+  background: #f1f9f7 !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-sales.is-zebra > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-sales.is-zebra > td {
+  background: #e6f3ef !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-inventory:not(.is-zebra) > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-inventory:not(.is-zebra) > td {
+  background: #f1f6fa !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-inventory.is-zebra > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-inventory.is-zebra > td {
+  background: #e6eff6 !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-coefficients:not(.is-zebra) > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-coefficients:not(.is-zebra) > td {
+  background: #fff8ea !important;
+}
+
+.sales-planning-category-metric-row.sales-planning-metric-group-coefficients.is-zebra > th,
+.sales-planning-category-metric-row.sales-planning-metric-group-coefficients.is-zebra > td {
+  background: #faefd9 !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-sales:not(.is-zebra) > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-sales:not(.is-zebra) > td {
+  background: #fbfefd !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-sales.is-zebra > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-sales.is-zebra > td {
+  background: #f2f8f6 !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-inventory:not(.is-zebra) > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-inventory:not(.is-zebra) > td {
+  background: #fafcfe !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-inventory.is-zebra > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-inventory.is-zebra > td {
+  background: #f2f7fa !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-coefficients:not(.is-zebra) > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-coefficients:not(.is-zebra) > td {
+  background: #fffdf8 !important;
+}
+
+.sales-planning-product-metric-row.sales-planning-metric-group-coefficients.is-zebra > th,
+.sales-planning-product-metric-row.sales-planning-metric-group-coefficients.is-zebra > td {
+  background: #fff8ec !important;
+}
+
+th.sales-planning-detail-label {
+  color: #0b6656;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: #7fb8ad;
+  text-decoration-style: dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
+th.sales-planning-detail-label:hover {
+  background: #e8f7f3 !important;
+  color: #034c40;
+  text-decoration-style: solid;
+}
+
+th.sales-planning-detail-label:focus-visible {
+  position: relative;
+  z-index: 3;
+  outline: 2px solid #087f6b;
+  outline-offset: -3px;
+}
+
+.sales-planning-planning-coefficient-row > th,
+.sales-planning-planning-coefficient-row > td {
+  border-top: 2px solid #dfb96f !important;
+  background: #faefd9 !important;
+  font-weight: 900;
+}
+
+.sales-planning-trend-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.sales-planning-trend-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 15, 14, .62);
+  backdrop-filter: blur(3px);
+}
+
+.sales-planning-trend-dialog {
+  position: relative;
+  display: grid;
+  width: min(920px, calc(100vw - 40px));
+  max-height: min(820px, calc(100vh - 40px));
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid #c9dfdb;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .28);
+}
+
+.sales-planning-trend-dialog > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #dceae7;
+  background: #f4fbf9;
+}
+
+.sales-planning-trend-dialog h2 {
+  margin: 0 0 5px;
+  color: #173c3a;
+  font-size: 18px;
+}
+
+.sales-planning-trend-dialog header p,
+.sales-planning-trend-source {
+  margin: 0;
+  color: #607a77;
+  font-size: 11px;
+}
+
+.sales-planning-trend-dialog header > button {
+  display: grid;
+  flex: 0 0 32px;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #bed8d3;
+  border-radius: 9px;
+  background: #ffffff;
+  color: #173c3a;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.sales-planning-trend-dialog header > button svg,
+.sales-planning-promotion-actions button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.sales-planning-trend-dialog header > button:focus-visible,
+.sales-planning-promotion-actions button:focus-visible {
+  outline: 2px solid #087f6b;
+  outline-offset: 2px;
+}
+
+.sales-planning-trend-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 16px 20px 20px;
+}
+
+.sales-planning-trend-chart,
+.sales-planning-seasonality-chart {
+  display: block;
+  width: 100%;
+  min-width: 560px;
+  height: auto;
+  margin-bottom: 14px;
+}
+
+.trend-axis { stroke: #bdd3cf; stroke-width: 1; }
+.trend-grid { stroke: #dce9e6; stroke-width: 1; }
+.trend-grid-label { fill: #607a77; font-size: 10px; font-weight: 700; }
+.trend-axis-title { fill: #315d58; font-size: 11px; font-weight: 900; }
+.trend-decade-band { fill: #f7fbfa; }
+.trend-decade-band.alternate { fill: #eef7f5; }
+.trend-decade-divider { stroke: #8fb4ae; stroke-width: 1.5; stroke-dasharray: 5 4; }
+.trend-decade-label { fill: #315d58; font-size: 11px; font-weight: 900; }
+.trend-line { fill: none; stroke: #ff4b52; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.trend-regression-line { fill: none; stroke: #147a68; stroke-width: 3; stroke-dasharray: 9 6; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.trend-legend-fact { stroke: #ff4b52; stroke-width: 4; stroke-linecap: round; }
+.trend-legend-label { fill: #315d58; font-size: 10px; font-weight: 800; }
+.trend-slope-label { fill: #147a68; font-size: 9px; font-weight: 900; }
+.trend-point { fill: #06e19b; stroke: #0d5549; stroke-width: 2; }
+.trend-value { fill: #173c3a; font-size: 12px; font-weight: 900; }
+.trend-label { fill: #607a77; font-size: 11px; font-weight: 700; }
+
+.seasonality-baseline {
+  stroke: #8ca5a1;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.seasonality-line {
+  fill: none;
+  stroke: #147a68;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.seasonality-point {
+  fill: #06e19b;
+  stroke: #0d5549;
+  stroke-width: 1.5;
+}
+
+.seasonality-baseline-label {
+  fill: #607a77;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.seasonality-axis-title,
+.seasonality-value {
+  fill: #315d58;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.sales-planning-trend-table {
+  min-width: 680px;
+}
+
+.sales-planning-seasonality-table {
+  min-width: 760px;
+}
+
+.sales-planning-promotion-dialog {
+  width: min(1060px, calc(100vw - 40px));
+}
+
+.sales-planning-planning-dialog {
+  width: min(1140px, calc(100vw - 40px));
+}
+
+.sales-planning-planning-workspace {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #d6e6e3;
+  border-radius: 12px;
+  background: #fbfefd;
+}
+
+.sales-planning-planning-stage {
+  min-width: 960px;
+  padding: 12px 14px 14px;
+}
+
+.sales-planning-planning-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 10px;
+}
+
+.planning-factor-grid {
+  stroke: #dce9e6;
+  stroke-width: 1;
+}
+
+.planning-factor-grid-label,
+.planning-factor-month,
+.planning-factor-legend-label {
+  fill: #607a77;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.planning-factor-baseline {
+  stroke: #839d99;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.planning-factor-line,
+.planning-factor-legend {
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.planning-factor-line.planning-trend,
+.planning-factor-legend.planning-trend {
+  stroke: #637c78;
+  stroke-dasharray: 7 5;
+}
+
+.planning-factor-line.planning-growth,
+.planning-factor-legend.planning-growth {
+  stroke: #ff4747;
+}
+
+.planning-factor-line.planning-seasonality,
+.planning-factor-legend.planning-seasonality {
+  stroke: #3b82b8;
+}
+
+.planning-factor-line.planning-promotion,
+.planning-factor-legend.planning-promotion {
+  stroke: #c67a17;
+}
+
+.planning-factor-line.planning-total,
+.planning-factor-legend.planning-total {
+  stroke: #087f6b;
+  stroke-width: 4;
+}
+
+.planning-total-point {
+  fill: #06e19b;
+  stroke: #075f51;
+  stroke-width: 2;
+}
+
+.planning-total-value {
+  fill: #075f51;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.sales-planning-planning-table {
+  min-width: 930px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sales-planning-planning-table th,
+.sales-planning-planning-table td {
+  min-width: 110px;
+  height: 32px;
+  border-bottom: 1px solid #e0ece9;
+}
+
+.sales-planning-planning-table th:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  min-width: 210px;
+  background: #f2f8f6;
+  text-align: left;
+}
+
+.sales-planning-planning-table thead th {
+  background: #111111;
+  color: #ffffff;
+  text-align: right;
+}
+
+.sales-planning-planning-table thead th:first-child {
+  z-index: 3;
+  background: #111111;
+}
+
+.sales-planning-planning-table tbody tr:nth-child(even) th,
+.sales-planning-planning-table tbody tr:nth-child(even) td {
+  background: #f7fbfa;
+}
+
+.sales-planning-planning-table .planning-step-result th,
+.sales-planning-planning-table .planning-step-result td {
+  border-bottom: 2px solid #aaccc6;
+}
+
+.sales-planning-planning-table .planning-step-total th,
+.sales-planning-planning-table .planning-step-total td {
+  border-top: 2px solid #087f6b;
+  background: #e9f7f3 !important;
+  color: #075f51;
+  font-weight: 900;
+}
+
+.sales-planning-planning-table .planning-step-forecast th,
+.sales-planning-planning-table .planning-step-forecast td {
+  background: #dff4ee !important;
+  color: #073f36;
+  font-weight: 900;
+}
+
+.sales-planning-planning-table th.planning-coefficient-disclosure {
+  position: sticky;
+  padding-right: 30px;
+  cursor: pointer;
+  outline: none;
+}
+
+.sales-planning-planning-table th.planning-coefficient-disclosure::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-65%) rotate(45deg);
+  transition: transform 160ms ease;
+}
+
+.sales-planning-planning-table th.planning-coefficient-disclosure[aria-expanded="true"]::after {
+  transform: translateY(-20%) rotate(225deg);
+}
+
+.sales-planning-planning-table th.planning-coefficient-disclosure:hover,
+.sales-planning-planning-table th.planning-coefficient-disclosure:focus-visible {
+  background: #ccece4 !important;
+  box-shadow: inset 0 0 0 2px #087f6b;
+}
+
+.sales-planning-coefficient-breakdown[hidden] {
+  display: none !important;
+}
+
+.sales-planning-coefficient-breakdown {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #9fc9c1;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.sales-planning-coefficient-breakdown > header h3 {
+  margin: 2px 0 4px;
+  color: #092f2a;
+  font-size: 16px;
+}
+
+.sales-planning-coefficient-breakdown > header p,
+.sales-planning-coefficient-note {
+  margin: 0;
+  color: #607a77;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.sales-planning-coefficient-eyebrow {
+  color: #087f6b;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.sales-planning-coefficient-sources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.sales-planning-coefficient-sources article {
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid #d6e6e3;
+  border-radius: 9px;
+  background: #f6fbfa;
+}
+
+.sales-planning-coefficient-sources strong,
+.sales-planning-coefficient-sources span {
+  display: block;
+}
+
+.sales-planning-coefficient-sources strong {
+  margin-bottom: 4px;
+  color: #092f2a;
+  font-size: 12px;
+}
+
+.sales-planning-coefficient-sources span {
+  color: #526d69;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.sales-planning-coefficient-breakdown-table {
+  min-width: 900px;
+}
+
+.sales-planning-coefficient-breakdown-table th:first-child {
+  min-width: 220px;
+  text-align: left;
+}
+
+.sales-planning-coefficient-breakdown-table td {
+  min-width: 112px;
+}
+
+.sales-planning-coefficient-breakdown-table .planning-coefficient-formula-row th,
+.sales-planning-coefficient-breakdown-table .planning-coefficient-formula-row td {
+  border-top: 2px solid #aaccc6;
+  color: #315d58;
+  font-weight: 800;
+}
+
+.sales-planning-coefficient-breakdown-table .planning-coefficient-result-row th,
+.sales-planning-coefficient-breakdown-table .planning-coefficient-result-row td {
+  background: #dff4ee;
+  color: #075f51;
+  font-weight: 900;
+}
+
+.sales-planning-coefficient-note {
+  margin-top: 10px;
+}
+
+@media (max-width: 720px) {
+  .sales-planning-coefficient-sources {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sales-planning-promotion-workspace {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid #d6e6e3;
+  border-radius: 12px;
+  background: #fbfefd;
+}
+
+.sales-planning-promotion-stage {
+  min-width: 920px;
+  padding: 12px 14px 14px;
+}
+
+.sales-planning-promotion-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 8px;
+}
+
+.promotion-grid {
+  stroke: #dce9e6;
+  stroke-width: 1;
+}
+
+.promotion-grid-label,
+.promotion-label {
+  fill: #607a77;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.promotion-axis-title,
+.promotion-value {
+  fill: #315d58;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.promotion-baseline {
+  stroke: #8ca5a1;
+  stroke-width: 1.5;
+  stroke-dasharray: 6 5;
+}
+
+.promotion-line {
+  fill: none;
+  stroke: #147a68;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.promotion-point {
+  fill: #06e19b;
+  stroke: #0d5549;
+  stroke-width: 2;
+}
+
+.sales-planning-promotion-months {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(64px, 1fr));
+  gap: 7px;
+}
+
+.sales-planning-promotion-months label {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 7px 5px;
+  border: 1px solid #d6e6e3;
+  border-radius: 9px;
+  background: #f2f8f6;
+  color: #315d58;
+  text-align: center;
+}
+
+.sales-planning-promotion-months span {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sales-planning-promotion-months small {
+  color: #6c8581;
+  font-size: 9px;
+}
+
+.sales-planning-promotion-months input {
+  width: 100%;
+  min-width: 0;
+  min-height: 32px;
+  padding: 5px 4px;
+  text-align: right;
+}
+
+.sales-planning-promotion-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.sales-planning-promotion-actions p {
+  min-height: 16px;
+  margin: 0 auto 0 0;
+  color: #b1242a;
+  font-size: 11px;
+}
+
+.sales-planning-promotion-actions button {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border: 1px solid #087f6b;
+  border-radius: 9px;
+  background: #087f6b;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.sales-planning-promotion-actions button:disabled {
+  cursor: wait;
+  opacity: .55;
+}
+
+.sales-planning-trend-source {
+  margin-top: 12px;
+}
+
+.sales-planning-trend-empty {
+  padding: 32px;
+  color: #607a77;
+  text-align: center;
+}
+
+@media (max-width: 900px) {
+  .sales-planning-matrix-scroll {
+    height: 62vh;
+    max-height: 68vh;
+    scrollbar-gutter: auto;
+  }
+
+  .sales-planning-tree-scroll {
+    height: 78vh;
+    max-height: 82vh;
+  }
+
+  .sales-planning-tree-matrix .sales-planning-article-head,
+  .sales-planning-tree-matrix tbody th {
+    width: 210px;
+    min-width: 210px;
+    max-width: 210px;
+  }
+
+  .sales-planning-trend-modal {
+    align-items: end;
+    padding: 0;
+  }
+
+  .sales-planning-trend-dialog {
+    width: 100vw;
+    max-height: 88vh;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .sales-planning-trend-body {
+    overflow-x: auto;
+  }
+
+  .sales-planning-trend-dialog header > button,
+  .sales-planning-promotion-actions button {
+    flex-basis: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  .sales-planning-promotion-dialog {
+    width: 100vw;
+  }
+}
+
+/* Current month is the only expanded comparison band. */
+.sales-planning-matrix .sales-planning-current-boundary {
+  border-left: 2px solid var(--kokoc-mint, #06e19b) !important;
+}
+
+.sales-planning-matrix thead .sales-planning-current-group {
+  min-width: 470px;
+  border-left: 2px solid var(--kokoc-mint, #06e19b) !important;
+  border-right: 1px solid rgba(6, 225, 155, .55) !important;
+  background: #10332b !important;
+  color: #ffffff !important;
+  text-align: center !important;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.sales-planning-matrix .sales-planning-current-column {
+  min-width: 94px;
+}
+
+.sales-planning-matrix thead .sales-planning-current-column {
+  background: #123c33 !important;
+  color: #ffffff !important;
+  text-align: right !important;
+  white-space: nowrap;
+}

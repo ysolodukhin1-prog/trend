@@ -1,0 +1,564 @@
+.kmue-table th small {
+  display: inline;
+  color: #8a93a3;
+  font-size: 9px;
+}
+
+.kmue-model-scroll {
+  max-height: min(68vh, 720px);
+}
+
+.kmue-grouped-table {
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kmue-grouped-table th,
+.kmue-grouped-table td {
+  min-width: 82px;
+  padding: 5px 6px;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.kmue-grouped-table th {
+  height: 38px;
+  box-sizing: border-box;
+  white-space: normal;
+}
+
+.kmue-grouped-table th small {
+  display: block;
+  margin-top: 2px;
+  line-height: 1;
+}
+
+.kmue-grouped-table td.num {
+  text-align: center;
+}
+
+.kmue-grouped-table .kmue-product {
+  min-width: 220px !important;
+  width: 220px;
+  max-width: 220px;
+  padding: 6px 8px;
+  text-align: left;
+}
+
+.kmue-grouped-table .kmue-product strong {
+  font-size: 11px;
+}
+
+.kmue-grouped-table .kmue-product span {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: 2px;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.kmue-grouped-table .kmue-product small {
+  overflow: hidden;
+  margin-top: 2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kmue-grouped-table .kmue-cell-input {
+  width: 72px;
+  min-width: 72px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 7px;
+  text-align: center;
+}
+
+.kmue-grouped-table .kmue-dimensions {
+  min-width: 168px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.kmue-grouped-table .kmue-dimensions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 50px);
+  gap: 3px;
+  width: max-content;
+  margin: 0 auto;
+  align-items: center;
+  justify-content: center;
+}
+
+.kmue-grouped-table .kmue-dimensions-grid .kmue-cell-input {
+  width: 50px;
+  min-width: 0;
+}
+
+.kmue-grouped-table .kmue-schema,
+.kmue-grouped-table .kmue-index {
+  justify-content: center;
+  padding: 3px 6px;
+  font-size: 9px;
+}
+
+.kmue-position {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 88px;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.kmue-grouped-table .kmue-position {
+  min-width: 72px;
+  padding: 4px 6px;
+  font-size: 9px;
+}
+
+.kmue-position-danger {
+  color: #a7191e;
+  background: #ffe1e2;
+}
+
+.kmue-position-good {
+  color: #086746;
+  background: #ddf7eb;
+}
+
+.kmue-position-high {
+  color: #245991;
+  background: #e2f0ff;
+}
+
+.kmue-position-missing {
+  color: #687386;
+  background: #edf0f3;
+}
+
+.kmue-table-note {
+  margin: 8px 2px 0;
+  color: #707b8e;
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.kmue-scenario-table td:has(.kmue-scenario-input) {
+  background: #fff9e9 !important;
+}
+
+.kmue-scenario-input {
+  border-color: #ebc46a;
+  background: #fffef9;
+}
+
+.kmue-scenario-table [data-kmue-scenario-output="profitUnit"],
+.kmue-scenario-table [data-kmue-scenario-output="profitTotal"] {
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.kmue-reset-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.kmue-reset-row svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 760px) {
+  .kmue-position {
+    min-width: 76px;
+  }
+}
+
+
+/* Konstex information architecture with Ozon-native calculations. */
+.kmue-konstex-table th,
+.kmue-konstex-table td {
+  min-width: 96px;
+  padding: 6px 7px;
+  text-align: center;
+}
+
+.kmue-konstex-table th {
+  height: 42px;
+  line-height: 1.15;
+}
+
+.kmue-konstex-table td.num {
+  text-align: right;
+}
+
+.kmue-konstex-table .kmue-product {
+  min-width: 210px !important;
+  width: 210px;
+  max-width: 210px;
+  text-align: left;
+}
+
+.kmue-konstex-table .kmue-cell-input {
+  width: 78px;
+  min-width: 78px;
+  height: 30px;
+}
+
+.kmue-konstex-table .kmue-dimensions {
+  min-width: 158px;
+}
+
+.kmue-konstex-table .kmue-dimensions-grid {
+  grid-template-columns: repeat(3, 48px);
+}
+
+.kmue-grouped-table td.kmue-acquiring-rate {
+  text-align: center;
+}
+
+.kmue-grouped-table td.kmue-acquiring-rate small {
+  margin-top: 2px;
+  text-align: center;
+}
+
+.kmue-konstex-table .kmue-dimensions-grid .kmue-cell-input {
+  width: 48px;
+}
+
+.kmue-actual-table .kmue-product,
+.kmue-scenario-table .kmue-product {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+
+.kmue-save-notice {
+  margin-top: 12px;
+  padding: 10px 13px;
+  border: 1px solid #98ddbf;
+  border-radius: 11px;
+  color: #086746;
+  background: #e8f8f0;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@media (min-width: 1100px) and (min-height: 700px) {
+  .kmue-table-card > .kmue-model-scroll {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+  }
+}
+
+/* Grouped one-unit tables: native layout with compact two- or three-level headers. */
+.kmue-grouped-table {
+  --kmue-model-group-h: 30px;
+  --kmue-model-leaf-h: 40px;
+}
+
+.kmue-grouped-table .kmue-model-group-row > th,
+.kmue-grouped-table .kmue-model-leaf-row > th {
+  position: sticky;
+  box-sizing: border-box;
+  border-bottom-color: #cfd8e6;
+  background-clip: padding-box;
+}
+
+.kmue-grouped-table .kmue-model-group-row > th {
+  top: 0;
+  z-index: 7;
+  height: var(--kmue-model-group-h);
+  min-height: var(--kmue-model-group-h);
+  padding: 4px 7px;
+  border-bottom-width: 1px;
+  color: #263247;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.kmue-grouped-table .kmue-model-leaf-row > th {
+  top: var(--kmue-model-group-h);
+  z-index: 6;
+  height: var(--kmue-model-leaf-h);
+  min-height: var(--kmue-model-leaf-h);
+  padding: 5px 6px;
+  color: #354258;
+  font-size: 9px;
+  font-weight: 850;
+  line-height: 1.15;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+.kmue-grouped-table .kmue-model-product-head[rowspan="2"],
+.kmue-grouped-table .kmue-model-group-row > th.kmue-product[rowspan="2"] {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 10;
+  height: calc(var(--kmue-model-group-h) + var(--kmue-model-leaf-h));
+  min-height: calc(var(--kmue-model-group-h) + var(--kmue-model-leaf-h));
+  background: #f3f6fa;
+  box-shadow: 1px 0 0 #cfd8e6;
+  text-align: left;
+  text-transform: none;
+}
+
+.kmue-model-structured-table {
+  --kmue-model-section-h: 30px;
+}
+
+.kmue-model-structured-table .kmue-model-section-row > th {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  box-sizing: border-box;
+  height: var(--kmue-model-section-h);
+  min-height: var(--kmue-model-section-h);
+  padding: 5px 8px;
+  border-bottom: 1px solid #c8d2e1;
+  background-clip: padding-box;
+  color: #172033;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.kmue-model-structured-table .kmue-model-group-row > th {
+  top: var(--kmue-model-section-h);
+}
+
+.kmue-model-structured-table .kmue-model-leaf-row > th {
+  top: calc(var(--kmue-model-section-h) + var(--kmue-model-group-h));
+}
+
+.kmue-grouped-table .kmue-model-product-head[rowspan="3"] {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 12;
+  height: calc(var(--kmue-model-section-h) + var(--kmue-model-group-h) + var(--kmue-model-leaf-h));
+  min-height: calc(var(--kmue-model-section-h) + var(--kmue-model-group-h) + var(--kmue-model-leaf-h));
+  background: #f3f6fa;
+  box-shadow: 1px 0 0 #cfd8e6;
+  text-align: left;
+  text-transform: none;
+}
+
+.kmue-model-structured-table .kmue-section-common {
+  background: #dce7f3;
+}
+
+.kmue-model-structured-table .kmue-section-rrc {
+  border-left-color: #c94670 !important;
+  background: #f7dce7;
+}
+
+.kmue-model-structured-table .kmue-section-mrc {
+  border-left-color: #7656b8 !important;
+  background: #e8e0fb;
+}
+
+.kmue-grouped-table .kmue-block-start {
+  border-left: 2px solid #aeb9ca !important;
+}
+
+.kmue-grouped-table .kmue-group-inputs {
+  background: #edf3f9;
+}
+
+.kmue-grouped-table .kmue-group-goal-mrc {
+  background: #eee9ff;
+}
+
+.kmue-grouped-table .kmue-group-goal-rrc {
+  background: #ffe8f0;
+}
+
+.kmue-grouped-table .kmue-group-tariffs {
+  background: #e3efff;
+}
+
+.kmue-grouped-table .kmue-group-logistics {
+  background: #e8f3ff;
+}
+
+.kmue-grouped-table .kmue-group-seller {
+  background: #fff2d8;
+}
+
+.kmue-grouped-table .kmue-group-marketplace {
+  background: #def4eb;
+}
+
+.kmue-grouped-table .kmue-group-tax {
+  background: #f1eaff;
+}
+
+.kmue-grouped-table .kmue-group-price {
+  background: #ffe9ef;
+}
+
+.kmue-grouped-table .kmue-group-roi {
+  background: #e1f5ea;
+}
+
+.kmue-grouped-table th.kmue-expense-article {
+  font-weight: 600;
+}
+
+.kmue-grouped-table td.num.kmue-expense-article,
+.kmue-grouped-table td.num.kmue-expense-article.is-positive,
+.kmue-grouped-table td.num.kmue-expense-article.is-negative {
+  color: #344054;
+  font-weight: 400;
+}
+
+.kmue-grouped-table th.kmue-expense-total,
+.kmue-grouped-table td.num.kmue-expense-total,
+.kmue-grouped-table td.num.kmue-expense-total.is-positive,
+.kmue-grouped-table td.num.kmue-expense-total.is-negative {
+  font-weight: 900;
+  box-shadow: inset 1px 0 0 rgba(8, 121, 75, 0.18);
+}
+
+.kmue-grouped-table.kmue-actual-table td.num {
+  font-weight: 850;
+}
+
+.kmue-grouped-table.kmue-actual-table td.num.kmue-expense-total {
+  font-weight: 900;
+}
+
+.kmue-actual-table th.kmue-actual-article-start,
+.kmue-actual-table td.kmue-actual-article-start {
+  border-left: 1px solid rgba(16, 24, 40, 0.14);
+}
+
+.kmue-actual-table .kmue-actual-summary-row > td {
+  background: #def4e8;
+  border-top: 2px solid #5fbd8d;
+  border-bottom: 2px solid #5fbd8d;
+}
+
+.kmue-actual-table .kmue-actual-summary-row .kmue-product {
+  background: #d3efdf;
+}
+
+.kmue-grouped-table td.kmue-derived-cost {
+  background: #effaf5;
+  color: #08794b;
+  font-weight: 850;
+}
+
+.kmue-grouped-table.kmue-actual-table td.num.is-negative,
+.kmue-grouped-table.kmue-actual-table td.num.is-positive {
+  font-weight: 900;
+}
+
+.kmue-grouped-table [data-kmue-group-cell][hidden] {
+  display: none !important;
+}
+
+.kmue-group-head-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.kmue-group-head-inner > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kmue-group-toggle {
+  display: inline-flex;
+  flex: 0 0 28px;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(38, 50, 71, 0.22);
+  border-radius: 7px;
+  color: #263247;
+  background: rgba(255, 255, 255, 0.72);
+  cursor: pointer;
+}
+
+.kmue-group-toggle:hover {
+  border-color: #64748b;
+  background: #fff;
+}
+
+.kmue-group-toggle:focus-visible {
+  outline: 3px solid rgba(47, 111, 237, 0.28);
+  outline-offset: 2px;
+}
+
+.kmue-group-toggle svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: rotate(90deg);
+  transition: transform 160ms ease;
+}
+
+.kmue-group-toggle.is-collapsed svg {
+  transform: rotate(0deg);
+}
+
+.kmue-grouped-table .kmue-collapsed-leaf,
+.kmue-grouped-table .kmue-collapsed-summary {
+  min-width: 102px;
+  background: #f8fafc;
+  font-weight: 850;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kmue-group-toggle svg {
+    transition: none;
+  }
+}
+
+@media (max-width: 760px), (pointer: coarse) {
+  .kmue-group-toggle {
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    flex-basis: 40px;
+  }
+}

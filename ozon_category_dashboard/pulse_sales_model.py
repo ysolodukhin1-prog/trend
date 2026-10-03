@@ -91,6 +91,8 @@ def apply_feasibility(products,months,as_of,supplies):
         if item['status'] in {'confirmed','shipped'} and date.fromisoformat(item['eta'])>as_of:
             arrivals=by_sku.setdefault(item['sku'],{}); arrivals[item['eta']]=arrivals.get(item['eta'],0)+float(item['quantity'])
     next_month=(as_of.replace(day=28)+timedelta(days=4)).replace(day=1).isoformat()
+    # Calendar dates are identical for all SKUs in a given month.
+    calendar_days = {}
     for product in products:
         stock=max(float(product.get('stock_available_qty') or 0),0)
         arrivals=by_sku.get(str(product['sku']),{})
@@ -115,8 +117,11 @@ def apply_feasibility(products,months,as_of,supplies):
                 demand=max(float(row.get('forecast_units') or 0)-fact,0)
                 begin=max(start,as_of+timedelta(days=1)); days=max((end-begin).days+1,0)
                 rate=demand/days if days else 0; sold=0.
-                for offset in range(days):
-                    day=begin+timedelta(days=offset); stock+=arrivals.get(str(day),0)
+                period_key = (begin, days)
+                if period_key not in calendar_days:
+                    calendar_days[period_key] = tuple(str(begin+timedelta(days=offset)) for offset in range(days))
+                for day in calendar_days[period_key]:
+                    stock+=arrivals.get(day,0)
                     daily=min(stock,rate); sold+=daily; stock-=daily
                 units=fact+sold; lost=max(demand-sold,0)
                 revenue=float(row.get('actual_revenue') or 0) if start<=as_of else 0

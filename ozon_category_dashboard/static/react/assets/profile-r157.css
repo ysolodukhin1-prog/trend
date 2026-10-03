@@ -1,0 +1,13 @@
+.pulse-context-bar .pulse-profile-button { flex:0 0 34px; width:34px; height:34px; border:1px solid #d4dce5; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#fff; color:#42526b; }
+.pulse-context-bar .pulse-profile-button:hover,.pulse-context-bar .pulse-profile-button[data-state=open] { color:#c9372c; background:#fff4f2; border-color:#e8aca6; }
+.pulse-profile-button:focus-visible { outline:2px solid #c9372c; outline-offset:3px; }
+.pulse-profile-menu { width:240px; padding:14px; }
+.pulse-profile-menu>strong { display:block; font-size:14px; }
+.pulse-profile-context { color:#708099; font-size:12px; margin:4px 0 12px; overflow-wrap:anywhere; }
+.pulse-profile-menu>button { display:flex; align-items:center; gap:9px; width:100%; padding:10px 8px; text-align:left; border-radius:5px; font-size:13px; }
+.pulse-profile-menu>button:hover { background:#f5f7fa; }
+.pulse-profile-menu>button:focus-visible { outline:2px solid #c9372c; }
+.pulse-profile-menu>button:disabled { opacity:.5; }
+.pulse-profile-menu .pulse-account-logout { color:#c9372c; }
+@media(max-width:767px) { .pulse-context-bar .pulse-profile-button { width:32px; height:32px; flex-basis:32px; } .pulse-context-bar .pulse-context-client { width:128px; flex-basis:128px; } }
+@media(max-width:399px) { .pulse-context-bar .pulse-context-client { width:110px; flex-basis:110px; } }

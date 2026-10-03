@@ -120,6 +120,10 @@ def payload(client_key: str) -> dict:
         )
         with app.client_registry_connection() as conn:
             row = get_client(conn, normalized)
+    row["history_available_steps"] = {
+        marketplace: _history_step_plan(app, row, marketplaces=[marketplace])
+        for marketplace in (row.get("marketplaces") or [])
+    }
     return {"ok": True, "client": row}
 
 
@@ -220,6 +224,18 @@ _WB_INSPECTION_SPECS = (
         "object": "3 основные materialized views WB",
     },
 )
+
+_LAMODA_INSPECTION_SPECS = (
+    {"key": "lamoda_orders", "label": "Заказы и статусы", "description": "Заказы Lamoda за выбранный период.", "dataset": "orders", "relation": "lamoda_v2_entities", "object": "lamoda_v2_entities · orders", "date_column": "event_at"},
+    {"key": "lamoda_stock", "label": "Остатки", "description": "Сводные остатки Lamoda.", "dataset": "stock", "relation": "lamoda_v2_entities", "object": "lamoda_v2_entities · stock", "date_column": "snapshot_date"},
+    {"key": "lamoda_catalog", "label": "Каталог", "description": "Номенклатуры и статусы товаров.", "dataset": "catalog", "relation": "lamoda_v2_entities", "object": "lamoda_v2_entities · catalog", "date_column": "snapshot_date"},
+    {"key": "lamoda_prices", "label": "Цены и скидки", "description": "Текущие цены и скидки из карточек товаров.", "dataset": "prices", "relation": "lamoda_v2_entities", "object": "v_lamoda_prices", "date_column": "snapshot_date"},
+    {"key": "lamoda_promotions", "label": "Продвижение и акции", "description": "Акции Lamoda; только чтение, без добавления или удаления товаров.", "dataset": "promotions", "relation": "lamoda_v2_entities", "object": "v_lamoda_promotions", "date_column": "snapshot_date"},
+    {"key": "lamoda_fbo_shipments", "label": "Поставки и приёмка FBO", "description": "Поставки на склады Lamoda и их статусы.", "dataset": "fbo_shipments", "relation": "lamoda_v2_entities", "object": "v_lamoda_fbo_shipments", "date_column": "event_at"},
+    {"key": "lamoda_fbs_returns", "label": "Возвраты FBS", "description": "Возвратные товары FBS и их статусы.", "dataset": "fbs_returns", "relation": "lamoda_v2_entities", "object": "v_lamoda_fbs_returns", "date_column": "event_at"},
+    {"key": "lamoda_finance", "label": "Расходы и финансовые документы", "description": "Нужен отдельный подтверждённый экспорт Lamoda Seller/LAB; расходы не рассчитываются из заказов.", "source_unavailable": True, "relation": "lamoda_finance", "object": "экспорт Lamoda Seller/LAB"},
+)
+
 
 _AVITO_INSPECTION_SPECS = (
     {
@@ -354,6 +370,34 @@ def _inspection_latest_runs(cur, table_name: str) -> dict[str, dict]:
             "finished_at": _inspection_value(row[8]),
         }
         for row in cur.fetchall()
+    }
+
+
+def _inspection_latest_lamoda_run(cur) -> dict | None:
+    cur.execute("SELECT to_regclass('public.lamoda_api_runs')")
+    if cur.fetchone()[0] is None:
+        return None
+    cur.execute(
+        """
+        SELECT date_from, date_to, requests_made, rows_loaded,
+               status, error, started_at, finished_at
+        FROM public.lamoda_api_runs
+        ORDER BY started_at DESC, id DESC
+        LIMIT 1
+        """
+    )
+    row = cur.fetchone()
+    if not row:
+        return None
+    return {
+        "date_from": _inspection_value(row[0]),
+        "date_to": _inspection_value(row[1]),
+        "requests": int(row[2] or 0),
+        "rows": int(row[3] or 0),
+        "status": str(row[4] or ""),
+        "error": str(row[5] or ""),
+        "started_at": _inspection_value(row[6]),
+        "finished_at": _inspection_value(row[7]),
     }
 
 
@@ -501,6 +545,41 @@ def _inspect_avito_history_data(app, client: dict, requested_from: date | None, 
     }
 
 
+def _inspect_lamoda_history_data(app, client: dict, requested_from: date | None, requested_to: date | None) -> dict:
+    import psycopg2
+    config = dict(app.read_db_config(client.get("key")))
+    config["database"] = client.get("db_name")
+    rows = []
+    with psycopg2.connect(**config) as conn, conn.cursor() as cur:
+        cur.execute("SET LOCAL statement_timeout = '15000ms'")
+        latest_run = _inspection_latest_lamoda_run(cur)
+        failed = str((latest_run or {}).get("status") or "").lower() in {"failed", "error", "stopped"}
+        for spec in _LAMODA_INSPECTION_SPECS:
+            if spec.get("source_unavailable"):
+                data = {"rows": 0, "date_from": None, "date_to": None}
+                status = "limited"
+            elif spec.get("dataset"):
+                cur.execute("SELECT to_regclass('public.lamoda_v2_entities')")
+                if cur.fetchone()[0] is None:
+                    data = {"rows": 0, "date_from": None, "date_to": None}
+                else:
+                    date_column = spec.get("date_column") or "snapshot_date"
+                    cur.execute(
+                        f'SELECT count(*), min("{date_column}"), max("{date_column}") '
+                        "FROM public.lamoda_v2_entities WHERE dataset = %s",
+                        (spec["dataset"],),
+                    )
+                    count, first_date, last_date = cur.fetchone()
+                    data = {"rows": int(count or 0), "date_from": _inspection_value(first_date), "date_to": _inspection_value(last_date)}
+                status = "error" if failed else ("loaded" if data["rows"] else ("empty" if latest_run else "missing"))
+            else:
+                data = _inspection_relation_metrics(cur, spec["relation"], spec.get("date_column"))
+                status = "error" if failed else ("loaded" if data["rows"] else ("empty" if latest_run else "missing"))
+            rows.append({**spec, "status": status, "status_label": status.title(), "rows": data["rows"], "date_from": data.get("date_from"), "date_to": data.get("date_to"), "latest_run": latest_run})
+    counts = {status: sum(1 for row in rows if row["status"] == status) for status in ("loaded", "limited", "empty", "missing", "error")}
+    return {"ok": True, "client": {"key": client["key"], "label": client["label"], "db_name": client["db_name"]}, "marketplace": "lamoda", "requested_period": {"date_from": _inspection_value(requested_from), "date_to": _inspection_value(requested_to)}, "checked_at": datetime.now().isoformat(timespec="seconds"), "summary": {"total": len(rows), **counts}, "rows": rows}
+
+
 def inspect_history_data(client_key: str, marketplace: str, date_from: str = "", date_to: str = "") -> dict:
     """Read the selected client's database and report what a history run actually stored."""
     from client_registry import get_client
@@ -512,7 +591,7 @@ def inspect_history_data(client_key: str, marketplace: str, date_from: str = "",
     if not client or client.get("status") != "active":
         raise ValueError("Клиент не найден в реестре")
     selected_marketplace = str(marketplace or "").strip().lower()
-    if selected_marketplace not in {"wb", "avito", "yandex_market"} or selected_marketplace not in set(client.get("marketplaces") or []):
+    if selected_marketplace not in {"wb", "avito", "lamoda", "yandex_market"} or selected_marketplace not in set(client.get("marketplaces") or []):
         raise ValueError("Инспекция доступна для подключённых WB, Avito и Яндекса")
     requested_from = date.fromisoformat(date_from) if date_from else None
     requested_to = date.fromisoformat(date_to) if date_to else None
@@ -520,6 +599,8 @@ def inspect_history_data(client_key: str, marketplace: str, date_from: str = "",
         raise ValueError("Дата начала позже даты окончания")
     if selected_marketplace == "avito":
         return _inspect_avito_history_data(app, client, requested_from, requested_to)
+    if selected_marketplace == "lamoda":
+        return _inspect_lamoda_history_data(app, client, requested_from, requested_to)
     if selected_marketplace == "yandex_market":
         from yandex_market_history import inspect_history
         return inspect_history(app, client, requested_from, requested_to)
@@ -801,6 +882,65 @@ def _history_step_plan(
                     "Дневная статистика · POST /campaigns/{campaignID}/stats · окна до 100 дней",
                 ],
             })
+    if "lamoda" in enabled_marketplaces:
+        steps.extend([
+            {
+                "key": "lamoda_orders",
+                "label": "Lamoda · Заказы",
+                "script": "sync_lamoda.py --step orders",
+                "status": "pending",
+                "description": "Исторические заказы и их товарные позиции за выбранный период.",
+            },
+            {
+                "key": "lamoda_stock",
+                "label": "Lamoda · Остатки",
+                "script": "sync_lamoda.py --step stock",
+                "status": "pending",
+                "description": "Текущий снимок доступных остатков по товарам и складам Lamoda.",
+            },
+            {
+                "key": "lamoda_catalog",
+                "label": "Lamoda · Каталог",
+                "script": "sync_lamoda.py --step catalog",
+                "status": "pending",
+                "description": "Номенклатуры, статусы и идентификаторы товаров Lamoda.",
+            },
+            {
+                "key": "lamoda_prices",
+                "label": "Lamoda · Цены и скидки",
+                "script": "sync_lamoda.py --step prices",
+                "status": "pending",
+                "description": "Текущие цены и скидки из карточек товаров Seller API v2.",
+            },
+            {
+                "key": "lamoda_promotions",
+                "label": "Lamoda · Продвижение и акции",
+                "script": "sync_lamoda.py --step promotions",
+                "status": "pending",
+                "description": "Список акций и их параметры; загрузчик использует только GET и ничего не меняет в кабинете.",
+            },
+            {
+                "key": "lamoda_fbo_shipments",
+                "label": "Lamoda · Поставки и приёмка FBO",
+                "script": "sync_lamoda.py --step fbo_shipments",
+                "status": "pending",
+                "description": "Поставки на склады Lamoda и статусы приёмки.",
+            },
+            {
+                "key": "lamoda_fbs_returns",
+                "label": "Lamoda · Возвраты FBS",
+                "script": "sync_lamoda.py --step fbs_returns",
+                "status": "pending",
+                "description": "Возвратные товары FBS и их статусы.",
+            },
+            {
+                "key": "lamoda_finance",
+                "label": "Lamoda · Расходы и финансовые документы",
+                "script": "sync_lamoda.py --step finance",
+                "status": "limited",
+                "description": "Нужен отдельный экспорт Lamoda Seller/LAB: в Seller API v2 нет подтверждённого финансового метода. Расходы из заказов не подменяются расчётными значениями.",
+            },
+        ])
     if "yandex_market" in enabled_marketplaces:
         from yandex_market_history import SOURCES
         steps.extend({"key": key, "label": label, "script": f"sync_yandex_market.py --step {key}",
@@ -1321,7 +1461,7 @@ def _provision_worker(client_key: str) -> None:
         for optional in (
             "ozon_performance_client_id", "ozon_performance_client_secret",
             "avito_ads_account_id", "avito_ads_client_id", "avito_ads_client_secret",
-            "lamoda_client_id", "lamoda_client_secret",
+            "lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id",
             "yandex_market_api_key", "yandex_market_business_id", "yandex_market_campaign_id",
         ):
             value = app.registered_client_credential(client_key, optional)
@@ -1401,7 +1541,7 @@ def start_provision(payload_data: dict) -> dict:
             *required_credentials(marketplaces),
             "ozon_performance_client_id", "ozon_performance_client_secret",
             "avito_ads_account_id", "avito_ads_client_id", "avito_ads_client_secret",
-            "lamoda_client_id", "lamoda_client_secret",
+            "lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id",
             "yandex_market_api_key", "yandex_market_business_id", "yandex_market_campaign_id",
         ):
             if not credentials.get(key):
@@ -1543,7 +1683,7 @@ def start_history(payload_data: dict) -> dict:
         client = get_client(conn, client_key)
     if not client or client.get("status") != "active":
         raise ValueError("Сначала завершите подключение клиента")
-    if marketplace not in {"ozon", "wb", "avito", "yandex_market"}:
+    if marketplace not in {"ozon", "wb", "avito", "lamoda", "yandex_market"}:
         raise ValueError("Выберите маркетплейс для исторической загрузки")
     if marketplace not in set(client.get("marketplaces") or []):
         raise ValueError("Выбранный маркетплейс не подключён клиенту")

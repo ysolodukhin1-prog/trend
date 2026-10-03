@@ -81,6 +81,7 @@ def ensure_schema(conn) -> None:
             )
             """
         )
+        cur.execute("ALTER TABLE public.bi_users ADD COLUMN IF NOT EXISTS data_access jsonb NOT NULL DEFAULT '[]'::jsonb")
     conn.commit()
 
 
@@ -89,6 +90,7 @@ def _serialize(row) -> dict:
     for field in ("created_at", "updated_at"):
         value = item.get(field)
         item[field] = value.isoformat() if hasattr(value, "isoformat") else str(value or "")
+    item["data_access"] = list(item.get("data_access") or [])
     item["clients"] = list(item.get("clients") or [])
     item["reports"] = list(item.get("reports") or [])
     item["admin_sections"] = list(item.get("admin_sections") or [])
@@ -104,7 +106,7 @@ def list_users(conn, *, prepare_schema: bool = True) -> list[dict]:
         cur.execute(
             """
             SELECT u.user_id, u.username, u.display_name, u.email, u.email_verified, u.is_active,
-                   u.created_at, u.updated_at,
+                   u.created_at, u.updated_at, u.data_access,
                    COALESCE((SELECT jsonb_agg(c.client_key ORDER BY c.client_key)
                              FROM public.bi_user_clients c WHERE c.user_id = u.user_id), '[]'::jsonb) AS clients,
                    COALESCE((SELECT jsonb_agg(r.report_id ORDER BY r.report_id)
@@ -133,6 +135,7 @@ def save_user(
     allowed_clients: set[str],
     allowed_reports: set[str],
     allowed_admin_sections: set[str] | None = None,
+    allowed_data_sources: list | None = None,
 ) -> dict:
     ensure_schema(conn)
     allowed_admin_sections = allowed_admin_sections or set()
@@ -148,6 +151,8 @@ def save_user(
         for value in payload.get("admin_sections", [])
         if str(value).strip()
     })
+    from data_access import normalize_grants
+    data_access = normalize_grants(payload.get('data_access', []), allowed_data_sources or []) if 'data_access' in payload else None
     is_active = bool(payload.get("is_active", True))
     if not USERNAME_RE.fullmatch(username):
         raise ValueError("Логин: 3–64 латинских символа, цифры, точка, дефис или _")
@@ -196,6 +201,9 @@ def save_user(
             )
             row = cur.fetchone()
             user_id = int(row[0] if not isinstance(row, dict) else next(iter(row.values())))
+        if data_access is not None:
+            from psycopg2.extras import Json
+            cur.execute("UPDATE public.bi_users SET data_access=%s WHERE user_id=%s", (Json(data_access), user_id))
         cur.execute("DELETE FROM public.bi_user_clients WHERE user_id=%s", (user_id,))
         cur.execute("DELETE FROM public.bi_user_reports WHERE user_id=%s", (user_id,))
         cur.execute("DELETE FROM public.bi_user_admin_sections WHERE user_id=%s", (user_id,))

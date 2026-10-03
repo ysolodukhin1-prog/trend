@@ -1,0 +1,6 @@
+.trend-channel-context{display:flex;align-items:center;gap:24px;padding:14px 18px;border:1px solid #d9e0e5;border-radius:4px;background:#fff}
+.trend-channel-context label{display:grid;gap:5px;min-width:200px;font-size:12px}.trend-channel-context select{height:36px;border:1px solid #cbd5df;border-radius:4px;background:#fff;padding:0 10px}.trend-channel-context p{margin:3px 0;font-size:13px;color:#536679}.trend-channel-context small{font-size:11px;color:#6d7a89}.trend-channel-unavailable{padding:22px!important}.trend-channel-unavailable p{margin-top:12px;line-height:1.6}
+.trend-channel .pulse-home-marketplaces,.trend-channel .sales-control-market,.trend-channel .sales-control-status,.trend-channel [data-export-button]{display:none!important}
+.trend-channel .report-filter-grid>label:first-child{display:none!important}
+.trend-retail .pulse-home-secondary>section:has(.pulse-home-funnel),.trend-retail .pulse-home-secondary>section:has(.pulse-home-advertising){display:none}
+@media(max-width:700px){.trend-channel-context{align-items:stretch;flex-direction:column;gap:10px}}

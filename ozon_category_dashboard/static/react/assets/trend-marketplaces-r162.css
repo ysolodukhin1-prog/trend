@@ -1,0 +1,18 @@
+.trend-account-menu .trend-account-item-total { font-weight: 700; }
+.trend-account-menu .trend-account-item-child { padding-left: 1.8rem; }
+.trend-account-menu .trend-account-item-other-first { border-top: 1px solid var(--border, #e5e9ee); margin-top: .3rem; padding-top: .55rem; }
+.trend-marketplaces-home .pulse-home-toolbar { align-items: center; gap: .8rem; }
+.trend-marketplaces-home .pulse-home-toolbar h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.trend-marketplaces-home .pulse-home-caption { color: #69778b; font-size: .79rem; }
+.trend-marketplaces-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.trend-marketplaces-card { padding: 1.1rem; }
+.trend-marketplaces-card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.trend-marketplaces-card h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.trend-marketplaces-card header span { color: #69778b; font-size: .78rem; }
+.trend-marketplaces-total { display: block; margin-top: .75rem; font-size: 1.5rem; }
+.trend-marketplaces-card dl { margin: 1rem 0 0; border-top: 1px solid #e5e9ee; }
+.trend-marketplaces-client { display: grid; grid-template-columns: 1fr auto; gap: .1rem .5rem; padding: .55rem 0; border-bottom: 1px solid #edf0f3; }
+.trend-marketplaces-client dt { font-weight: 600; }
+.trend-marketplaces-client dd { margin: 0; font-weight: 700; }
+.trend-marketplaces-client small { grid-column: 1 / -1; color: #69778b; }
+@media (max-width: 760px) { .trend-marketplaces-grid { grid-template-columns: 1fr; } .trend-marketplaces-home .pulse-home-toolbar { align-items: flex-start; } }

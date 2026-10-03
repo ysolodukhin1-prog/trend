@@ -171,8 +171,9 @@ def decode_archive(data):
     return out
 
 class Collector:
-    def __init__(self,client,conn,key,log=print):
+    def __init__(self,client,conn,key,log=print,job_keys=None):
         self.client,self.conn,self.key,self.log=client,conn,key,log
+        self.job_keys = None if job_keys is None else list(job_keys)
         self.requests=0;self.last_request=0
         with conn.cursor() as cur:cur.execute(DDL)
         conn.commit()
@@ -270,7 +271,8 @@ class Collector:
         # End read transactions so PostgreSQL now() advances during quota waits.
         self.conn.commit()
         with self.conn.cursor(cursor_factory=RealDictCursor) as c:
-            c.execute("SELECT * FROM yandex_analytics_jobs WHERE state IN ('polling','queued','retry') AND next_at<=now() ORDER BY CASE WHEN state='polling' THEN 0 ELSE 1 END, CASE WHEN source_key='sales_funnel' THEN 0 ELSE 1 END,job_key")
+            scope = " AND job_key=ANY(%s)" if self.job_keys is not None else ""
+            c.execute("SELECT * FROM yandex_analytics_jobs WHERE state IN ('polling','queued','retry') AND next_at<=now()" + scope + " ORDER BY CASE WHEN state='polling' THEN 0 ELSE 1 END, CASE WHEN source_key='sales_funnel' THEN 0 ELSE 1 END,job_key", (self.job_keys,) if self.job_keys is not None else None)
             jobs=c.fetchall()
         for job in jobs:
             business,source=job['business_id'],job['source_key']

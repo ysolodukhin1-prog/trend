@@ -103,7 +103,22 @@ def attach_multi_model(config,payload,raw_tax=None):
         if market=='ozon':
             cur.execute("SELECT operation_date dt,sku,max(article) article,CASE WHEN amount<0 THEN -1 ELSE 1 END sign,sum(abs(quantity)) units,sum(amount) amount FROM ozon_finance_lines WHERE operation_date BETWEEN %s AND %s AND line_kind='revenue' GROUP BY 1,2,4",(start,end));events=cur.fetchall()
             cur.execute("SELECT operation_date dt,line_kind,coalesce(nullif(type_name,''),line_kind) label,sum(amount) amount FROM ozon_finance_lines WHERE operation_date BETWEEN %s AND %s AND line_kind<>'revenue' GROUP BY 1,2,3",(start,end))
-            for r in cur.fetchall():add(r['dt'],r['label'],'promotion' if r['line_kind']=='advertising' else 'marketplace',r['amount'])
+            for r in cur.fetchall():
+                group='promotion' if r['line_kind']=='advertising' or 'advertis' in r['label'].lower() else 'marketplace'
+                add(r['dt'],r['label'],group,r['amount'])
+            # Operational spending is separate from posted financial charges.
+            cur.execute("""SELECT report_date dt,sum(expense_rub) amount
+                FROM ozon_adv_daily_raw WHERE report_date BETWEEN %s AND %s
+                GROUP BY report_date""",(start,end))
+            performance_ads=cur.fetchall()
+            if any(D(r['amount']) for r in performance_ads):
+                key='promotion_ozon_performance_spend'
+                arts[key]=dict(key=key,label='Расход Ozon Performance API',group='promotion',unit='money',kind='article',
+                    help='Расход по дате рекламы из Ozon Performance API; не является финансовым начислением. Начисления Ozon показаны отдельно; перекрывающиеся списания требуют сверки.')
+                for ad in performance_ads:
+                    if D(ad['amount']):
+                        day=daily[str(ad['dt'])]
+                        day[key]=D(day.get(key))-D(ad['amount'])
             cur.execute("SELECT report_date dt,sum(ordered_units) units,sum(ordered_amount_rub) amount FROM ozon_funnel_daily WHERE report_date BETWEEN %s AND %s GROUP BY 1",(start,end))
             orders=cur.fetchall()
             cur.execute("SELECT max(operation_date)::text latest FROM ozon_finance_lines");source_bounds['Начисления Ozon']=cur.fetchone()['latest']
@@ -149,7 +164,10 @@ def attach_multi_model(config,payload,raw_tax=None):
         r=daily[dt];r[key]=None
         for k in ('gross_margin','ebitda','net_profit','taxes','income_tax'):r[k]=None
         if key in arts:r[arts[key]['group']]=None
-    model=pack(days,list(arts.values()),tax,monthly_budgets=budgets,registry_barcodes=registry_count,cost_events=trace,marketplace=market,label={'ozon':'Ozon','yandex':'Яндекс Маркет'}[market],source_note=' · '.join(k+': '+str(v) for k,v in source_bounds.items()),unknown_amount_rows=len(unknown))
+    source_note=' · '.join(k+': '+str(v) for k,v in source_bounds.items())
+    if market=='ozon' and 'promotion_ozon_performance_spend' in arts:
+        source_note+=' · Рекламный расход Performance API включён в P&L отдельно от начислений; перекрытие при будущих списаниях требует сверки.'
+    model=pack(days,list(arts.values()),tax,monthly_budgets=budgets,registry_barcodes=registry_count,cost_events=trace,marketplace=market,label={'ozon':'Ozon','yandex':'Яндекс Маркет'}[market],source_note=source_note,unknown_amount_rows=len(unknown))
     if unknown:
         for period in [model['total']]+[p for ps in model['periods'].values() for p in ps]:
             if any(period['from_date']<=dt<=period['to_date'] for dt,_ in unknown):
@@ -197,6 +215,28 @@ def sync_summary(payload):
     if not model:return payload
     v=model['total']['values'];t=payload['totals'];result=v['net_profit'] if v['net_profit'] is not None else v['ebitda']
     t.update(cogs=-v['cogs'] if v['cogs'] is not None else None,gross_profit=v['gross_margin'],management_result=result,net_profit=v['net_profit'],tax_configured=model['tax_ready'])
+    if model.get('marketplace') == 'ozon':
+        matched_units=float(model['total'].get('sku_cost_units') or 0)
+        missing_units=float(model['total'].get('missing_cost_units') or 0)
+        cost_units=matched_units+missing_units
+        coverage=matched_units/cost_units*100 if cost_units else None
+        complete=missing_units <= 0
+        t.update(
+            cogs_coverage_units_pct=coverage,
+            cogs_model_coverage_pct=coverage,
+            estimated_sku_count=0,
+            profit_ready=bool(model['tax_ready'] and complete and v['net_profit'] is not None),
+            result_basis='actual_cogs' if complete else 'partial_actual_cogs',
+        )
+        if complete:
+            notice='Себестоимость взята из справочника БД. Расчётная себестоимость не используется.'
+        else:
+            notice=(
+                f'Себестоимость взята из справочника БД для {coverage:.1f}% единиц. '
+                f'Для {missing_units:g} единиц соответствие не найдено; расчётная себестоимость не используется.'
+            )
+        payload['model_notice']=notice
+        payload.setdefault('methodology',{})['cogs']=notice
     values={'cogs':v['cogs'],'gross_profit':v['gross_margin'],'management_result':result,'net_profit':v['net_profit']}
     for key,field in [('vat','vat'),('vat_model','vat'),('tax','income_tax')]:
         amount=v.get(field)
@@ -206,6 +246,9 @@ def sync_summary(payload):
         values[key]=amount
     for row in payload.get('statement',[]):
         if row['key'] in values:row['amount']=values[row['key']]
+        if model.get('marketplace') == 'ozon' and row['key']=='cogs':
+            row.update(label='Себестоимость (справочник БД)',is_partial=not complete,is_estimated=False)
         if row['key']=='management_result':row['label']='Результат модели' if model['tax_ready'] else 'EBITDA'
+        row['revenue_pct']=row['amount']/v['revenue']*100 if row.get('amount') is not None and v.get('revenue') else None
     from pl_monthly_budgets import sync_statement
     return sync_statement(payload)

@@ -45,7 +45,7 @@ AVITO_ADS_CREDENTIALS = (
     "avito_ads_client_id",
     "avito_ads_client_secret",
 )
-LAMODA_CREDENTIALS = ("lamoda_client_id", "lamoda_client_secret")
+LAMODA_CREDENTIALS = ("lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id")
 YANDEX_MARKET_CREDENTIALS = ("yandex_market_api_key",)
 
 
@@ -240,6 +240,11 @@ def validate_marketplace_credentials(
             method="GET",
         )
         _safe_http_json(account_request)
+
+
+    if "lamoda" in marketplaces:
+        from scripts.sync_lamoda import verify_credentials
+        verify_credentials(credentials["lamoda_client_id"], credentials["lamoda_client_secret"], credentials["lamoda_seller_id"])
 
 
 def ensure_database(db_config: dict, db_name: str) -> bool:

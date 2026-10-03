@@ -15,6 +15,7 @@ import os
 import threading
 import time
 from collections import defaultdict
+from functools import lru_cache
 from datetime import date, timedelta
 from typing import Any
 from urllib.parse import parse_qs, urlencode
@@ -990,6 +991,7 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
         return True
 
     selected_skus = [sku for sku, meta in product_meta.items() if selected(meta)]
+    selected_sku_set = set(selected_skus)
     daily_sales = list(sources.get("daily_sales") or [])
     daily_sales_by_sku = defaultdict(list)
     for daily_row in daily_sales:
@@ -998,14 +1000,14 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
     oos_daily_rates = _oos_adjusted_daily_rates(
         daily_sales,
         stock_history,
-        set(selected_skus),
+        selected_sku_set,
         year_start,
         available_to,
     )
     oos_stock_history_dates = [
         row["snapshot_date"]
         for row in stock_history
-        if str(row.get("sku") or "") in selected_skus
+        if str(row.get("sku") or "") in selected_sku_set
         and isinstance(row.get("snapshot_date"), date)
         and row["snapshot_date"] <= available_to
     ]
@@ -1045,7 +1047,6 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
     trend_period_from = available_to - timedelta(days=29)
     recent_daily_by_category: dict[str, list[dict[str, Any]]] = defaultdict(list)
     recent_selected_daily: list[dict[str, Any]] = []
-    selected_sku_set = set(selected_skus)
     for row in daily_sales:
         sale_date = row.get("sale_date")
         sku = str(row.get("sku") or "")
@@ -1103,6 +1104,7 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
             coefficient = number(row.get("seasonality_coefficient")) or 1.0
             seasonality_by_category_month[(category, int(row["month_number"]))] = coefficient
 
+    @lru_cache(maxsize=None)
     def category_seasonality(category: str, target_month: date) -> float:
         level = seasonality_by_category_month.get((category, target_month.month), 1.0)
         previous = seasonality_by_category_month.get((category, add_months(target_month, -1).month))
@@ -1125,6 +1127,7 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
             promotion_lookup.get(("__all__", target_month), 1.0),
         )
 
+    @lru_cache(maxsize=None)
     def promotion_coefficient(category: str, target_month: date) -> float:
         """Return the month-over-month factor implied by saved promotion levels."""
         current_level = promotion_level(category, target_month)
@@ -1698,15 +1701,19 @@ def _sales_forecast_payload_uncached(config: dict[str, Any], raw_query: str = ""
         key=lambda row: (-number(row["recommended_plan_revenue"]), str(row["article"]))
     )
 
+    product_month_indexes = []
+    for product in product_rows:
+        indexed = {}
+        for row in product["monthly"]:
+            indexed.setdefault(row["month_start"], row)
+        product_month_indexes.append(indexed)
+
     def weighted_product_month_coefficient(month_value: date, key: str) -> float:
         weighted_sum = 0.0
         total_weight = 0.0
         month_key = month_value.isoformat()
-        for product in product_rows:
-            product_month = next(
-                (row for row in product["monthly"] if row["month_start"] == month_key),
-                None,
-            )
+        for indexed in product_month_indexes:
+            product_month = indexed.get(month_key)
             if not product_month:
                 continue
             weight = max(number(product_month.get("forecast_units")), number(product_month.get("actual_units")), 1.0)

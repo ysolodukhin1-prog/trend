@@ -96,6 +96,7 @@ class AllClientsDailyRunner:
     ):
         self.state_path = Path(state_path)
         self.plan_provider = plan_provider
+        self.marketplace_rows = os.environ.get("TREND_MARKETPLACE_ROWS") == "1"
         self.acquire_task = acquire_task
         self.register_process = register_process
         self.release_task = release_task
@@ -109,6 +110,7 @@ class AllClientsDailyRunner:
         self.max_view_workers = MAX_VIEW_WORKERS
         self.stop_requested = False
         self.paused_clients = set()
+        self.paused_task_ids = set()
         self.replay_clients = set()
         # The next execution of these tasks must use the collector checkpoint.
         self.resume_task_ids = set()
@@ -249,7 +251,7 @@ class AllClientsDailyRunner:
                     previous = {task.get("id"): task for task in self.state.get("tasks") or []}
                     for task in tasks:
                         old = previous.get(task.get("id"))
-                        if old and old.get("status") not in {"running", "stopping"}:
+                        if old and old.get("status") not in {"running", "stopping"} and not (self.marketplace_rows and ":monthly:" in task["id"]):
                             task.update({
                                 "status": old.get("status") or task.get("status"),
                                 "detail": old.get("detail") or task.get("detail"),
@@ -327,6 +329,23 @@ class AllClientsDailyRunner:
             raise ValueError("Нет подключённых ежедневных процессов")
         scope = {str(value) for value in (only_clients or []) if str(value or "").strip()}
         task_scope = {str(value) for value in (only_task_ids or []) if str(value or "").strip()}
+        # Assortment snapshots are intentionally manual. The React admin already
+        # leaves them unchecked, but scheduler/API starts without task_ids used to
+        # bypass that UI default and run them every day. Preserve explicit manual
+        # selection while enforcing the same default on the server.
+        if only_task_ids is None:
+            previous_scope = {
+                str(value) for value in (self.state.get("scope_task_ids") or [])
+                if str(value or "").strip()
+            }
+            if resume and previous_scope:
+                task_scope = previous_scope
+            else:
+                task_scope = {
+                    str(task.get("id") or "")
+                    for task in fresh_tasks
+                    if task.get("stage") != "assortment"
+                }
         if only_task_ids is not None and not task_scope:
             raise ValueError("Выберите хотя бы один этап")
         if task_scope:
@@ -341,6 +360,9 @@ class AllClientsDailyRunner:
                 }
                 if foreign:
                     raise ValueError("Выбранный этап относится к другому аккаунту")
+        if self.marketplace_rows and task_scope:
+            from trend_marketplace_rows import with_views
+            task_scope = with_views(plan["tasks"], task_scope)
         if scope:
             known = {task.get("client") for task in fresh_tasks}
             unknown = scope - known
@@ -398,6 +420,7 @@ class AllClientsDailyRunner:
                     raise ValueError("Незавершённых этапов нет")
             self.stop_requested = False
             self.paused_clients = set()
+            self.paused_task_ids = set()
             self.replay_clients = set()
             self.resume_task_ids = {
                 task["id"]
@@ -750,8 +773,12 @@ class AllClientsDailyRunner:
                 self._append_log_locked(self.state["message"], "stopped")
                 self._save_locked(force=True)
                 return "stopped"
+            if self.marketplace_rows and task["client"] in self.paused_clients:
+                self._set_task_locked(task_id, status="stopped", detail="Остановлено по аккаунту", progress_text="Остановлено")
+                self._save_locked(force=True)
+                return "stopped"
             failed = bool(error_text) or returncode != 0
-            if matched_nonfatal and (failed or task.get("nonfatal_on_success")):
+            if matched_nonfatal and (failed or task.get("nonfatal_on_success")) and (not self.marketplace_rows or returncode == 0):
                 detail = str(task.get("nonfatal_status_label") or "Источник недоступен")
                 self._set_task_locked(
                     task_id, status="limited", detail=detail, progress_pct=100, progress_text=detail
@@ -917,6 +944,17 @@ class AllClientsDailyRunner:
     def _run(self, plan):
         internal_tasks = {task["id"]: task for task in plan.get("tasks") or []}
         try:
+            if self.marketplace_rows:
+                from trend_marketplace_rows import run
+                run(self, internal_tasks)
+                for _ in range(CATCH_UP_PASS_LIMIT):
+                    with self.lock:
+                        pending = sorted(self.replay_clients)
+                        self.replay_clients.clear()
+                    if not pending or self.stop_requested:
+                        break
+                    run(self, internal_tasks)
+                return
             self._consecutive_failures = 0
             retry_queue = []
             if not self._run_client_chains(internal_tasks, retry_queue):
@@ -970,6 +1008,9 @@ class AllClientsDailyRunner:
         evaluated_tasks = self._tasks_in_run_scope(self.state, tasks)
         limited_count = sum(1 for task in evaluated_tasks if task.get("status") == "limited")
         failed_count = sum(1 for task in evaluated_tasks if task.get("status") == "error")
+        if self.marketplace_rows and any(t.get("status") not in TERMINAL_TASK_STATUSES for t in evaluated_tasks) and not failed_count and self.state.get("status") != "error":
+            self.state["status"] = "stopped"
+            self.state["message"] = "Есть незавершённые строки; доступно продолжение"
         if self.stop_requested and self.state.get("status") != "stopped":
             self.state["status"] = "stopped"
             self.state["message"] = "Общий процесс остановлен"

@@ -152,7 +152,11 @@ def selected_payload(config, raw_from, raw_to, client, marketplace, supported):
         return unavailable(client, marketplace, start, end, 'Площадка не подключена к этому аккаунту.')
     if marketplace == 'yandex':
         return yandex_payload(config, start, end, client)
-    return pl_payload(config, raw_from, raw_to, client, marketplace)
+    payload = pl_payload(config, raw_from, raw_to, client, marketplace)
+    if marketplace == 'ozon':
+        from pl_financial_model import attach_financial_model
+        payload = attach_financial_model(config, payload, None)
+    return payload
 
 
 def workbook_bytes(data):

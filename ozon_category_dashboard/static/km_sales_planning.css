@@ -1,0 +1,406 @@
+.sales-planning-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px 8px;
+  padding: 9px 11px;
+  border-color: #b9ded9;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #fff 0%, #f2fffb 100%);
+}
+
+.sales-planning-controls .sales-planning-controls-head {
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.sales-planning-controls-head h2 {
+  margin: 0 0 1px;
+  font-size: 15px;
+  line-height: 1.1;
+}
+
+.sales-planning-controls-head p {
+  margin: 0;
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.sales-planning-freshness {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid #d3e7e4;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sales-planning-controls .sales-planning-filter-grid {
+  display: grid;
+  grid-column: 1;
+  grid-template-columns:
+    minmax(88px, .62fr)
+    minmax(118px, 1fr)
+    minmax(130px, 1.08fr)
+    minmax(170px, 1.35fr)
+    repeat(3, minmax(74px, .62fr))
+    minmax(104px, .78fr)
+    minmax(92px, .7fr);
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sales-planning-controls .sales-planning-filter-grid label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+  line-height: 1.1;
+}
+
+.sales-planning-controls .sales-planning-filter-grid select,
+.sales-planning-controls .sales-planning-filter-grid input {
+  width: 100%;
+  min-height: 30px;
+  min-width: 0;
+  padding: 5px 7px;
+  border-radius: 7px;
+  font-size: 10px;
+}
+
+.sales-planning-controls .sales-planning-actions {
+  display: flex;
+  grid-column: 2;
+  align-self: end;
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin: 0;
+}
+
+.sales-planning-controls .sales-planning-icon-button {
+  display: inline-grid;
+  flex: 0 0 30px;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  min-height: 30px;
+  place-items: center;
+  padding: 0;
+  border-radius: 8px;
+}
+
+.sales-planning-icon-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+
+.sales-planning-controls .sales-planning-icon-button:focus-visible {
+  outline: 3px solid rgb(255 74 79 / 25%);
+  outline-offset: 2px;
+}
+
+.sales-planning-kpis.finance-kpi-grid {
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 7px;
+}
+
+.sales-planning-kpis .finance-kpi-card {
+  min-height: 62px;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 10px;
+}
+
+.sales-planning-kpis .finance-kpi-card span,
+.sales-planning-kpis .finance-kpi-card small {
+  font-size: 8.5px;
+  line-height: 1.2;
+}
+
+.sales-planning-kpis .finance-kpi-card strong {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.sales-planning-chart-scroll {
+  overflow-x: auto;
+  padding: 18px 8px 4px;
+}
+
+.sales-planning-columns {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(72px, 1fr));
+  gap: 8px;
+  min-width: 980px;
+  height: 280px;
+  padding: 0 8px;
+  border-bottom: 1px solid #d8e7e5;
+}
+
+.sales-planning-month-column {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 28px;
+  align-items: end;
+  min-width: 0;
+}
+
+.sales-planning-month-column > strong {
+  overflow: hidden;
+  padding-top: 8px;
+  text-align: center;
+  text-transform: capitalize;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.sales-planning-column-bars {
+  display: flex;
+  height: 236px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+}
+
+.sales-planning-column-bars i {
+  position: relative;
+  display: block;
+  width: 28%;
+  min-height: 0;
+  max-width: 24px;
+  border-radius: 4px 4px 0 0;
+  transition: height .2s ease;
+}
+
+.sales-planning-column-bars i span {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 50%;
+  display: none;
+  padding: 3px 5px;
+  border-radius: 4px;
+  background: #142523;
+  color: #fff;
+  font-size: 8px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.sales-planning-column-bars i:hover span { display: block; }
+.sales-planning-column-bars .actual,
+.sales-planning-legend .actual { background: #70ad47; }
+.sales-planning-column-bars .forecast,
+.sales-planning-legend .forecast { background: #62b7f5; }
+.sales-planning-column-bars .plan,
+.sales-planning-legend .plan { background: #ff4b52; }
+
+.sales-planning-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.sales-planning-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.sales-planning-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.sales-planning-pivot-table,
+.sales-planning-product-matrix {
+  min-width: 1460px;
+}
+
+.sales-planning-pivot-table th:first-child,
+.sales-planning-product-matrix th:first-child {
+  position: sticky;
+  left: 0;
+  min-width: 245px;
+  background: #f2fbfa;
+  z-index: 2;
+}
+
+.sales-planning-pivot-table thead th:first-child,
+.sales-planning-product-matrix thead th:first-child {
+  z-index: 4;
+}
+
+.sales-planning-pivot-table thead th:not(:first-child),
+.sales-planning-product-matrix thead th:not(:first-child) {
+  min-width: 94px;
+  text-align: right;
+  text-transform: capitalize;
+}
+
+.sales-planning-stock-negative {
+  background: #ffe5e6 !important;
+  color: #b4232d !important;
+  font-weight: 900;
+}
+
+.sales-planning-category-list {
+  display: grid;
+  gap: 10px;
+}
+
+.sales-planning-category,
+.sales-planning-product {
+  overflow: hidden;
+  border: 1px solid #d9e8e6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.sales-planning-category > summary,
+.sales-planning-product > summary {
+  display: flex;
+  cursor: pointer;
+  list-style: none;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sales-planning-category > summary::-webkit-details-marker,
+.sales-planning-product > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sales-planning-category > summary {
+  padding: 13px 15px;
+  background: #eef9f7;
+  color: #173c3a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.sales-planning-category > summary::before,
+.sales-planning-product > summary::before {
+  content: "›";
+  flex: 0 0 auto;
+  font-size: 18px;
+  transform: rotate(0deg);
+  transition: transform .15s ease;
+}
+
+.sales-planning-category[open] > summary::before,
+.sales-planning-product[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.sales-planning-category > summary span,
+.sales-planning-product > summary span {
+  flex: 1 1 auto;
+}
+
+.sales-planning-category > summary small,
+.sales-planning-product > summary small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.sales-planning-category-products {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.sales-planning-product > summary {
+  padding: 11px 13px;
+  background: #fff;
+}
+
+.sales-planning-product > summary span {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+}
+
+.sales-planning-product > summary span strong {
+  color: #173c3a;
+  font-size: 12px;
+}
+
+.sales-planning-product > .finance-table-wrap {
+  border-top: 1px solid #e1ecea;
+}
+
+@media (max-width: 1250px) {
+  .sales-planning-controls .sales-planning-filter-grid {
+    grid-template-columns: repeat(5, minmax(118px, 1fr));
+  }
+
+  .sales-planning-kpis.finance-kpi-grid {
+    grid-template-columns: repeat(3, minmax(150px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .sales-planning-controls .sales-planning-filter-grid {
+    grid-template-columns: repeat(2, minmax(140px, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .sales-planning-controls .sales-planning-controls-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .sales-planning-controls .sales-planning-filter-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sales-planning-controls .sales-planning-actions {
+    align-self: end;
+  }
+
+  .sales-planning-controls .sales-planning-actions > .sales-planning-icon-button {
+    flex: 0 0 40px;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    min-height: 40px;
+  }
+
+  .sales-planning-kpis.finance-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sales-planning-category > summary,
+  .sales-planning-product > summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .sales-planning-kpis.finance-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}

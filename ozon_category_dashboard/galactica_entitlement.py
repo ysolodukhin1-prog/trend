@@ -87,7 +87,7 @@ def read_entitlement(connection, subject, client, report):
                           WHERE s.session_hash=%s AND s.user_id=u.user_id
                           AND s.user_revision=u.updated_at AND s.revoked_at IS NULL
                           AND s.expires_at >= to_timestamp(%s)
-                          AND s.expires_at > clock_timestamp())
+                          AND s.expires_at > clock_timestamp() AND s.last_activity_at > clock_timestamp()-interval '3 hours')
               AND EXISTS (SELECT 1 FROM public.bi_personal_sessions child
                 WHERE child.session_hash=%s AND (child.parent_session_hash IS NULL OR EXISTS (
                   SELECT 1 FROM public.bi_personal_sessions parent
@@ -95,7 +95,7 @@ def read_entitlement(connection, subject, client, report):
                     AND parent.parent_session_hash IS NULL AND parent.user_id=child.user_id
                     AND parent.user_revision=child.user_revision AND parent.revoked_at IS NULL
                     AND parent.expires_at>=child.expires_at
-                    AND parent.expires_at>clock_timestamp())))
+                    AND parent.expires_at>clock_timestamp() AND parent.last_activity_at>clock_timestamp()-interval '3 hours')))
               AND EXISTS (SELECT 1 FROM public.bi_user_clients c
                           WHERE c.user_id=u.user_id AND c.client_key=%s)
               AND EXISTS (SELECT 1 FROM public.bi_user_reports r
@@ -106,6 +106,8 @@ def read_entitlement(connection, subject, client, report):
         row = cursor.fetchone()
     if row is None:
         raise SourceDenied()
+    from data_access import require_user_grant
+    require_user_grant(connection, user_id, 'marketplace:'+client, report)
     values = list(row.values()) if isinstance(row, dict) else list(row)
     current_revision = row["updated_at"] if isinstance(row, dict) else row[2]
     if session_revision(current_revision) != token_revision:
@@ -361,14 +363,14 @@ def require_current_session(connection, subject):
             "WHERE s.session_hash=%s AND s.user_id=%s AND u.username=%s "
             "AND u.is_active AND u.updated_at=%s::timestamptz "
             "AND s.user_revision=u.updated_at AND s.revoked_at IS NULL "
-            "AND s.expires_at>=to_timestamp(%s) AND s.expires_at>clock_timestamp() "
+            "AND s.expires_at>=to_timestamp(%s) AND s.expires_at>clock_timestamp() AND s.last_activity_at>clock_timestamp()-interval '3 hours' "
             "AND (s.parent_session_hash IS NULL OR EXISTS ("
             "SELECT 1 FROM public.bi_personal_sessions parent "
             "WHERE parent.session_hash=s.parent_session_hash "
             "AND parent.parent_session_hash IS NULL "
             "AND parent.user_id=s.user_id AND parent.user_revision=s.user_revision "
             "AND parent.revoked_at IS NULL AND parent.expires_at>=s.expires_at "
-            "AND parent.expires_at>clock_timestamp()))",
+            "AND parent.expires_at>clock_timestamp() AND parent.last_activity_at>clock_timestamp()-interval '3 hours'))",
             (session_hash, user_id, username, revision, expires),
         )
         if cursor.fetchone() is None:

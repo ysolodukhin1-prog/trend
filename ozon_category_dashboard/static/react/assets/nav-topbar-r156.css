@@ -1,0 +1,47 @@
+:root { --trend-topbar-height:56px; }
+[data-kokoc-dashboard-layout] > .pulse-context-bar {
+  position:fixed; inset:0 0 auto 0; z-index:80; height:var(--trend-topbar-height);
+  min-height:var(--trend-topbar-height); margin:0; padding:8px 20px;
+  display:flex; gap:14px; background:#fff; box-sizing:border-box;
+}
+[data-kokoc-dashboard-layout] > main { padding-top:calc(var(--trend-topbar-height) + 16px)!important; }
+.pulse-context-bar .pulse-context-brand { margin-right:auto; flex:none; }
+.pulse-context-bar .pulse-mobile-menu { display:inline-flex; flex:none; align-items:center; justify-content:center; width:30px; height:32px; }
+.pulse-context-bar .pulse-context-tools { min-width:0; gap:12px; }
+.pulse-context-bar .pulse-context-client { width:190px; flex:0 0 190px; }
+.pulse-context-bar .pulse-context-client [role=combobox] { width:100%; }
+.pulse-context-bar .trend-db-indicators { width:440px; flex:0 0 440px; margin:0; justify-content:flex-end; }
+.pulse-context-bar .trend-db-indicator { justify-content:center; min-width:0; }
+.pulse-context-bar .trend-db-indicator-label { display:inline; }
+.pulse-context-bar .pulse-report-search { width:190px; flex:0 0 190px; justify-content:flex-start; }
+.pulse-context-bar .pulse-report-search kbd { margin-left:auto; }
+.pulse-navigation { top:var(--trend-topbar-height); max-height:calc(100dvh - var(--trend-topbar-height)); }
+.pulse-nav-backdrop { top:var(--trend-topbar-height); }
+.pulse-rail { top:var(--trend-topbar-height); height:calc(100dvh - var(--trend-topbar-height)); }
+[data-radix-popper-content-wrapper] { z-index:90!important; }
+@media(min-width:1024px) {
+  [data-kokoc-dashboard-layout] > .trend-main-admin { margin-left:84px; width:calc(100% - 100px); }
+}
+@media(max-width:1199px) {
+  .pulse-context-bar .pulse-report-search { width:150px; flex-basis:150px; }
+  .pulse-context-bar .pulse-context-client { width:170px; flex-basis:170px; }
+  .pulse-context-bar .trend-db-indicators { width:135px; flex-basis:135px; gap:5px; }
+  .pulse-context-bar .trend-db-indicator { width:23px; height:23px; padding:6px; }
+  .pulse-context-bar .trend-db-indicator-label { display:none; }
+}
+@media(max-width:767px) {
+  :root { --trend-topbar-height:88px; }
+  [data-kokoc-dashboard-layout] > .pulse-context-bar { padding:8px 12px; gap:8px; align-items:flex-start; }
+  .pulse-context-bar .pulse-mobile-menu { margin-top:3px; }
+  .pulse-context-bar .pulse-context-brand { margin-top:10px; gap:8px; font-size:12px; }
+  .pulse-context-bar .pulse-context-brand small,.pulse-context-bar .pulse-context-brand>span { display:none; }
+  .pulse-context-bar .pulse-context-tools { gap:6px; margin-left:auto; }
+  .pulse-context-bar .pulse-context-client { width:154px; flex-basis:154px; padding-left:6px; }
+  .pulse-context-bar .pulse-report-search { width:32px; flex-basis:32px; padding:7px; }
+  .pulse-context-bar .pulse-report-search span,.pulse-context-bar .pulse-report-search kbd { display:none; }
+  .pulse-context-bar .trend-db-indicators { position:absolute; right:12px; bottom:8px; width:135px; }
+  .pulse-context-bar .pulse-context-client [role=combobox] { height:32px; }
+}
+@media(max-width:399px) {
+  .pulse-context-bar .pulse-context-client { width:146px; flex-basis:146px; }
+}

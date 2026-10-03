@@ -1,0 +1,15 @@
+[Unit]
+Description=Commit and push live TREND source changes
+Wants=network-online.target
+After=network-online.target docker.service
+
+[Service]
+Type=oneshot
+User=egor
+WorkingDirectory=/home/egor/trend-github-sync
+ExecStart=/usr/bin/python3 /home/egor/trend-github-sync/sync.py
+TimeoutStartSec=240
+UMask=0077
+NoNewPrivileges=true
+Nice=10
+

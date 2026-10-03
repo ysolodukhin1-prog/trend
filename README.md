@@ -1,19 +1,21 @@
 # TREND
 
-Приватный репозиторий TREND — серверной версии PULSE для TOPTOP и LERA NENA.
+Private source repository for the TREND VPS edition of PULSE (TOPTOP and LERA NENA).
 
-## Состав
+The source tree is synchronized from the running TREND reader container. The current image and per-file SHA-256 hashes are in `LIVE_SOURCE_MANIFEST.json`. `SOURCE_MANIFEST.json` records the original September 18 import and is historical.
 
-- `ozon_category_dashboard/` — Python backend, API, отчёты, расчёты, управление доступом и статический frontend.
-- `scripts/` — загрузка данных, построение витрин и служебные операции.
-- `Dockerfile`, `requirements.txt` — контейнерная сборка и Python-зависимости.
-- `SOURCE_MANIFEST.json` — происхождение и SHA-256 исходных файлов.
-- `SOURCE_STATUS.md` — дата снимка и известные ограничения.
+The VPS checks code every 30 seconds after the previous check finishes and requires two matching snapshots before committing. Changes normally reach GitHub within approximately 1–2 minutes, depending on snapshot and network duration. No changes means no new commit. Synchronization survives VPS reboot and does not require this laptop or Codex to remain open.
 
-## Версия и запуск
+Included: Python application and selected scripts, SQL migrations, compiled frontend assets, Dockerfile and requirements. Excluded: credentials, databases, runtime data, agent memory, unrelated client scripts. Editable frontend source is not present in the deployed image. This repository is not a database backup.
 
-Исходники восстановлены из локального снимка развёрнутого приложения от **18 сентября 2026 года**. Это архивная база кода, а не подтверждённая копия текущего VPS. Последующие ревизии до r154 требуют отдельной сверки: 28 сентября SSH завершался таймаутом banner exchange.
+Synchronization is one-way from the running VPS code to GitHub. Local drafts are not automatically deployed or uploaded. The source service does not deploy code, restart TREND, change databases, or force-push. Concurrent edits of managed source files on GitHub stop synchronization for manual reconciliation.
 
-Синтаксис Python-файлов проверен без запуска приложения. Полная сборка и работа с production-БД не проверены. Для запуска нужны отдельно настроенные базы, переменные окружения и доступы. CSS frontend восстановлен из локального артефакта той же даты.
+Operator commands on VPS:
 
-Секреты, `.env`, ключи, базы данных, выгрузки, рабочие логи и локальная память агента в репозиторий не входят. Клиентские аналитические скрипты, не относящиеся к TOPTOP/LERA NENA, исключены.
+```sh
+systemctl status trend-source-sync.timer
+journalctl -u trend-source-sync.service -n 30 --no-pager
+sudo systemctl stop trend-source-sync.timer
+```
+
+Implementation: `tools/trend_sync/`. Server mirror and dedicated GitHub deploy key are outside the production workspace in `/home/egor/trend-github-sync`; the private key is never committed.

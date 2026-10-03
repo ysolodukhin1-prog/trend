@@ -478,6 +478,33 @@ def inventory_payload(
             exists = cursor.fetchone()
             if not exists or not exists.get("table_name"):
                 return {"rows": [], "reason": "inventory_history_daily отсутствует"}
+            if not active_filters:
+                cursor.execute(
+                    "SELECT to_regclass('public.mv_pulse_home_inventory_daily_v1') AS table_name"
+                )
+                mart = cursor.fetchone()
+                if mart and mart.get("table_name"):
+                    cursor.execute(
+                        """
+                        SELECT
+                          report_date,
+                          stock_available_qty::numeric AS inventory_available_stock_qty,
+                          stock_sku_count::numeric AS inventory_active_sku,
+                          in_stock_sku_count::numeric AS inventory_in_stock_sku
+                        FROM public.mv_pulse_home_inventory_daily_v1
+                        WHERE marketplace = %s
+                          AND report_date BETWEEN %s AND %s
+                        ORDER BY report_date
+                        """,
+                        (marketplace, start, cutoff),
+                    )
+                    rows = [dict(row) for row in cursor.fetchall()]
+                    if rows and not include_oos_diagnostic:
+                        return {
+                            "rows": rows,
+                            "oos_diagnostic": {},
+                            "source": "mv_pulse_home_inventory_daily_v1",
+                        }
             clauses = [
                 "marketplace = %s",
                 "snapshot_date BETWEEN %s AND %s",

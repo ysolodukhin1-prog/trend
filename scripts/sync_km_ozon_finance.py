@@ -1112,7 +1112,7 @@ def fetch_product_dimensions(api: FinanceApiClient) -> dict[str, dict[str, Any]]
 def fetch_price_snapshots(api: FinanceApiClient, dimensions: dict[str, dict[str, Any]]) -> list[tuple[Any, ...]]:
     cursor = ""
     rows: list[tuple[Any, ...]] = []
-    snapshot_day = date.today()
+    snapshot_day = app.marketplace_today()
     page = 0
     while True:
         page += 1
@@ -1283,7 +1283,7 @@ def normalize_existing_api_lines(conn, *, dry_run: bool) -> tuple[int, int]:
 
 
 def default_api_range(conn) -> tuple[date, date]:
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = app.marketplace_today() - timedelta(days=1)
     with conn.cursor() as cur:
         cur.execute(
             """
@@ -1303,7 +1303,7 @@ def default_api_range(conn) -> tuple[date, date]:
 def validate_range(date_from: date, date_to: date) -> None:
     if date_from > date_to:
         raise FinancePipelineError("Дата начала позже даты окончания")
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = app.marketplace_today() - timedelta(days=1)
     if date_to > yesterday:
         raise FinancePipelineError(f"Дата окончания не может быть позже {yesterday}")
 
@@ -1313,12 +1313,20 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--source", choices=("manual", "api", "all", "reclassify"), default="api")
     parser.add_argument("--date-from", type=date.fromisoformat)
     parser.add_argument("--date-to", type=date.fromisoformat)
-    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--skip-catalog-refresh",
+        action="store_true",
+        help=(
+            "Не запрашивать повторно каталог габаритов и текущие цены/тарифы. "
+            "Используется для исторической дозагрузки финансов."
+        ),
+    )
     parser.add_argument(
         "--with-product-snapshot",
         action="store_true",
         help="Обновить габариты и цены/тарифы; использовать только в ежемесячном запуске",
     )
+    parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
 
 
@@ -1433,16 +1441,16 @@ def main() -> int:
                     f"elapsed={elapsed:.1f}s | ETA={eta:.1f}s",
                     flush=True,
                 )
-            dimensions = {}
-            price_rows = []
-            if args.with_product_snapshot:
+            dimensions: dict[str, dict[str, Any]] = {}
+            price_rows: list[tuple[Any, ...]] = []
+            if args.with_product_snapshot and not args.skip_catalog_refresh:
                 dimensions = fetch_product_dimensions(api)
                 price_rows = fetch_price_snapshots(api, dimensions)
                 total_prices += store_price_snapshots(conn, price_rows, dry_run=args.dry_run)
             else:
                 print(
-                    "ПРОГРЕСС: габариты и цены/тарифы | пропуск: "
-                    "ежемесячный снимок не запрошен | API-запросов 0",
+                    f"[{step_index}/{len(steps)}] api: габариты и текущие "
+                    "цены/тарифы пропущены; снимок выполняется только ежемесячно",
                     flush=True,
                 )
             print(

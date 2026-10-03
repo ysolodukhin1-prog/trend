@@ -1,0 +1,45 @@
+.trend-account-menu .trend-account-item-total { font-weight: 700; }
+.trend-account-menu .trend-account-item-child { padding-left: 1.8rem; }
+.trend-account-menu .trend-account-item-other-first { border-top: 1px solid var(--border, #e5e9ee); margin-top: .3rem; padding-top: .55rem; }
+.trend-marketplaces-home .pulse-home-toolbar { align-items: center; gap: .8rem; }
+.trend-marketplaces-home .pulse-home-toolbar h2 { margin: 0; font-size: 1.15rem; font-weight: 700; }
+.trend-marketplaces-home .pulse-home-caption { color: #69778b; font-size: .79rem; }
+.trend-marketplaces-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 1rem; }
+.trend-marketplaces-card { padding: 1.1rem; }
+.trend-marketplaces-card header { display: flex; justify-content: space-between; align-items: baseline; gap: .5rem; }
+.trend-marketplaces-card h3 { margin: 0; font-size: 1rem; font-weight: 700; }
+.trend-marketplaces-card header span { color: #69778b; font-size: .78rem; }
+.trend-marketplaces-total { display: block; margin-top: .75rem; font-size: 1.5rem; }
+.trend-marketplaces-card dl { margin: 1rem 0 0; border-top: 1px solid #e5e9ee; }
+.trend-marketplaces-client { display: grid; grid-template-columns: 1fr auto; gap: .1rem .5rem; padding: .55rem 0; border-bottom: 1px solid #edf0f3; }
+.trend-marketplaces-client dt { font-weight: 600; }
+.trend-marketplaces-client dd { margin: 0; font-weight: 700; }
+.trend-marketplaces-client small { grid-column: 1 / -1; color: #69778b; }
+.trend-marketplaces-summary { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+.trend-marketplaces-summary article { display: flex; flex-direction: column; gap: .4rem; padding: 1rem 1.1rem; }
+.trend-marketplaces-summary small { color: #69778b; }
+.trend-marketplaces-summary strong { color: #14243c; font-size: 1.35rem; line-height: 1.2; }
+.trend-marketplaces-summary-main strong { font-size: 1.7rem; }
+.trend-marketplaces-summary span { color: #69778b; font-size: .75rem; }
+.trend-marketplaces-wide { margin-top: 1rem; padding: 1rem 1.1rem; }
+.trend-marketplaces-wide h3 { margin: 0 0 .4rem; font-size: 1rem; }
+.trend-marketplaces-chart { width: 100%; min-width: 0; margin-top: .7rem; }
+.trend-marketplaces-chart svg { width: 100%; height: auto; overflow: visible; display: block; }
+.trend-marketplaces-chart.is-mini { margin: .5rem 0 .2rem; }
+.trend-marketplaces-chart.is-mini svg { height: 95px; }
+.trend-marketplaces-legend { display: flex; flex-wrap: wrap; gap: .35rem 1rem; font-size: .75rem; color: #69778b; }
+.trend-marketplaces-home .pulse-home-toolbar { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .65rem 1rem; }
+.trend-marketplaces-date-controls { display: flex; align-items: center; flex-wrap: wrap; gap: .55rem .8rem; }
+.trend-marketplaces-date-controls .pulse-home-period { white-space: nowrap; }
+.trend-marketplaces-chart-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: .7rem; flex-wrap: wrap; }
+.trend-marketplaces-chart-heading .pulse-home-caption { margin: .15rem 0 0; }
+.trend-marketplaces-chart-switch { display: inline-flex; border: 1px solid #d7dde3; border-radius: .2rem; overflow: hidden; flex: none; }
+.trend-marketplaces-chart-switch button { border: 0; background: #fff; color: #586577; font: inherit; font-size: .75rem; padding: .3rem .65rem; cursor: pointer; }
+.trend-marketplaces-chart-switch button + button { border-left: 1px solid #d7dde3; }
+.trend-marketplaces-chart-switch button.is-active { color: #fff; background: #be3e32; }
+.trend-marketplaces-chart-switch button:focus-visible { outline: 2px solid #20836a; outline-offset: -2px; }
+.trend-marketplaces-year { margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid #dbe2ea; }
+.trend-marketplaces-year h2 { margin: 0; font-size: 1.15rem; }
+.trend-marketplaces-history-note { margin: 1rem 0 0; }
+@media (max-width: 760px) { .trend-marketplaces-grid { grid-template-columns: 1fr; } .trend-marketplaces-home .pulse-home-toolbar { align-items: flex-start; } }
+@media (max-width: 760px) { .trend-marketplaces-summary { grid-template-columns: 1fr; } }

@@ -29,6 +29,7 @@ from datetime import date, datetime, timedelta
 from io import BytesIO
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from zoneinfo import ZoneInfo
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -73,6 +74,14 @@ ADMIN_ALL_CLIENTS_ASSORTMENT_RUNNER = None
 ADMIN_ALL_CLIENTS_ASSORTMENT_STATE_PATH = PROJECT_ROOT / ".admin_all_clients_assortment_state.json"
 ADMIN_AUTH_FAILURES_LOCK = threading.Lock()
 ADMIN_AUTH_FAILURES = {}
+MARKETPLACE_TIMEZONE = ZoneInfo("Europe/Moscow")
+
+
+def marketplace_today():
+    """Return the Moscow business date used by marketplace imports."""
+    return datetime.now(MARKETPLACE_TIMEZONE).date()
+
+
 WB_API_RUNNING_LOCK = threading.Lock()
 WB_API_RUNNING = {}
 WB_API_RUN_CONTEXT = threading.local()
@@ -532,7 +541,9 @@ FUNNEL_CHART_METRICS = {
     "ordered_units": "Заказы, шт",
     "ordered_amount_rub": "Заказы, руб",
     "bought_units": "Выкуплено, шт",
-    "bought_amount_rub": "Выкуплено, руб",
+    "bought_amount_rub": "Выкупы минус возвраты по дате операции, руб",
+    "cohort_bought_units": "Выкуплено по дате заказа, шт",
+    "cohort_bought_amount_rub": "Выкуплено по дате заказа, руб",
     "favorites_adds": "Добавили в отложенные",
     "cancelled_units": "Отменено, шт",
     "cancelled_amount_rub": "Отменено, руб",
@@ -659,6 +670,8 @@ CHART_SECONDARY_METRICS = {
         "ordered_amount_rub",
         "bought_units",
         "bought_amount_rub",
+            "cohort_bought_units",
+            "cohort_bought_amount_rub",
         "favorites_adds",
         "cancelled_units",
         "cancelled_amount_rub",
@@ -1249,6 +1262,11 @@ ADMIN_CLIENTS = {
     },
 }
 ADMIN_REPORT_CATALOG = [
+    {'id': 'assortmentProducts', 'label': 'Товары', 'group': 'Ассортимент'},
+    {'id': 'assortmentPrices', 'label': 'Цены', 'group': 'Ассортимент'},
+    {'id': 'assortmentABC', 'label': 'ABC', 'group': 'Ассортимент'},
+    {'id': 'assortmentXYZ', 'label': 'XYZ', 'group': 'Ассортимент'},
+
     {"id": "abc", "label": "ABC по категориям"},
     {"id": "product", "label": "ABC по продуктам"},
     {"id": "sku", "label": "SKU-скоринг"},
@@ -1277,10 +1295,15 @@ ADMIN_REPORT_CATALOG = [
     {"id": "yandexFinance", "label": "Яндекс Маркет · Финансы"},
     {"id": "yandexPromotion", "label": "Яндекс Маркет · Продвижение"},
     {"id": "yandexInventory", "label": "Яндекс Маркет · Остатки"},
+    {"id": "lamodaSales", "label": "Lamoda · Продажи"},
+    {"id": "lamodaReturns", "label": "Lamoda · Возвраты"},
+    {"id": "lamodaCatalog", "label": "Lamoda · Ассортимент"},
+    {"id": "lamodaOperations", "label": "Lamoda · Операции"},
     {"id": "commercialRadar", "label": "Health Check"},
 ]
 AVITO_REPORT_IDS = ("avitoOverview", "avitoCampaigns", "avitoGroups", "avitoCreatives", "avitoDaily")
 YANDEX_REPORT_IDS = ("yandexOverview", "yandexFunnel", "yandexFinance", "yandexPromotion", "yandexInventory")
+LAMODA_REPORT_IDS = ("lamodaSales", "lamodaReturns", "lamodaCatalog", "lamodaOperations")
 WB_ONLY_REPORT_IDS = {"wbSearchQueries", "wbAdSearchQueries", "wbEntrance"}
 WB_SEARCH_QUERY_CLIENT_IDS = {"gloria_jeans", "sportmaster", "konstex"}
 MEDIA_ADV_CLIENT_IDS = {"gloria_jeans", "sportmaster"}
@@ -1470,13 +1493,13 @@ KM_TRADE_ADMIN_IMPORTS = {
     "km_wb_api_funnel": {
         "report": "API: воронка WB",
         "description": "Дневная воронка карточек KM Trade через отдельный токен WB категории «Аналитика».",
-        "policy": "Только read-only POST /api/analytics/v3/sales-funnel/products и /history; nmID обрабатываются пачками до 20, запись только в km_trade_products.",
+        "policy": "Read-only POST /api/analytics/v3/sales-funnel/products: отдельный запрос на каждый день, все страницы, включая удалённые карточки; повтор обновляет поздние выкупы.",
         "script": PROJECT_ROOT / "scripts" / "sync_km_wb_api.py",
         "args": ["--step", "funnel"],
         "date_args": True,
         "api_daily": True,
         "api_daily_order": 5,
-        "source": "WB Seller Analytics API /api/analytics/v3/sales-funnel/products + /history",
+        "source": "WB Seller Analytics API /api/analytics/v3/sales-funnel/products",
         "destination": "km_trade_products.public.wb_funnel_daily",
     },
     "km_wb_api_stock": {
@@ -1918,7 +1941,9 @@ COLUMN_LABELS.update(
         "abc_orders_qty": "ABC по количеству заказов",
         "ordered_amount_rub": "Заказано, руб",
         "bought_units": "Выкуплено, шт",
-        "bought_amount_rub": "Выкуплено, руб",
+        "bought_amount_rub": "Выкупы минус возвраты по дате операции, руб",
+    "cohort_bought_units": "Выкуплено по дате заказа, шт",
+    "cohort_bought_amount_rub": "Выкуплено по дате заказа, руб",
         "ordered_amount_dynamic": "Динамика заказов, руб",
         "search_catalog_position": "Позиция в поиске и каталоге",
         "search_catalog_position_dynamic": "Динамика позиции",
@@ -2087,6 +2112,8 @@ NUMERIC_FIELDS.update(
         "ordered_amount_rub",
         "bought_units",
         "bought_amount_rub",
+            "cohort_bought_units",
+            "cohort_bought_amount_rub",
         "favorites_adds",
         "cancelled_units",
         "cancelled_amount_rub",
@@ -2354,14 +2381,10 @@ def save_env_value(key, value, path=None):
 
 
 CLIENT_CREDENTIALS_MASTER_KEY_ENV = "CLIENT_CREDENTIALS_MASTER_KEY"
-CLIENT_REGISTRY_DATABASE_ENV = "DASHBOARD_REGISTRY_DB_NAME"
 
 
 def client_registry_connection():
     config = read_db_config(DEFAULT_CLIENT)
-    registry_database = str(os.environ.get(CLIENT_REGISTRY_DATABASE_ENV) or "").strip()
-    if registry_database:
-        config["database"] = registry_database
     return psycopg2.connect(**config, cursor_factory=RealDictCursor)
 
 
@@ -2459,7 +2482,7 @@ def save_admin_client(payload):
     if avito_values["avito_ads_account_id"] and not str(avito_values["avito_ads_account_id"]).isdigit():
         raise ValueError("Avito Ads Account ID должен состоять из цифр")
     for marketplace_label, credential_keys in (
-        ("Lamoda", ("lamoda_client_id", "lamoda_client_secret")),
+        ("Lamoda", ("lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id")),
     ):
         values = {
             key: credentials.get(key) or registered_client_credential(client["key"], key)
@@ -2477,7 +2500,10 @@ def save_admin_client(payload):
     # IDs and accessibility are authoritative only when returned by Yandex.
     # The form supplies import choices, never trusted account/store identities.
     yandex_accounts = []
-    if "yandex_market" in client["marketplaces"]:
+    # Updating Lamoda, Avito, WB or Ozon must not depend on an unrelated
+    # Yandex API call. Rediscover Yandex accounts only when its key is part
+    # of this request; otherwise keep the already persisted account mapping.
+    if "yandex_market" in client["marketplaces"] and credentials.get("yandex_market_api_key"):
         try:
             yandex_accounts = discover_yandex_market_accounts(yandex_api_key)
         except RuntimeError as exc:
@@ -2518,6 +2544,17 @@ def discover_admin_yandex_market(payload):
 
 
 SERVICE_INTEGRATION_CATALOG = {
+    "1c": {
+        "label": "1С",
+        "description": "Параметры SQL Server 1С. Сетевой доступ через VPN TOPTOP настраивается отдельно.",
+        "credentials": [
+            {"key": "host", "label": "Адрес SQL Server", "placeholder": "Имя хоста или IP-адрес"},
+            {"key": "port", "label": "Порт", "placeholder": "1433"},
+            {"key": "database", "label": "База данных", "placeholder": "Имя базы 1С"},
+            {"key": "username", "label": "Пользователь SQL Server", "placeholder": "Логин"},
+            {"key": "password", "label": "Пароль SQL Server", "placeholder": "Пароль"},
+        ],
+    },
     "mpstats": {
         "label": "MPStats",
         "description": "Поисковые запросы, частотность, конкуренты и семантика для Ozon и WB.",
@@ -2573,6 +2610,20 @@ def ensure_service_credentials_schema(conn):
     conn.commit()
 
 
+def is_1c_connection_key(key):
+    import re
+    return key == "1c" or key == "1c:new" or bool(re.fullmatch(r"1c:[0-9a-f]{32}", key))
+
+
+def connection_catalog(saved_rows):
+    catalog = dict(SERVICE_INTEGRATION_CATALOG)
+    for row in saved_rows:
+        key = str(row["service_key"])
+        if is_1c_connection_key(key) and key != "1c:new":
+            catalog[key] = SERVICE_INTEGRATION_CATALOG["1c"]
+    return catalog
+
+
 def admin_integrations_payload():
     with client_registry_connection() as conn:
         ensure_service_credentials_schema(conn)
@@ -2586,7 +2637,7 @@ def admin_integrations_payload():
         for row in saved_rows
     }
     services = []
-    for service_key, config in SERVICE_INTEGRATION_CATALOG.items():
+    for service_key, config in connection_catalog(saved_rows).items():
         credentials = []
         for field in service_credential_fields(config):
             row = saved.get((service_key, field["key"]))
@@ -2606,7 +2657,7 @@ def admin_integrations_payload():
 
 def save_admin_integration(payload):
     service_key = str(payload.get("service") or "").strip().lower()
-    config = SERVICE_INTEGRATION_CATALOG.get(service_key)
+    config = SERVICE_INTEGRATION_CATALOG.get("1c" if is_1c_connection_key(service_key) else service_key)
     if not config:
         raise ValueError("Неизвестная интеграция")
     action = str(payload.get("action") or "save").strip().lower()
@@ -2641,6 +2692,275 @@ def save_admin_integration(payload):
                     )
         conn.commit()
     return admin_integrations_payload()
+
+
+def ensure_admin_connection_events_schema(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS public.bi_service_connection_events (
+                id bigserial PRIMARY KEY,
+                service_key text NOT NULL,
+                action text NOT NULL,
+                status text NOT NULL,
+                message text NOT NULL,
+                http_status integer,
+                created_at timestamptz NOT NULL DEFAULT now()
+            )
+        """)
+    conn.commit()
+
+
+def record_admin_connection_event(service_key, action, status, message, http_status=None):
+    with client_registry_connection() as conn:
+        ensure_admin_connection_events_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO public.bi_service_connection_events
+                    (service_key, action, status, message, http_status)
+                VALUES (%s, %s, %s, %s, %s)
+            """, (service_key, action, status, message, http_status))
+        conn.commit()
+
+
+def probe_1c_connection(service_key="1c"):
+    """Check the configured 1C database over the dedicated local SQL tunnel."""
+    import pymssql
+    import re
+
+    values = {key: service_credential(service_key, key) for key in
+              ("host", "port", "database", "username", "password")}
+    if not all(values.values()):
+        return "not_configured", "1С: сначала сохраните все параметры подключения", None
+    if values["host"].strip() != "172.19.0.1" or values["port"].strip() != "11433":
+        return "config_error", "1С: для настроенного SQL-туннеля укажите адрес 172.19.0.1 и порт 11433", None
+    if values["database"].strip() not in {"1c_ut_prod", "1c_retail_prod", "1c_erp_prod"}:
+        return "config_error", "1С: выберите одну базу: 1c_ut_prod, 1c_retail_prod или 1c_erp_prod", None
+    conn = None
+    try:
+        conn = pymssql.connect(
+            server="172.19.0.1", port=11433,
+            user=values["username"], password=values["password"],
+            database=values["database"].strip(), login_timeout=5, timeout=5,
+            appname="TREND connection check", autocommit=True,
+        )
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+            row = cur.fetchone()
+        if row and row[0] == 1:
+            return "connected", "1С: вход в выбранную базу выполнен, SELECT 1 выполнен успешно", None
+        return "unavailable", "1С: SQL Server не подтвердил проверочный запрос", None
+    except pymssql.Error as exc:
+        # Inspect only SQL error codes; never return/log driver text or credentials.
+        codes = set(re.findall(r"\b(?:18456|18452|4060|916)\b", str(exc.args)))
+        if codes & {"4060", "916"}:
+            return "access_denied", "1С: выбранная база недоступна или у пользователя нет доступа", None
+        if codes & {"18456", "18452"}:
+            return "auth_failed", "1С: SQL Server отклонил логин или пароль", None
+        return "unavailable", "1С: соединение или запрос не выполнены; проверьте VPN и SQL-туннель", None
+    except (OSError, TimeoutError):
+        return "unavailable", "1С: истекло время ожидания; проверьте VPN и SQL-туннель", None
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def probe_mpstats_connection():
+    """Use one documented, fixed MPStats read endpoint; never expose the token."""
+    from urllib.error import HTTPError, URLError
+    from urllib.request import Request, urlopen
+
+    token = service_credential("mpstats")
+    if not token:
+        raise ValueError("Сначала сохраните API-ключ MPStats")
+    request = Request(
+        "https://mpstats.io/api/analytics/v1/oz/items/1786874757/full?d1=2026-09-01&d2=2026-09-02",
+        headers={"X-Mpstats-TOKEN": token, "Accept": "application/json"},
+        method="GET",
+    )
+    try:
+        with urlopen(request, timeout=8) as response:
+            http_status = response.status
+            if http_status == 200 and "json" not in response.headers.get("Content-Type", "").lower():
+                return "unavailable", "MPStats ответил не в формате API", http_status
+    except HTTPError as exc:
+        http_status = exc.code
+        exc.close()
+    except (URLError, TimeoutError, OSError):
+        return "unavailable", "MPStats не ответил; проверьте сеть и повторите запрос", None
+    statuses = {
+        200: ("connected", "MPStats ответил: API-ключ принят"),
+        202: ("pending", "MPStats принял запрос, результат ещё обрабатывается"),
+        401: ("auth_failed", "MPStats отклонил API-ключ"),
+        403: ("access_denied", "MPStats не разрешил доступ к этому методу"),
+        429: ("rate_limited", "MPStats ограничил запросы по тарифу"),
+    }
+    status, message = statuses.get(http_status, ("unavailable", "MPStats не подтвердил соединение"))
+    return status, message, http_status
+
+
+_SERVICE_STATUS_LOCK = threading.Lock()
+_SERVICE_STATUS_CACHE = {"expires": 0.0, "payload": None}
+
+
+def service_connection_status_payload():
+    """Bounded, cached checks for the TOPTOP header; never expose credentials."""
+    import socket
+
+    with _SERVICE_STATUS_LOCK:
+        if _SERVICE_STATUS_CACHE["payload"] and time.monotonic() < _SERVICE_STATUS_CACHE["expires"]:
+            return _SERVICE_STATUS_CACHE["payload"]
+
+        vpn_connected = False
+        try:
+            # This private 1C host is reachable from the VPS only over its VPN route.
+            with socket.create_connection(("192.168.90.228", 40300), timeout=2):
+                vpn_connected = True
+        except (OSError, TimeoutError):
+            pass
+
+        keys = []
+        registry_failed = False
+        try:
+            with client_registry_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute("""
+                        SELECT DISTINCT service_key FROM public.bi_service_credentials
+                        WHERE service_key = '1c' OR service_key LIKE '1c:%'
+                        ORDER BY service_key
+                    """)
+                    keys = [row["service_key"] for row in cur.fetchall()]
+        except Exception:
+            # A registry failure must not be interpreted as healthy 1C.
+            registry_failed = True
+
+        statuses = {}
+        with ThreadPoolExecutor(max_workers=min(len(keys) + 1, 5)) as pool:
+            futures = {pool.submit(probe_1c_connection, key): key for key in keys}
+            mpstats_future = pool.submit(probe_mpstats_connection)
+            for future, key in futures.items():
+                try:
+                    statuses[key] = future.result()[0]
+                except Exception:
+                    statuses[key] = "unavailable"
+            try:
+                mpstats_status = mpstats_future.result()[0]
+            except ValueError:
+                mpstats_status = "not_configured"
+            except Exception:
+                mpstats_status = "unavailable"
+
+        connected_count = sum(status == "connected" for status in statuses.values())
+        one_c_status = (
+            "unavailable" if registry_failed else
+            "not_configured" if not keys else
+            "connected" if connected_count == len(keys) else
+            "partial" if connected_count else "unavailable"
+        )
+        payload = {
+            "ok": True,
+            "checked_at": datetime.now(ZoneInfo("UTC")).isoformat(),
+            "services": [
+                {"key": "1c", "label": "1С", "status": one_c_status,
+                 "connected": connected_count, "total": len(keys)},
+                {"key": "mpstats", "label": "MPStats", "status": mpstats_status},
+                {"key": "vpn", "label": "VPN 1С", "status": "connected" if vpn_connected else "unavailable"},
+            ],
+        }
+        # Retry transient VPN/1C failures promptly; healthy checks stay cached.
+        ttl = 30 if not vpn_connected or one_c_status in {"unavailable", "partial"} else 300
+        _SERVICE_STATUS_CACHE.update(payload=payload, expires=time.monotonic() + ttl)
+        return payload
+
+
+def admin_connections_payload():
+    """Only MPStats and 1C metadata; never return decrypted credentials."""
+    payload = admin_integrations_payload()
+    payload["services"] = [
+        service for service in payload["services"]
+        if service["key"] == "mpstats" or is_1c_connection_key(service["key"])
+    ]
+    with client_registry_connection() as conn:
+        ensure_admin_connection_events_schema(conn)
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT service_key, action, status, message, http_status, created_at
+                FROM public.bi_service_connection_events
+                WHERE service_key IN ('mpstats', '1c') OR service_key LIKE '1c:%'
+                ORDER BY id DESC LIMIT 50
+            """)
+            events = cur.fetchall()
+    for service in payload["services"]:
+        own_events = [row for row in events if row["service_key"] == service["key"]]
+        service["history"] = [{
+            "action": row["action"], "status": row["status"],
+            "message": row["message"], "http_status": row["http_status"],
+            "created_at": row["created_at"].isoformat(),
+        } for row in own_events[:10]]
+        saved_at = max((field["updated_at"] for field in service["credentials"] if field["saved"]), default="")
+        service["updated_at"] = saved_at
+        if is_1c_connection_key(service["key"]):
+            database = service_credential(service["key"], "database") if service["saved"] else ""
+            service["database_name"] = database
+            service["label"] = "1С · " + database if database else "1С"
+
+        if saved_at and not any(row["action"] == "save" for row in own_events):
+            service["history"].append({
+                "action": "saved_existing", "status": "saved",
+                "message": "Параметры сохранены до включения журнала",
+                "http_status": None, "created_at": saved_at,
+            })
+        last_check = next((row for row in own_events
+            if row["action"] == "check" and row["created_at"].isoformat() >= saved_at), None) if own_events and own_events[0]["action"] == "check" else None
+        service["connection_status"] = (
+            last_check["status"] if service["saved"] and last_check else
+            "untested" if service["saved"] else "not_configured"
+        )
+    payload["services"] = [x for x in payload["services"] if x["key"] != "1c" or x["saved"] or x.get("history")]
+    payload["services"].append({
+        "key": "1c:new", "label": "Добавить базу 1С", "description": "Каждая база сохраняется как отдельное подключение.",
+        "credentials": [{**f, "saved": False} for f in service_credential_fields(SERVICE_INTEGRATION_CATALOG["1c"])],
+        "saved": False, "history": [], "connection_status": "not_configured",
+    })
+
+    labels = {x["key"]: x["label"] for x in payload["services"]}
+    payload["history"] = [{"service_label": labels.get(row["service_key"], "1С (удалено)"),
+        "action": row["action"], "status": row["status"], "message": row["message"],
+        "http_status": row["http_status"], "created_at": row["created_at"].isoformat()}
+        for row in events]
+
+    return payload
+
+
+def save_admin_connection(payload):
+    service_key = str(payload.get("service") or "").strip().lower()
+    if service_key != "mpstats" and not is_1c_connection_key(service_key):
+        raise ValueError("В этом разделе доступны только MPStats и 1С")
+    action = str(payload.get("action") or "save").strip().lower()
+    if service_key == "1c:new":
+        if action != "save":
+            raise ValueError("Сначала сохраните базу")
+        import uuid
+        service_key = "1c:" + uuid.uuid4().hex
+        payload = {**payload, "service": service_key}
+    elif service_key.startswith("1c:"):
+        with client_registry_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT 1 FROM public.bi_service_credentials WHERE service_key=%s LIMIT 1", (service_key,))
+                if not cur.fetchone():
+                    raise ValueError("Подключение уже удалено; обновите список")
+
+    if action == "check":
+        status, message, http_status = probe_mpstats_connection() if service_key == "mpstats" else probe_1c_connection(service_key)
+        record_admin_connection_event(service_key, "check", status, message, http_status)
+    elif action in {"save", "delete"}:
+        save_admin_integration(payload)
+        record_admin_connection_event(
+            service_key, action, "saved" if action == "save" else "deleted",
+            "Параметры подключения сохранены" if action == "save" else "Подключение удалено",
+        )
+    else:
+        raise ValueError("Неизвестное действие с подключением")
+    return admin_connections_payload()
 
 
 def service_credential(service_key, credential_key="api_key"):
@@ -3803,6 +4123,7 @@ def admin_users_payload():
         "allowed_admin_sections": ordered_admin_sections(current_admin_section_ids()),
         "access_enforced": bool(users),
         "password_storage": "PBKDF2-SHA256",
+        "data_sources": __import__("data_access").catalog(sys.modules[__name__]),
     }
 
 
@@ -4033,6 +4354,7 @@ def save_admin_user(payload):
             set(ADMIN_CLIENTS),
             {item["id"] for item in ADMIN_REPORT_CATALOG},
             ADMIN_SECTION_IDS,
+            allowed_data_sources=__import__("data_access").catalog(sys.modules[__name__]),
         )
     result = admin_users_payload()
     result["saved_user"] = saved
@@ -6838,7 +7160,7 @@ def wb_promotion_raw_timestamp(row, name, *fallback_keys):
 
 
 def wb_promotion_campaign_lifetime_end(row, today=None):
-    today = today or date.today()
+    today = today or marketplace_today()
     yesterday = today - timedelta(days=1)
     deleted = wb_promotion_raw_timestamp(row, "deleted", "endTime", "endedAt")
     if not deleted or deleted == date(2100, 1, 1):
@@ -6861,7 +7183,7 @@ def wb_promotion_campaign_lifetime_existing_files(campaign_id):
 
 
 def select_wb_promotion_lifetime_campaigns_from_rows(rows, json_path, campaign_ids=None, today=None):
-    today = today or date.today()
+    today = today or marketplace_today()
     requested_ids = parse_campaign_ids(campaign_ids) if str(campaign_ids or "").strip() else []
     requested_id_set = set(requested_ids)
     campaigns = []
@@ -8021,7 +8343,7 @@ load_app_env()
 
 ADMIN_AUTH_COOKIE_NAME = "kokoc_admin_session"
 ADMIN_AUTH_PASSWORD_ITERATIONS = 310_000
-ADMIN_AUTH_SESSION_TTL_SECONDS = 12 * 60 * 60
+ADMIN_AUTH_SESSION_TTL_SECONDS = 3 * 60 * 60
 ADMIN_AUTH_FAILURE_WINDOW_SECONDS = 10 * 60
 ADMIN_AUTH_MAX_FAILURES = 5
 ADMIN_AUTH_PUBLIC_PATHS = {
@@ -8113,6 +8435,7 @@ def verify_admin_session_token(token, now=None):
             hmac.compare_digest(str(payload.get("username") or ""), str(os.environ.get("ADMIN_AUTH_USERNAME") or ""))
             and int(payload.get("issued_at") or 0) <= current_time + 60
             and int(payload.get("expires_at") or 0) > current_time
+            and int(payload.get("issued_at") or 0) + 3 * 60 * 60 > current_time
         )
     except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError):
         return False
@@ -8165,7 +8488,7 @@ def clear_admin_login_failures(client_key):
 DASHBOARD_ACCESS_USERNAME_ENV = "DASHBOARD_ACCESS_USERNAME"
 DASHBOARD_ACCESS_PASSWORD_ENV = "DASHBOARD_ACCESS_PASSWORD"
 DASHBOARD_ACCESS_COOKIE_NAME = "kokoc_bi_access"
-DASHBOARD_ACCESS_SESSION_TTL_SECONDS = 12 * 60 * 60
+DASHBOARD_ACCESS_SESSION_TTL_SECONDS = 3 * 60 * 60
 
 
 def dashboard_locked_client():
@@ -8288,6 +8611,7 @@ def verify_dashboard_access_session_token(token, now=None):
             )
             and int(payload.get("issued_at") or 0) <= current_time + 60
             and int(payload.get("expires_at") or 0) > current_time
+            and int(payload.get("issued_at") or 0) + 3 * 60 * 60 > current_time
         )
     except (ValueError, TypeError, json.JSONDecodeError, UnicodeDecodeError):
         return False
@@ -8357,6 +8681,8 @@ def verify_managed_access_token(token, now=None):
         current_time = int(time.time() if now is None else now)
         if int(payload.get("issued_at") or 0) > current_time + 60 or int(payload.get("expires_at") or 0) <= current_time:
             return None
+        if payload.get("is_admin") and int(payload.get("issued_at") or 0) + DASHBOARD_ACCESS_SESSION_TTL_SECONDS <= current_time:
+            return None
         if payload.get("is_admin"):
             return {"username": payload.get("username"), "is_admin": True, "clients": [], "reports": [], "admin_sections": list(ADMIN_SECTION_IDS)}
         from galactica_entitlement import configured_subject, require_current_session, transaction_limits, session_revision
@@ -8389,6 +8715,9 @@ def verify_managed_credentials(username, password):
 
 
 def report_id_for_request(parsed):
+    if parsed.path == "/api/assortment":
+        from assortment_api import report_id
+        return report_id(parsed)
     # Reuse existing permissions; query parameters cannot override these endpoints.
     if str(parsed.path or '').startswith('/api/autobidder'):
         return 'adv'
@@ -8425,6 +8754,7 @@ def report_id_for_request(parsed):
         ("/api/reviews", "reviews"),
         ("/api/avito-ads-dashboard", "avitoOverview"),
         ("/api/yandex-market/analytics", "yandexOverview"),
+        ("/api/lamoda/dashboard", "lamodaSales"),
     )
     if path in {"/api/summary", "/api/stats"}:
         return "abc"
@@ -8484,9 +8814,9 @@ def preferred_client_dashboard(reports):
     return reports[0] if reports else "abc"
 
 
-def effective_client_reports(client):
+def effective_client_reports(client, config=None):
     client_key = normalize_client_key(client)
-    config = ADMIN_CLIENTS[client_key]
+    config = ADMIN_CLIENTS[client_key] if config is None else config
     configured = list(config.get("reports") or [])
     marketplaces = set(config.get("marketplaces") or [])
     if (
@@ -8500,6 +8830,8 @@ def effective_client_reports(client):
         configured.extend(report for report in AVITO_REPORT_IDS if report not in configured)
     if "yandex_market" in marketplaces:
         configured.extend(report for report in YANDEX_REPORT_IDS if report not in configured)
+    if "lamoda" in marketplaces:
+        configured.extend(report for report in LAMODA_REPORT_IDS if report not in configured)
     if marketplaces == {"avito"}:
         allowed = set(AVITO_REPORT_IDS)
         configured = [report for report in configured if report in allowed]
@@ -8584,6 +8916,8 @@ def admin_sections_for_request(path, method="GET"):
         return {"database"}
     if normalized == "/api/admin/integrations":
         return {"integrations"}
+    if normalized == "/api/admin/connections":
+        return {"integrations", "clientOnboarding"}
     if normalized == "/api/admin/clients":
         return {"client", "clientOnboarding"} if request_method == "GET" else {"client"}
     if normalized == "/api/admin/yandex-market/discover":
@@ -10167,7 +10501,28 @@ def ozon_abc_category_sql(query, outer_where="", marketplace="ozon"):
             GROUP BY category_name
         """
     query_text = f"""
-        WITH {group_dimension_cte}{attribute_product_ctes}stock AS (
+        WITH {group_dimension_cte}{attribute_product_ctes}stock_products_for_count AS (
+            SELECT {stock_category_expr} AS category_name, s.artikul_wb::text AS sku
+            FROM public.{stock_view} s
+            {stock_group_join}
+            WHERE {stock_filter}
+        ),
+        order_products_for_count AS (
+            SELECT {order_category_expr} AS category_name, o.artikul_wb::text AS sku
+            FROM public.{order_view} o
+            {order_group_join}
+            WHERE {order_filter}
+        ),
+        category_sku_counts AS (
+            SELECT category_name, count(DISTINCT sku) AS sku_count
+            FROM (
+                SELECT * FROM stock_products_for_count
+                UNION ALL
+                SELECT * FROM order_products_for_count
+            ) products
+            GROUP BY category_name
+        ),
+        stock AS (
             SELECT
                 {stock_category_expr} AS category_name,
                 count(DISTINCT s.artikul_wb) AS sku_count,
@@ -10195,12 +10550,13 @@ def ozon_abc_category_sql(query, outer_where="", marketplace="ozon"):
             SELECT
                 coalesce(o.category_name, s.category_name) AS category_name,
                 coalesce(s.total_stock_qty, 0::numeric) AS total_stock_qty,
-                greatest(coalesce(s.sku_count, 0), coalesce(o.ordered_sku_count, 0)) AS sku_count,
+                coalesce(c.sku_count, 0) AS sku_count,
                 coalesce(a.category_attribute_count, 0) AS category_attribute_count,
                 coalesce(o.zakazano_sht, 0::numeric) AS zakazano_sht,
                 coalesce(o.zakazano_rub, 0::numeric) AS zakazano_rub
             FROM orders o
             FULL JOIN stock s ON s.category_name = o.category_name
+            LEFT JOIN category_sku_counts c ON c.category_name = coalesce(o.category_name, s.category_name)
             LEFT JOIN attrs a ON a.category_name = coalesce(o.category_name, s.category_name)
         ),
         totals AS (
@@ -10278,7 +10634,7 @@ def ozon_abc_category_sql(query, outer_where="", marketplace="ozon"):
         FROM final
         {outer_where}
     """
-    return query_text, attribute_values + stock_values + order_values
+    return query_text, attribute_values + stock_values + order_values + stock_values + order_values
 
 
 def ozon_abc_product_sql(query, outer_where="", marketplace="ozon"):
@@ -11244,6 +11600,35 @@ def handle_ozon_product_filters(parsed):
 
 def handle_stats(parsed):
     params = parse_qs(parsed.query)
+    home_keys = {
+        "client", "marketplace", "date_from", "date_to",
+        "sort_col", "sort_dir", "limit", "page",
+    }
+    is_home_category = (
+        set(params).issubset(home_keys)
+        and params.get("sort_col", [""])[0] == "zakazano_rub"
+        and params.get("sort_dir", ["desc"])[0].lower() == "desc"
+        and params.get("page", ["1"])[0] == "1"
+        and bool(params.get("date_from", [""])[0])
+        and bool(params.get("date_to", [""])[0])
+    )
+    if is_home_category:
+        try:
+            from home_marts import category_payload
+            home_limit = max(5, min(int(params.get("limit", ["5"])[0]), MAX_PAGE_SIZE))
+            with get_conn() as conn:
+                fast_payload = category_payload(
+                    conn,
+                    marketplace_from_query(parsed.query),
+                    params["date_from"][0],
+                    params["date_to"][0],
+                    home_limit,
+                )
+            if fast_payload is not None:
+                fast_payload["rows"] = normalize_rows(fast_payload["rows"])
+                return fast_payload
+        except Exception as exc:
+            print(f"home category mart fallback: {exc}", flush=True)
     if is_ozon_abc_query(parsed.query):
         return handle_ozon_abc_stats(parsed)
     if has_mapping_filters(parsed.query):
@@ -13437,7 +13822,7 @@ def handle_funnel_summary(parsed):
                 , 0::numeric AS sessions_total
                 , 0::numeric AS sessions_search_catalog
                 , 0::numeric AS sessions_card
-                , 0::numeric AS returned_units
+                , coalesce(sum(v.returned_units),0) AS returned_units
                 , 0::numeric AS delivered_units
                 , coalesce(sum(v.favorites_adds), 0) AS favorites_adds
                 , coalesce(sum(v.cancelled_units), 0) AS cancelled_units
@@ -13476,7 +13861,9 @@ def handle_funnel_summary(parsed):
                 coalesce(sum(v.ordered_units), 0) AS ordered_units,
                 coalesce(sum(v.ordered_amount_rub), 0) AS ordered_amount_rub,
                 {bought_units_expr} AS bought_units,
-                {bought_amount_expr} AS bought_amount_rub
+                {bought_amount_expr} AS bought_amount_rub,
+                {cohort_units_expr} AS cohort_bought_units,
+                {cohort_amount_expr} AS cohort_bought_amount_rub
                 {wb_extra_select}
             FROM public.{funnel_view} v
             {funnel_join}
@@ -13514,6 +13901,8 @@ def handle_funnel_summary(parsed):
             f.ordered_amount_rub,
             f.bought_units,
             f.bought_amount_rub,
+            f.cohort_bought_units,
+            f.cohort_bought_amount_rub,
             f.favorites_adds,
             f.cancelled_units,
             f.cancelled_amount_rub,
@@ -13555,7 +13944,7 @@ def handle_funnel_summary(parsed):
                 THEN round(coalesce(f.favorites_adds, 0)::numeric / coalesce(f.card_visits, 0)::numeric * 100, 2)
                 ELSE 0 END AS favorite_to_card_visit_pct,
             CASE WHEN coalesce(f.ordered_units, 0) <> 0
-                THEN round(coalesce(f.bought_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
+                THEN round(coalesce(f.cohort_bought_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
                 ELSE 0 END AS buyout_pct,
             CASE WHEN coalesce(f.ordered_units, 0) <> 0
                 THEN round(coalesce(f.cancelled_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
@@ -13601,6 +13990,8 @@ def handle_funnel_summary(parsed):
         category_count_expr=category_count_expr,
         bought_units_expr=bought_units_expr,
         bought_amount_expr=bought_amount_expr,
+        cohort_units_expr=sql.SQL("coalesce(sum(v.cohort_bought_units),0)" if marketplace == "wb" else "0::numeric"),
+        cohort_amount_expr=sql.SQL("coalesce(sum(v.cohort_bought_amount_rub),0)" if marketplace == "wb" else "0::numeric"),
         wb_extra_select=wb_extra_select,
         funnel_where=sql.SQL(funnel_where),
         adv_where=sql.SQL(adv_where),
@@ -13635,7 +14026,7 @@ def handle_funnel_daily(parsed):
                 , 0::numeric AS sessions_total
                 , 0::numeric AS sessions_search_catalog
                 , 0::numeric AS sessions_card
-                , 0::numeric AS returned_units
+                , coalesce(sum(v.returned_units),0) AS returned_units
                 , 0::numeric AS delivered_units
                 , coalesce(sum(v.favorites_adds), 0) AS favorites_adds
                 , coalesce(sum(v.cancelled_units), 0) AS cancelled_units
@@ -13672,7 +14063,9 @@ def handle_funnel_daily(parsed):
                 coalesce(sum(v.ordered_units), 0) AS ordered_units,
                 coalesce(sum(v.ordered_amount_rub), 0) AS ordered_amount_rub,
                 {bought_units_expr} AS bought_units,
-                {bought_amount_expr} AS bought_amount_rub
+                {bought_amount_expr} AS bought_amount_rub,
+                {cohort_units_expr} AS cohort_bought_units,
+                {cohort_amount_expr} AS cohort_bought_amount_rub
                 {wb_extra_select}
             FROM public.{funnel_view} v
             {funnel_join}
@@ -13711,6 +14104,8 @@ def handle_funnel_daily(parsed):
             coalesce(f.ordered_amount_rub, 0) AS ordered_amount_rub,
             coalesce(f.bought_units, 0) AS bought_units,
             coalesce(f.bought_amount_rub, 0) AS bought_amount_rub,
+            coalesce(f.cohort_bought_units,0) AS cohort_bought_units,
+            coalesce(f.cohort_bought_amount_rub,0) AS cohort_bought_amount_rub,
             coalesce(f.favorites_adds, 0) AS favorites_adds,
             coalesce(f.cancelled_units, 0) AS cancelled_units,
             coalesce(f.cancelled_amount_rub, 0) AS cancelled_amount_rub,
@@ -13752,7 +14147,7 @@ def handle_funnel_daily(parsed):
                 THEN round(coalesce(f.favorites_adds, 0)::numeric / coalesce(f.card_visits, 0)::numeric * 100, 2)
                 ELSE 0 END AS favorite_to_card_visit_pct,
             CASE WHEN coalesce(f.ordered_units, 0) <> 0
-                THEN round(coalesce(f.bought_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
+                THEN round(coalesce(f.cohort_bought_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
                 ELSE 0 END AS buyout_pct,
             CASE WHEN coalesce(f.ordered_units, 0) <> 0
                 THEN round(coalesce(f.cancelled_units, 0)::numeric / coalesce(f.ordered_units, 0)::numeric * 100, 2)
@@ -13798,6 +14193,8 @@ def handle_funnel_daily(parsed):
         adv_join=adv_join,
         bought_units_expr=bought_units_expr,
         bought_amount_expr=bought_amount_expr,
+        cohort_units_expr=sql.SQL("coalesce(sum(v.cohort_bought_units),0)" if marketplace == "wb" else "0::numeric"),
+        cohort_amount_expr=sql.SQL("coalesce(sum(v.cohort_bought_amount_rub),0)" if marketplace == "wb" else "0::numeric"),
         wb_extra_select=wb_extra_select,
         funnel_where=sql.SQL(funnel_where),
         adv_where=sql.SQL(adv_where),
@@ -13847,6 +14244,14 @@ def cached_read_only_report(namespace, parsed, loader, *, ignore_params=()):
     canonical_query = urlencode(
         [(name, value) for name in sorted(params) for value in params[name]]
     )
+    generation_file = Path(
+        os.environ.get("PULSE_REPORT_CACHE_DIR", "/var/lib/pulse/report_cache")
+    ) / "home-marts-generation"
+    try:
+        generation = generation_file.read_text(encoding="utf-8").strip()
+    except OSError:
+        generation = "legacy"
+    canonical_query = f"{canonical_query}|home_marts={generation}"
     return cached_payload(namespace, f"{client}|{canonical_query}", loader)
 
 
@@ -15048,7 +15453,7 @@ def review_marketplaces_for_report(client_key, report):
 
 
 def review_default_period_params():
-    today = date.today()
+    today = marketplace_today()
     return {
         "date_from": today.replace(day=1).isoformat(),
         "date_to": today.isoformat(),
@@ -15648,12 +16053,10 @@ def admin_all_clients_registered_task(
 ):
     row_key = REGISTERED_API_MATRIX_ROW_KEYS[step_key]
     order, row_label, stage = ALL_CLIENTS_MATRIX_ROWS[row_key]
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = marketplace_today() - timedelta(days=1)
     window = dict(window or {"date_from": yesterday.isoformat(), "date_to": yesterday.isoformat()})
     command_from = window.get("date_from") or yesterday.isoformat()
     command_to = window.get("date_to") or command_from
-    if step_key == "ozon_finance":
-        command_from = command_to = yesterday.isoformat()
     completeness = dict(completeness or {})
     missing_windows = list(completeness.get("missing_windows") or [])
     missing_labels = [admin_all_clients_window_label(item) for item in missing_windows]
@@ -15774,6 +16177,32 @@ def admin_all_clients_registered_step_tasks(client, client_config, step_key, rep
         return [admin_all_clients_registered_task(client, client_config, step_key, report)]
     state = dict((completeness or {}).get(step_key) or {})
     windows = list(state.get("missing_windows") or [])
+    if step_key == "wb_funnel" and int(state.get("refresh_days") or 0):
+        # Buyouts belong to the order date. Refresh the whole mutable API window,
+        # even when yesterday is missing; filling gaps alone freezes older days.
+        refresh_to = date.fromisoformat(str(state.get("expected_to") or
+                                            (marketplace_today() - timedelta(days=1)).isoformat()))
+        refresh_days = min(int(state["refresh_days"]), int(state.get("retention_days") or 7))
+        refresh_from = refresh_to - timedelta(days=refresh_days - 1)
+        if state.get("expected_from"):
+            refresh_from = max(refresh_from, date.fromisoformat(state["expected_from"]))
+        # Preserve older gaps when the API horizon is longer than the rolling
+        # refresh window. Otherwise a new client could never fill its history.
+        older = []
+        for window in windows:
+            gap_from = date.fromisoformat(window["date_from"])
+            gap_to = min(date.fromisoformat(window["date_to"]), refresh_from - timedelta(days=1))
+            if gap_from <= gap_to:
+                older.append(admin_all_clients_registered_task(
+                    client, client_config, step_key, report,
+                    window={"date_from": gap_from.isoformat(), "date_to": gap_to.isoformat()},
+                    completeness=state,
+                ))
+        return older + [admin_all_clients_registered_task(
+            client, client_config, step_key, report,
+            window={"date_from": refresh_from.isoformat(), "date_to": refresh_to.isoformat()},
+            completeness=state,
+        )]
     if step_key in {"ozon_advertising", "wb_advertising", "avito_advertising"} and len(windows) > 1:
         combined = {
             "date_from": min(str(item.get("date_from") or item.get("date_to") or "") for item in windows),
@@ -15785,7 +16214,7 @@ def admin_all_clients_registered_step_tasks(client, client_config, step_key, rep
         )]
     if not windows:
         refresh_days = int(state.get("refresh_days") or 0)
-        expected_to = str(state.get("expected_to") or (date.today() - timedelta(days=1)).isoformat())
+        expected_to = str(state.get("expected_to") or (marketplace_today() - timedelta(days=1)).isoformat())
         if refresh_days:
             refresh_to = date.fromisoformat(expected_to)
             refresh_from = refresh_to - timedelta(days=refresh_days - 1)
@@ -15798,8 +16227,8 @@ def admin_all_clients_registered_step_tasks(client, client_config, step_key, rep
                 completeness=state,
             )]
         current_window = {
-            "date_from": state.get("expected_to") or (date.today() - timedelta(days=1)).isoformat(),
-            "date_to": state.get("expected_to") or (date.today() - timedelta(days=1)).isoformat(),
+            "date_from": state.get("expected_to") or (marketplace_today() - timedelta(days=1)).isoformat(),
+            "date_to": state.get("expected_to") or (marketplace_today() - timedelta(days=1)).isoformat(),
         }
         return [admin_all_clients_registered_task(
             client,
@@ -16084,7 +16513,7 @@ def handle_admin_imports(parsed):
     daily_order = {key: index for index, key in enumerate(daily_keys)}
     api_daily_keys = KM_TRADE_API_DAILY_IMPORT_KEYS if client == "km_trade" else []
     api_daily_order = {key: index for index, key in enumerate(api_daily_keys)}
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = marketplace_today() - timedelta(days=1)
     api_default_from = yesterday
     if client == "km_trade":
         try:
@@ -17064,6 +17493,8 @@ def aggregate_chart_rows(rows, dashboard, period_group):
             "ordered_amount_rub",
             "bought_units",
             "bought_amount_rub",
+            "cohort_bought_units",
+            "cohort_bought_amount_rub",
             "favorites_adds",
             "cancelled_units",
             "cancelled_amount_rub",
@@ -17119,7 +17550,7 @@ def aggregate_chart_rows(rows, dashboard, period_group):
         row["card_visit_to_order_pct"] = safe_ratio_pct(row.get("ordered_units"), row.get("card_visits"))
         row["ordered_amount_per_unit_rub"] = round(to_float(row.get("ordered_amount_rub")) / to_float(row.get("ordered_units")), 2) if to_float(row.get("ordered_units")) else 0
         row["favorite_to_card_visit_pct"] = safe_ratio_pct(row.get("favorites_adds"), row.get("card_visits"))
-        row["buyout_pct"] = safe_ratio_pct(row.get("bought_units"), row.get("ordered_units"))
+        row["buyout_pct"] = safe_ratio_pct(row.get("cohort_bought_units"), row.get("ordered_units"))
         row["cancellation_pct"] = safe_ratio_pct(row.get("cancelled_units"), row.get("ordered_units"))
         row["wb_club_order_share_pct"] = safe_ratio_pct(row.get("wb_club_ordered_units"), row.get("ordered_units"))
         row["adv_ctr_pct"] = safe_ratio_pct(row.get("adv_clicks"), row.get("adv_impressions"))
@@ -17982,6 +18413,8 @@ def handle_funnel_export(parsed):
         """
             coalesce(sum(v.bought_units), 0) AS bought_units,
             coalesce(sum(v.bought_amount_rub), 0) AS bought_amount_rub,
+            coalesce(sum(v.cohort_bought_units), 0) AS cohort_bought_units,
+            coalesce(sum(v.cohort_bought_amount_rub), 0) AS cohort_bought_amount_rub,
         """
     ) if marketplace == "wb" else sql.SQL("")
     columns = [
@@ -17998,7 +18431,7 @@ def handle_funnel_export(parsed):
         "cart_adds",
         "ordered_units",
         "ordered_amount_rub",
-        *(["bought_units", "bought_amount_rub"] if marketplace == "wb" else []),
+        *(["bought_units", "bought_amount_rub", "cohort_bought_units", "cohort_bought_amount_rub"] if marketplace == "wb" else []),
         "search_to_card_visit_pct",
         "total_impression_to_card_visit_pct",
         "card_visit_to_cart_pct",
@@ -18315,6 +18748,7 @@ REPORT_DATA_API_PATHS = {
     "/api/adv-summary", "/api/media-adv-summary", "/api/funnel-summary",
     "/api/weekly-dynamics", "/api/inventory-history-summary",
     "/api/planfact-summary", "/api/seo-monitoring-products",
+    "/api/lamoda/dashboard",
 }
 
 
@@ -18396,6 +18830,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             self.send_error(404, "static file not found")
             return
         body = file_path.read_bytes()
+        if file_path.suffix.lower() == ".html" and b"/api/access/session/activity.js" not in body:
+            body = body.replace(b"</head>", b'<script defer src="/api/access/session/activity.js"></script></head>', 1)
         self.send_response(200)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Cache-Control", cache_control)
@@ -18411,7 +18847,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", self.guess_type(str(file_path)))
         self.send_header("Cache-Control", cache_control)
-        self.send_header("Content-Length", str(file_path.stat().st_size))
+        size = file_path.stat().st_size
+        if file_path.suffix.lower() == ".html":
+            body = file_path.read_bytes()
+            if b"/api/access/session/activity.js" not in body:
+                body = body.replace(b"</head>", b'<script defer src="/api/access/session/activity.js"></script></head>', 1)
+            size = len(body)
+        self.send_header("Content-Length", str(size))
         self.end_headers()
 
     def send_json(self, payload, status=200, headers=None):
@@ -18502,6 +18944,13 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             return {"username": "dashboard", "is_admin": True, "clients": [], "reports": [], "admin_sections": list(ADMIN_SECTION_IDS)}
         return None
 
+    def dashboard_access_default_path(self):
+        return "/"
+
+    def dashboard_access_return_path(self, value):
+        from dashboard_access_navigation import safe_return_path
+        return safe_return_path(value, self.dashboard_access_default_path())
+
     def dashboard_access_redirect(self, path):
         prefix = self.dashboard_access_prefix()
         location = f"{prefix}{path}" if prefix else path
@@ -18523,7 +18972,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 status=401,
             )
             return
-        self.dashboard_access_redirect("/login")
+        target = self.dashboard_access_return_path(parsed.path + ("?" + parsed.query if parsed.query else ""))
+        self.dashboard_access_redirect("/login?" + urlencode({"next": target}))
 
     def handle_dashboard_access_login(self):
         from galactica_entitlement import SourceDenied, require_access_origin, register_session
@@ -18589,7 +19039,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self.send_json({"ok": False, "reason_code": "SOURCE_AUTHORITY_UNAVAILABLE"}, status=503)
                 return
         self.send_json(
-            {"ok": True, "authenticated": True, **({"source_return": source_return} if source_return else {})},
+            {"ok": True, "authenticated": True, **({"source_return": source_return} if source_return else {"return_to": self.dashboard_access_prefix() + self.dashboard_access_return_path(payload.get("next"))})},
             headers={"Set-Cookie": self.dashboard_access_cookie_header(token)},
         )
 
@@ -18848,6 +19298,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/galactica/database":
+            from trend_database import handle
+            handle(sys.modules[__name__], self)
+            return
         if parsed.path == "/api/galactica/authorize":
             from galactica_consent import handle_consent
             handle_consent(sys.modules[__name__], self, parsed)
@@ -18859,6 +19313,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/galactica/delivery/finish":
             from galactica_reports import handle_delivery_finish
             handle_delivery_finish(sys.modules[__name__], self, parsed)
+            return
+        if parsed.path == "/api/access/session/activity":
+            from session_idle import handle
+            handle(sys.modules[__name__], self, touch=True)
             return
         if parsed.path == "/api/access/login":
             try:
@@ -18878,6 +19336,10 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         access_token = CURRENT_ACCESS_USER.set(self.dashboard_access_identity())
         try:
             report_id = report_id_for_request(parsed)
+            if report_id and parsed.path.startswith('/api/') and CURRENT_ACCESS_USER.get() and not __import__('data_access').report_permitted(CURRENT_ACCESS_USER.get(), current_client_key(), report_id):
+                self.send_json({"ok": False, "error": "Нет доступа к данным этого отчёта"}, status=403)
+                return
+
             access_user = CURRENT_ACCESS_USER.get()
             if report_id and access_user and not access_user.get("is_admin") and report_id not in set(access_user.get("reports") or []):
                 self.send_json({"ok": False, "error": "Нет доступа к отчёту"}, status=403)
@@ -19010,6 +19472,11 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 try:
                     self.send_json(discover_admin_yandex_market(payload))
                 except (ValueError, RuntimeError) as exc:
+                    self.send_json({"ok": False, "error": str(exc)}, status=400)
+            elif parsed.path == "/api/admin/connections":
+                try:
+                    self.send_json(save_admin_connection(self.read_json_body()))
+                except ValueError as exc:
                     self.send_json({"ok": False, "error": str(exc)}, status=400)
             elif parsed.path == "/api/admin/integrations":
                 try:
@@ -19590,6 +20057,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/access/session/activity.js":
+            from session_idle import script
+            script(self)
+            return
+        if parsed.path == "/api/access/session/status":
+            from session_idle import handle
+            handle(sys.modules[__name__], self)
+            return
         if parsed.path == "/api/galactica/authorize":
             from galactica_consent import handle_consent
             handle_consent(sys.modules[__name__], self, parsed)
@@ -19608,7 +20083,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
             return
         if parsed.path in {"/login", "/login/"}:
             if parsed.query != "source=1" and self.dashboard_access_granted():
-                self.dashboard_access_redirect("/")
+                self.dashboard_access_redirect(self.dashboard_access_return_path(parse_qs(parsed.query).get("next", [None])[0]))
             else:
                 self.send_static_file("access-login.html", cache_control="no-store")
             return
@@ -19622,9 +20097,19 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         client_token = CURRENT_CLIENT.set(client_from_query(parsed.query))
         try:
             report_id = report_id_for_request(parsed)
+            if report_id and parsed.path.startswith('/api/') and CURRENT_ACCESS_USER.get() and not __import__('data_access').report_permitted(CURRENT_ACCESS_USER.get(), current_client_key(), report_id):
+                self.send_json({"ok": False, "error": "Нет доступа к данным этого отчёта"}, status=403)
+                return
+
             access_user = CURRENT_ACCESS_USER.get()
             if report_id and access_user and not access_user.get("is_admin") and report_id not in set(access_user.get("reports") or []):
                 self.send_json({"ok": False, "error": "Нет доступа к отчёту"}, status=403)
+                return
+            from assortment_api import handle as handle_assortment
+            if handle_assortment(sys.modules[__name__], self, parsed):
+                return
+            from trend_retail import handle as handle_retail
+            if handle_retail(sys.modules[__name__], self, parsed):
                 return
             if parsed.path == "/api/autobidder/overview":
                 from autobidder.routes import get_payload
@@ -19722,6 +20207,37 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                         "marketplaces": client_marketplaces_payload(client),
                     }
                 )
+            elif parsed.path == "/api/database-status":
+                permitted = {item["key"] for item in dashboard_clients_payload()}
+                databases = []
+                for key, label in (("toptop", "TOPTOP"), ("lera_nena", "LERA NENA")):
+                    if key not in permitted:
+                        continue
+                    connected = False
+                    conn = None
+                    try:
+                        config = read_db_config(key)
+                        config["connect_timeout"] = 2
+                        conn = psycopg2.connect(**config)
+                        with conn.cursor() as cursor:
+                            cursor.execute("SELECT 1")
+                            connected = cursor.fetchone()[0] == 1
+                    except Exception:
+                        connected = False
+                    finally:
+                        if conn is not None:
+                            conn.close()
+                    databases.append({"client": key, "label": label, "connected": connected})
+                self.send_json({
+                    "ok": True,
+                    "checked_at": datetime.now(ZoneInfo("UTC")).isoformat(),
+                    "databases": databases,
+                })
+            elif parsed.path == "/api/service-status":
+                if "toptop" not in {item["key"] for item in dashboard_clients_payload()}:
+                    self.send_json({"ok": False, "error": "Нет доступа"}, status=403)
+                else:
+                    self.send_json(service_connection_status_payload())
             elif parsed.path == "/api/review-dashboard":
                 self.send_json(handle_review_dashboard(parsed))
             elif parsed.path in {"/api/reviews-workbench", "/api/reviews-insights"}:
@@ -19787,6 +20303,14 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 client = current_client_key()
                 if "avito" not in set(ADMIN_CLIENTS[client].get("marketplaces") or []):
                     self.send_json({"ok": False, "error": "Avito Ads не подключён для выбранного клиента"}, status=409)
+                else:
+                    self.send_json(dashboard_payload(parsed, read_db_config(client)))
+            elif parsed.path == "/api/lamoda/dashboard":
+                from lamoda_dashboard import dashboard_payload
+
+                client = current_client_key()
+                if "lamoda" not in set(ADMIN_CLIENTS[client].get("marketplaces") or []):
+                    self.send_json({"ok": False, "error": "Lamoda не подключена для выбранного клиента"}, status=409)
                 else:
                     self.send_json(dashboard_payload(parsed, read_db_config(client)))
             elif parsed.path == "/api/km-trade/sales-plan":
@@ -19956,7 +20480,22 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 config = read_db_config(client)
                 supported_marketplaces = connected_marketplaces(config, client, supported_marketplaces)
                 def build_pl_payload():
-                    payload = selected_payload(config, date_from, date_to, client, marketplace, supported_marketplaces)
+                    home_summary = (
+                        bool(date_from and date_to)
+                        and (params.get("workbench") or [""])[0] != "1"
+                        and (params.get("financial_model") or [""])[0] != "1"
+                        and (params.get("include_plan") or [""])[0].strip().lower()
+                            not in {"1", "true", "yes", "on"}
+                    )
+                    payload = None
+                    if home_summary:
+                        try:
+                            from home_marts import home_pl_payload
+                            payload = home_pl_payload(config, date_from, date_to, client, marketplace)
+                        except Exception as exc:
+                            print(f"home P&L mart fallback: {exc}", flush=True)
+                    if payload is None:
+                        payload = selected_payload(config, date_from, date_to, client, marketplace, supported_marketplaces)
                     payload["marketplaces"] = [{"id": key, "label": LABELS[key]} for key in supported_marketplaces if key in LABELS]
                     if (params.get("workbench") or [""])[0] == "1":
                         from pl_workbench import attach_workbench
@@ -19970,7 +20509,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     if marketplace == "ozon" and include_plan:
                         payload["plan"] = planned_pl_payload(config, date_from, date_to, client)
                     return payload
-                self.send_json(cached_read_only_report("profit-loss", parsed, build_pl_payload))
+                self.send_json(cached_read_only_report("profit-loss-r87", parsed, build_pl_payload))
             elif parsed.path == "/api/km-trade/pl-export":
                 from marketplace_pl import selected_payload, workbook_bytes, connected_marketplaces
                 params = parse_qs(parsed.query)
@@ -20355,6 +20894,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                     column_filters=(params.get("column_filters") or [""])[0],
                     categories=(params.get("categories") or [""])[0],
                     project_id=(params.get("project_id") or [""])[0],
+                    client=client,
                 ))
             elif parsed.path == "/api/seo-project-template":
                 try:
@@ -20456,6 +20996,8 @@ class DashboardHandler(SimpleHTTPRequestHandler):
                 self.send_json(admin_users_payload())
             elif parsed.path == "/api/admin/database-overview":
                 self.send_json(admin_database_overview_payload())
+            elif parsed.path == "/api/admin/connections":
+                self.send_json(admin_connections_payload())
             elif parsed.path == "/api/admin/integrations":
                 self.send_json(admin_integrations_payload())
             elif parsed.path == "/api/admin/imports":
@@ -20499,7 +21041,7 @@ class DashboardHandler(SimpleHTTPRequestHandler):
         parsed = urlparse(self.path)
         if parsed.path in {"/login", "/login/"}:
             if parsed.query != "source=1" and self.dashboard_access_granted():
-                self.dashboard_access_redirect("/")
+                self.dashboard_access_redirect(self.dashboard_access_return_path(parse_qs(parsed.query).get("next", [None])[0]))
             else:
                 self.send_static_file_headers("access-login.html", cache_control="no-store")
             return

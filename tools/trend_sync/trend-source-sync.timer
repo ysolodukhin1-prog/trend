@@ -1,0 +1,11 @@
+[Unit]
+Description=Check TREND live source changes every 30 seconds
+
+[Timer]
+OnBootSec=60
+OnUnitInactiveSec=30
+AccuracySec=1
+Unit=trend-source-sync.service
+
+[Install]
+WantedBy=timers.target

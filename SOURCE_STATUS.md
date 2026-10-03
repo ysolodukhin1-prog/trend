@@ -1,14 +1,9 @@
-# TREND source snapshot
+# Live source synchronization
 
-TREND is the VPS edition of PULSE for TOPTOP and LERA NENA.
+Prepared 2026-10-03 from running container `toptop_data_stage-pulse_reader-1`, image `toptop-trend:lamoda-combined-r177-20261001`.
 
-This source tree comes from the deployed-source audit captured on 2026-09-18. It is not asserted to equal the current VPS release: SSH on 2026-09-28 timed out during banner exchange. Later deployment patches remain available locally for reconciliation. No production changes were made.
+The live image and hashes are recorded in LIVE_SOURCE_MANIFEST.json on each source update. The historical SOURCE_MANIFEST.json is not the current version inventory. Source includes the mounted data_access.py as visible inside the running container. No database or credential files are included.
 
-Secrets, environment files, database dumps, runtime logs, agent memory and unrelated client analysis scripts are excluded. Runtime requires separately configured databases and credentials. See SOURCE_MANIFEST.json for per-file provenance.
+Python source is parsed before every commit. File exclusions, secret-pattern guards, archive path/checksum validation, stable-snapshot debounce and concurrent Git edit protection are tested separately. These checks do not establish application integration correctness. Production services are not modified by synchronization.
 
-## Known limitations
-
-- The referenced stylesheet was restored from deployment/seo-yandex-20260918; its SHA-256 matches the r41-registry-db copy.
-- Later deployment revisions (through r154) are not represented by this snapshot.
-- Editable frontend sources from the shared PULSE checkout include unrelated client proposals and are not imported. The captured runtime JavaScript bundle is included.
-- Python source syntax was checked without executing application code; runtime integration has not been tested.
+The deployed frontend includes compiled assets and historical asset versions retained in the image, not its editable React source tree. The Dockerfile captured from the image is archival; image layers and separately provisioned services/secrets mean a standalone rebuild is not asserted to reproduce the running deployment. The repository tracks selected deployed source, not all server state.

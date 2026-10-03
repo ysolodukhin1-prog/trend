@@ -66,7 +66,7 @@ def rebuild() -> dict[str, object]:
                 SELECT
                     operation_date AS report_date,
                     coalesce(sum(amount) FILTER (
-                        WHERE line_kind = 'revenue' AND amount > 0
+                        WHERE line_kind = 'revenue'
                     ), 0) AS sales_rub
                 FROM public.ozon_finance_lines
                 GROUP BY operation_date

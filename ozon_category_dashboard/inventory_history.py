@@ -1000,6 +1000,29 @@ def stock_daily_rows(parsed: Any, get_conn: Callable[[], Any], marketplace: str)
     with get_conn() as conn:
         if not _table_exists(conn):
             return []
+        params = parse_qs(parsed.query)
+        scoped = any(
+            value
+            for key in ("product", "article", "categories", "inventory_skus", "q", "category", "category_exact")
+            for value in params.get(key, [])
+            if str(value).strip()
+        )
+        if not scoped:
+            try:
+                from home_marts import inventory_daily_rows
+
+                prepared = inventory_daily_rows(
+                    conn,
+                    marketplace,
+                    params.get("date_from", [""])[0] or None,
+                    params.get("date_to", [""])[0] or None,
+                )
+                if prepared is not None:
+                    return prepared
+            except Exception as exc:
+                # The Home optimization is additive. A missing/invalid mart must
+                # never make the existing inventory report unavailable.
+                print(f"home inventory mart fallback: {type(exc).__name__}", flush=True)
         where, values = _stock_where(parsed, marketplace)
         with conn.cursor() as cur:
             cur.execute(

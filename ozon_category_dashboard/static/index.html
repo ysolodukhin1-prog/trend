@@ -1,0 +1,689 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PULSE</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="styles.css?v=20260907-yandex-key-only-v2" />
+    <link rel="stylesheet" href="commercial_radar.css?v=20260913-shared-health-v1" />
+    <link rel="stylesheet" href="km_sales_planning.css?v=20260910-client-marketplaces-growth-v2" />
+    <link rel="stylesheet" href="km_media_plan.css?v=20260813-client-media-plan-v1" />
+    <link rel="stylesheet" href="sportmaster_run_rate.css?v=20260721-sportmaster-run-rate-daily-v2" />
+    <link rel="stylesheet" href="kokoc-brand.css?v=20260814-sidebar-planfact-media-v1" />
+    <link rel="stylesheet" href="responsive-system-v3.css?v=20260728-system-responsive-v3" />
+    <link rel="stylesheet" href="km_sales_planning_matrix_v3.css?v=20260911-orders-row-v33" />
+    <link rel="stylesheet" href="km_profit_loss_parity.css?v=20260804-km-pl-planning-v3" />
+    <link rel="stylesheet" href="km_unit_economics_parity.css?v=20260817-unit-pagination-v1" />
+    <link rel="stylesheet" href="km_unit_economics_workbench.css?v=20260803-km-unit-ad-allocation-v19" />
+    <link rel="stylesheet" href="compact_shell_v2.css?v=20260814-sidebar-planfact-media-v1" />
+    <link rel="stylesheet" href="admin_header_light.css?v=20260813-admin-add-store-v1" />
+    <link rel="stylesheet" href="seo_projects.css?v=20260819-seo-projects-v13" />
+    <link rel="stylesheet" href="seo_project_builder.css?v=20260825-full-run-roadmap-v20" />
+    <link rel="stylesheet" href="yandex_market_dashboard.css?v=20260908-yandex-reports-v1" />
+  </head>
+  <body class="pfm-compact-sidebar-active">
+    <script>
+      (function () {
+        try {
+          var params = new URLSearchParams(window.location.search || "");
+          if (params.has("client") || params.has("dashboard")) {
+            window.__KOKOC_PREBOOT_CONTEXT__ = {
+              explicit: true,
+              dashboard: params.get("dashboard") || "",
+              marketplace: params.get("marketplace") || "ozon"
+            };
+            document.documentElement.classList.add("explicit-dashboard-context", "explicit-dashboard-preboot-pending");
+            document.body.classList.add("report-shell-loading");
+          }
+        } catch (error) {}
+      })();
+    </script>
+    <button id="mobileNavToggle" type="button" class="mobile-nav-toggle" aria-label="Открыть навигацию" aria-expanded="false">☰</button>
+    <div class="layout">
+      <aside class="sidebar" aria-label="Навигация">
+        <a id="navPortfolio" href="./" class="nav-item nav-portfolio" aria-label="Общий отчёт">Общий</a>
+        <div id="navPinnedTitle" class="side-title">Закреплено</div>
+        <a id="navClientReview" href="review/" class="nav-item nav-pinned hidden" aria-hidden="true" tabindex="-1">Ревью по клиенту</a>
+        <div id="navReportsTitle" class="side-title">Отчеты</div>
+        <button id="navPlanFact" type="button" class="nav-item active">План/факт</button>
+        <button id="navSalesPlanning" type="button" class="nav-item">План продаж</button>
+        <button id="navMediaPlan" type="button" class="nav-item">Медиаплан</button>
+        <div id="navFinanceTitle" class="nav-group-title hidden">Финансы</div>
+        <button id="navProfitLoss" type="button" class="nav-item nav-subitem hidden">P&amp;L</button>
+        <button id="navUnitEconomics" type="button" class="nav-item nav-subitem hidden">Юнит-экономика</button>
+        <div id="navClientsTitle" class="nav-group-title hidden">Клиенты</div>
+        <a id="navReviews" class="nav-item nav-subitem hidden" href="react/?dashboard=reviews">Работа с отзывами</a>
+        <div id="navAdvertisingTitle" class="nav-group-title">Реклама</div>
+        <button id="navAdv" type="button" class="nav-item nav-subitem">Товарная реклама</button>
+        <button id="navMediaAdv" type="button" class="nav-item nav-subitem">Медийная реклама</button>
+        <div id="navSalesTitle" class="nav-group-title">Продажи</div>
+        <button id="navFunnel" type="button" class="nav-item nav-subitem">Воронка продаж</button>
+        <button id="navWeeklyDynamics" type="button" class="nav-item nav-subitem">Еженедельная динамика</button>
+        <div id="navLogisticsTitle" class="nav-group-title hidden">Логистика</div>
+        <button id="navInventoryHistory" type="button" class="nav-item nav-subitem hidden">История запасов</button>
+        <div id="navSeoTitle" class="nav-group-title">SEO</div>
+        <button id="navSeoMonitoring" type="button" class="nav-item nav-subitem">Мониторинг SEO</button>
+        <button id="navWbSearchQueries" type="button" class="nav-item nav-subitem">запросы ВБ</button>
+        <button id="navWbEntrance" type="button" class="nav-item nav-subitem">Точки входа WB</button>
+        <div id="navAvitoTitle" class="nav-group-title hidden">Avito Ads</div>
+        <button id="navAvitoOverview" type="button" class="nav-item nav-subitem hidden">Обзор</button>
+        <button id="navAvitoCampaigns" type="button" class="nav-item nav-subitem hidden">Кампании</button>
+        <button id="navAvitoGroups" type="button" class="nav-item nav-subitem hidden">Группы</button>
+        <button id="navAvitoCreatives" type="button" class="nav-item nav-subitem hidden">Креативы</button>
+        <button id="navAvitoDaily" type="button" class="nav-item nav-subitem hidden">Статистика по дням</button>
+        <div id="navYandexTitle" class="nav-group-title hidden">Яндекс Маркет</div>
+        <button id="navYandexOverview" type="button" class="nav-item nav-subitem hidden">Обзор</button>
+        <button id="navYandexFunnel" type="button" class="nav-item nav-subitem hidden">Воронка</button>
+        <button id="navYandexFinance" type="button" class="nav-item nav-subitem hidden">Финансы</button>
+        <button id="navYandexPromotion" type="button" class="nav-item nav-subitem hidden">Продвижение</button>
+        <button id="navYandexInventory" type="button" class="nav-item nav-subitem hidden">Остатки</button>
+        <div id="navAbcTitle" class="nav-group-title">ABC</div>
+        <button id="navAbc" type="button" class="nav-item">ABC по категориям</button>
+        <button id="navProduct" type="button" class="nav-item">ABC по продуктам</button>
+        <button id="navSku" type="button" class="nav-item">SKU-скоринг</button>
+        <button id="navSeoBot" type="button" class="nav-item nav-subitem" aria-label="Семантика, генерация SEO">Семантика, генерация SEO</button>
+        <button id="navAdmin" type="button" class="nav-item nav-admin">Админка</button>
+      </aside>
+      <button id="mobileNavOverlay" type="button" class="mobile-nav-overlay" aria-label="Закрыть навигацию"></button>
+
+      <main class="shell">
+      <header class="topbar">
+        <div class="brand-left">
+          <a class="brand" href="./" title="Общий отчёт" aria-label="Перейти к общему отчёту">PULSE</a>
+          <h1 id="dashboardTitle">План/факт</h1>
+          <p id="status">Подключение к витрине...</p>
+        </div>
+        <label class="client-switcher">
+          Аккаунт
+          <select id="clientSelect">
+            <option value="toptop" selected>TOPTOP</option>
+            <option value="lera_nena">LERA NENA</option>
+          </select>
+        </label>
+        <button id="backToAbc" type="button" class="ghost hidden">Назад к ABC</button>
+        <button
+          id="exportExcel"
+          type="button"
+          class="topbar-export-button"
+          aria-label="Выгрузить отчет с диаграммой в Excel"
+          title="Выгрузить отчет с диаграммой в Excel"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4h14v-4" />
+          </svg>
+        </button>
+      </header>
+      <section id="reportLoadingState" class="report-loading-state" data-placeholder-kind="preparing" role="status" aria-live="polite">
+        <img
+          id="reportLoadingIllustration"
+          class="report-loading-illustration"
+          src="assets/empty-states/report-preparing.png"
+          alt=""
+          aria-hidden="true"
+        />
+        <div class="report-loading-copy">
+          <span class="report-loading-indicator" aria-hidden="true"></span>
+          <strong id="reportLoadingLabel">Загружаем отчет...</strong>
+          <p id="reportLoadingHint">Цифры уже в пути. Осталось собрать их в один отчет.</p>
+        </div>
+      </section>
+      <script>
+        (function () {
+          try {
+            var context = window.__KOKOC_PREBOOT_CONTEXT__;
+            if (!context || !context.explicit) return;
+            var marketplaceLabel = String(context.marketplace || "ozon").toLowerCase() === "wb" ? "WB" : "Ozon";
+            var titleByDashboard = {
+              planfact: "План/факт",
+              salesPlanning: "План продаж",
+              mediaPlan: "Медиаплан",
+              profitLoss: "P&L",
+              unitEconomics: "Юнит-экономика",
+              reviews: "Работа с отзывами",
+              adv: "Реклама " + marketplaceLabel,
+              mediaAdv: "Медийная реклама " + marketplaceLabel,
+              funnel: "Воронка продаж " + marketplaceLabel,
+              weeklyDynamics: "Еженедельная динамика " + marketplaceLabel,
+              inventoryHistory: "История запасов " + marketplaceLabel,
+              seoMonitoring: "Мониторинг SEO",
+              wbSearchQueries: "запросы ВБ",
+              wbEntrance: "Точки входа WB",
+              avitoOverview: "Avito Ads · Обзор",
+              avitoCampaigns: "Avito Ads · Кампании",
+              avitoGroups: "Avito Ads · Группы",
+              avitoCreatives: "Avito Ads · Креативы",
+              avitoDaily: "Avito Ads · Статистика по дням",
+              yandexOverview: "Яндекс Маркет · Обзор",
+              yandexFunnel: "Яндекс Маркет · Воронка",
+              yandexFinance: "Яндекс Маркет · Финансы",
+              yandexPromotion: "Яндекс Маркет · Продвижение",
+              yandexInventory: "Яндекс Маркет · Остатки",
+              abc: "ABC по категориям",
+              product: "ABC по продуктам",
+              sku: "SKU-скоринг",
+              admin: "Админка"
+            };
+            var navByDashboard = {
+              planfact: "navPlanFact",
+              salesPlanning: "navSalesPlanning",
+              mediaPlan: "navMediaPlan",
+              profitLoss: "navProfitLoss",
+              unitEconomics: "navUnitEconomics",
+              reviews: "navReviews",
+              adv: "navAdv",
+              mediaAdv: "navMediaAdv",
+              funnel: "navFunnel",
+              weeklyDynamics: "navWeeklyDynamics",
+              inventoryHistory: "navInventoryHistory",
+              seoMonitoring: "navSeoMonitoring",
+              wbSearchQueries: "navWbSearchQueries",
+              wbEntrance: "navWbEntrance",
+              avitoOverview: "navAvitoOverview",
+              avitoCampaigns: "navAvitoCampaigns",
+              avitoGroups: "navAvitoGroups",
+              avitoCreatives: "navAvitoCreatives",
+              avitoDaily: "navAvitoDaily",
+              yandexOverview: "navYandexOverview",
+              yandexFunnel: "navYandexFunnel",
+              yandexFinance: "navYandexFinance",
+              yandexPromotion: "navYandexPromotion",
+              yandexInventory: "navYandexInventory",
+              abc: "navAbc",
+              product: "navProduct",
+              sku: "navSku",
+              admin: "navAdmin"
+            };
+            var dashboard = context.dashboard || "planfact";
+            var dashboardTitle = titleByDashboard[dashboard] || "PULSE";
+            document.getElementById("dashboardTitle").textContent = dashboardTitle;
+            document.getElementById("status").textContent = "Загружаем отчет...";
+            document.getElementById("reportLoadingLabel").textContent = "Загружаем: " + dashboardTitle;
+            document.querySelectorAll(".nav-item.active").forEach(function (item) { item.classList.remove("active"); });
+            var activeNav = document.getElementById(navByDashboard[dashboard]);
+            if (activeNav) activeNav.classList.add("active");
+          } finally {
+            document.documentElement.classList.remove("explicit-dashboard-preboot-pending");
+          }
+        })();
+      </script>
+
+      <section class="filters" aria-label="Фильтры">
+        <label data-filter-group="core">
+          Маркетплейс
+          <select id="marketplace">
+            <option value="ozon" selected>Ozon</option>
+            <option value="wb">WB</option>
+          </select>
+        </label>
+        <label data-filter-group="core">
+          <span id="categoryFilterLabel">Категория</span>
+          <div class="dropdown-multi" id="categoryDropdown">
+            <button id="categoryToggle" type="button" class="dropdown-toggle">Все категории</button>
+            <div id="categoryMenu" class="dropdown-menu hidden"></div>
+          </div>
+        </label>
+        <label class="wb-entrance-filter hidden" data-filter-group="analytics">
+          Раздел WB
+          <select id="wb_entrance_section"></select>
+        </label>
+        <label class="wb-entrance-filter hidden" data-filter-group="analytics">
+          Точка входа
+          <select id="wb_entrance_point"></select>
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Подкатегория
+          <div class="dropdown-multi" id="sm_subcategoryDropdown" data-sportmaster-multi="sm_subcategory">
+            <button id="sm_subcategoryToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_subcategoryMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_subcategory" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Бренд
+          <div class="dropdown-multi" id="sm_brandDropdown" data-sportmaster-multi="sm_brand">
+            <button id="sm_brandToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_brandMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_brand" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Модель
+          <div class="dropdown-multi" id="sm_modelDropdown" data-sportmaster-multi="sm_model">
+            <button id="sm_modelToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_modelMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_model" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Пол
+          <div class="dropdown-multi" id="sm_genderDropdown" data-sportmaster-multi="sm_gender">
+            <button id="sm_genderToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_genderMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_gender" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Возраст
+          <div class="dropdown-multi" id="sm_ageDropdown" data-sportmaster-multi="sm_age">
+            <button id="sm_ageToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_ageMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_age" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Коллекция
+          <div class="dropdown-multi" id="sm_collectionDropdown" data-sportmaster-multi="sm_collection">
+            <button id="sm_collectionToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_collectionMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_collection" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Сезон
+          <div class="dropdown-multi" id="sm_seasonDropdown" data-sportmaster-multi="sm_season">
+            <button id="sm_seasonToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_seasonMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_season" type="hidden" />
+        </label>
+        <label class="sportmaster-filter hidden" data-filter-group="assortment">
+          Назначение / спорт
+          <div class="dropdown-multi" id="sm_sportDropdown" data-sportmaster-multi="sm_sport">
+            <button id="sm_sportToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="sm_sportMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="sm_sport" type="hidden" />
+        </label>
+        <label class="boiron-filter hidden" data-filter-group="assortment">
+          Бренд
+          <div class="dropdown-multi" id="boiron_brandDropdown" data-boiron-multi="boiron_brand">
+            <button id="boiron_brandToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="boiron_brandMenu" class="dropdown-menu hidden"></div>
+          </div>
+          <input id="boiron_brand" type="hidden" />
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          Модель GJ
+          <input id="gj_model" type="search" placeholder="Введите модель" />
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          Осн. Ассорт / БиА
+          <select id="assortment_bia"></select>
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          ТГ
+          <select id="tg"></select>
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          ТГ+
+          <select id="tg_plus"></select>
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          Пол / ЦГ
+          <select id="cg"></select>
+        </label>
+        <label class="mapping-filter" data-filter-group="assortment">
+          Сезон
+          <select id="season"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Пол карточки Ozon
+          <select id="ozon_gender"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Коллекция карточки Ozon
+          <select id="ozon_collection"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Сезон карточки Ozon
+          <select id="ozon_season"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Стиль карточки Ozon
+          <select id="ozon_style"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Цвет
+          <select id="ozon_color"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Материал
+          <select id="ozon_material"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Состав материала
+          <select id="ozon_material_composition"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Российский размер
+          <select id="ozon_russian_size"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Размер производителя
+          <select id="ozon_manufacturer_size"></select>
+        </label>
+        <label class="ozon-product-attribute-filter hidden" data-filter-group="assortment">
+          Целевая аудитория
+          <select id="ozon_target_audience"></select>
+        </label>
+        <label class="adv-filter hidden" data-filter-group="core">
+          <span id="productFilterLabel">Наименование</span>
+          <div class="dropdown-multi" id="productDropdown">
+            <button id="productToggle" type="button" class="dropdown-toggle">Все товары</button>
+            <div id="productMenu" class="dropdown-menu product-menu hidden">
+              <input id="productSearch" type="search" placeholder="Введите наименование" />
+              <div id="productOptions"></div>
+            </div>
+          </div>
+          <input id="product" type="hidden" />
+        </label>
+        <label class="adv-campaign-filter hidden" data-filter-group="core">
+          Кампания
+          <select id="adv_campaign_id" aria-label="Кампания Ozon"></select>
+        </label>
+        <label class="collection-filter hidden" data-filter-group="merch">
+          Приоритетная коллекция
+          <div class="dropdown-multi" id="collectionStatusDropdown">
+            <button id="collectionStatusToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="collectionStatusMenu" class="dropdown-menu collection-status-menu hidden"></div>
+          </div>
+          <input id="collection_status" type="hidden" />
+        </label>
+        <label class="seo-filter hidden" data-filter-group="merch">
+          Тег SKU
+          <div class="dropdown-multi" id="seoStatusDropdown">
+            <button id="seoStatusToggle" type="button" class="dropdown-toggle">Все</button>
+            <div id="seoStatusMenu" class="dropdown-menu seo-status-menu hidden"></div>
+          </div>
+          <input id="seo_status" type="hidden" />
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Брендовость запроса
+          <select id="query_brand_class"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Найденный бренд
+          <select id="query_brand_name"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Тип запроса
+          <select id="query_type"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Аудитория запроса
+          <select id="query_audience"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Сценарий
+          <select id="query_scenario"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Конкретность
+          <select id="query_specificity"></select>
+        </label>
+        <label class="wb-query-classification-filter hidden" data-filter-group="query_semantics">
+          Ранг частотности
+          <select id="frequency_tier"></select>
+        </label>
+        <label data-filter-group="analytics">
+          ABC заказов
+          <select id="abc_orders"></select>
+        </label>
+        <label data-filter-group="analytics">
+          ABC продаж
+          <select id="abc_sales"></select>
+        </label>
+        <label data-filter-group="analytics">
+          ABC остатков
+          <select id="abc_stock"></select>
+        </label>
+        <label data-filter-group="analytics">
+          ABC итог
+          <select id="abc_combined"></select>
+        </label>
+        <label data-filter-group="analytics">
+          Сортировка / показатель
+          <select id="sort">
+            <option value="stock">Остатки</option>
+            <option value="sku">SKU</option>
+            <option value="orders">Заказы, шт</option>
+            <option value="sales">Заказы, руб</option>
+            <option value="attributes">Характеристики</option>
+          </select>
+        </label>
+        <label data-filter-group="actions">
+          Строк
+          <select id="limit">
+            <option>25</option>
+            <option selected>50</option>
+            <option>100</option>
+            <option>200</option>
+          </select>
+        </label>
+        <label class="adv-filter period-group-filter hidden" data-filter-group="period">
+          Отобразить по
+          <select id="period_group">
+            <option value="day" selected>по дням</option>
+            <option value="week">по неделям</option>
+            <option value="month">по месяцам</option>
+          </select>
+        </label>
+        <label class="adv-filter date-range-filter hidden" data-filter-group="period">
+          Период
+          <div class="date-range" id="dateRange">
+            <button id="dateRangeToggle" type="button" class="dropdown-toggle">Выберите период</button>
+            <div id="dateRangeMenu" class="date-range-menu hidden"></div>
+          </div>
+          <input id="date_from" type="hidden" />
+          <input id="date_to" type="hidden" />
+        </label>
+        <label class="abc-level-filter" data-filter-group="analytics">
+          Отразить по
+          <select id="category_level">
+            <option value="category" selected>Категориям</option>
+            <option value="subcategory">Подкатегориям</option>
+            <option value="brand" data-sportmaster-only="true">Брендам</option>
+            <option value="model" data-sportmaster-only="true">Моделям</option>
+            <option value="gender" data-sportmaster-only="true">Полу</option>
+            <option value="age" data-sportmaster-only="true">Возрасту</option>
+            <option value="collection" data-sportmaster-only="true">Коллекциям</option>
+            <option value="season_sm" data-sportmaster-only="true">Сезону</option>
+            <option value="sport" data-sportmaster-only="true">Назначению / спорту</option>
+          </select>
+        </label>
+        <label class="media-level-filter hidden" data-filter-group="analytics">
+          Отобразить по
+          <select id="media_level">
+            <option value="campaign" selected>По кампаниям</option>
+            <option value="group">По группам объявлений</option>
+            <option value="creative">По креативам</option>
+          </select>
+        </label>
+        <label class="media-filter hidden" data-filter-group="analytics">
+          Статус
+          <select id="media_status"></select>
+        </label>
+        <label class="media-filter hidden" data-filter-group="analytics">
+          Сегмент
+          <select id="media_segment"></select>
+        </label>
+        <label class="media-filter hidden" data-filter-group="analytics">
+          Кампания
+          <select id="media_campaign_id"></select>
+        </label>
+        <label class="media-group-filter hidden" data-filter-group="analytics">
+          Группа
+          <select id="media_group_id"></select>
+        </label>
+        <label class="media-creative-filter hidden" data-filter-group="analytics">
+          Креатив
+          <select id="media_creative_id"></select>
+        </label>
+        <label class="adv-filter hidden" data-filter-group="core">
+          ID / название
+          <input id="article" type="search" placeholder="Ozon / продавца / SKU" />
+        </label>
+        <div class="filter-actions" data-filter-group="actions">
+          <button id="applyFilters" type="button" disabled>Применить</button>
+          <button id="resetFilters" type="button" class="ghost" aria-label="Снять все фильтры" title="Снять все фильтры">Сбросить</button>
+          <span id="filterDirtyStatus">Фильтры применены</span>
+        </div>
+      </section>
+
+      <section id="financeDashboard" class="finance-dashboard hidden" aria-label="Финансовый отчет KM Trade"></section>
+
+      <section id="avitoDashboard" class="avito-dashboard hidden" aria-label="Отчёты Avito Ads"></section>
+
+      <section id="yandexDashboard" class="yandex-dashboard hidden" aria-label="Отчёты Яндекс Маркета"></section>
+
+      <section class="kpis" aria-label="KPI">
+        <article>
+          <span>Категорий</span>
+          <strong id="kpi_categories">-</strong>
+        </article>
+        <article>
+          <span>SKU</span>
+          <strong id="kpi_sku">-</strong>
+        </article>
+        <article>
+          <span>Остаток, шт</span>
+          <strong id="kpi_stock">-</strong>
+        </article>
+        <article>
+          <span>Заказано, руб</span>
+          <strong id="kpi_sales">-</strong>
+        </article>
+        <article>
+          <span>Выкуп, %</span>
+          <strong id="kpi_buyout">-</strong>
+        </article>
+      </section>
+
+      <section class="visuals">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="primaryChartTitle">Топ категорий</h2>
+              <span id="chartMetric">по остаткам</span>
+            </div>
+            <select id="primaryChartMetricSelect" class="chart-metric-control hidden" aria-label="Показатель левой диаграммы"></select>
+            <button type="button" class="chart-export-btn icon-export-btn hidden" data-chart-export="primary" aria-label="Скачать график в Excel" title="Скачать график в Excel">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4h14v-4" /></svg>
+            </button>
+          </div>
+          <div id="barChart" class="bar-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <h2 id="secondaryChartTitle">ABC итог</h2>
+              <span id="secondaryChartMetric">по количеству категорий</span>
+            </div>
+            <select id="secondaryChartMetricSelect" class="chart-metric-control hidden" aria-label="Показатель правой диаграммы"></select>
+            <button type="button" class="chart-export-btn icon-export-btn hidden" data-chart-export="secondary" aria-label="Скачать графики в Excel" title="Скачать графики в Excel">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 15v4h14v-4" /></svg>
+            </button>
+          </div>
+          <div id="abcChart" class="abc-chart"></div>
+        </div>
+      </section>
+
+      <section id="advCampaignTableSection" class="campaign-table-wrap hidden" aria-labelledby="advCampaignTableTitle">
+        <div class="campaign-table-toolbar">
+          <div>
+            <h2 id="advCampaignTableTitle">Кампании</h2>
+            <span id="advCampaignTableMeta">Нажмите ID кампании, чтобы применить фильтр ко всему дашборду</span>
+          </div>
+          <button id="resetCampaignTableFilters" type="button" class="campaign-reset-filters-btn" aria-label="Снять все фильтры" title="Снять все фильтры">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h18M7 5l5 7v5l3 2v-7l5-7M5 19 19 5" /></svg>
+          </button>
+        </div>
+        <div class="campaign-table-scroll">
+          <table>
+            <thead id="advCampaignTableHead"></thead>
+            <tbody id="advCampaignTableRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="table-wrap">
+        <div class="table-toolbar">
+          <div id="tableContext" class="table-context hidden">
+            <strong id="tableContextTitle">Товары</strong>
+            <span id="tableContextMeta"></span>
+            <span id="tableContextNote" class="table-context-note"></span>
+          </div>
+          <button id="exportTableExcel" type="button" class="table-export-btn">Excel</button>
+        </div>
+        <table>
+          <thead id="tableHead"></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </section>
+
+      <section id="skuCardPage" class="sku-card-page hidden" aria-label="Карточка товара">
+        <header class="sku-card-head">
+          <div>
+            <span class="sku-card-eyebrow">Карточка товара</span>
+            <h2 id="skuCardTitle">SKU</h2>
+            <p id="skuCardSubtitle"></p>
+          </div>
+          <button id="skuCardBack" class="ghost sku-card-close" type="button">Назад к SKU</button>
+        </header>
+        <div id="skuCardContent" class="sku-card-content"></div>
+      </section>
+
+      <section class="pagination" aria-label="Навигация по страницам">
+        <button id="prevPage" type="button">Назад</button>
+        <span id="pageInfo">Страница 1 из 1</span>
+        <button id="nextPage" type="button">Вперед</button>
+      </section>
+      </main>
+    </div>
+
+    <div id="adminLoginModal" class="admin-auth-modal hidden" role="dialog" aria-modal="true" aria-labelledby="adminLoginTitle">
+      <form id="adminLoginForm" class="admin-auth-card">
+        <div class="admin-auth-mark" aria-hidden="true">K</div>
+        <div>
+          <p class="admin-auth-eyebrow">Защищенный раздел</p>
+          <h2 id="adminLoginTitle">Вход в админку</h2>
+          <p class="admin-auth-copy">Введите логин и пароль администратора.</p>
+        </div>
+        <label>
+          <span>Логин</span>
+          <input id="adminLoginUsername" name="username" type="text" autocomplete="username" required />
+        </label>
+        <label>
+          <span>Пароль</span>
+          <input id="adminLoginPassword" name="password" type="password" autocomplete="current-password" required />
+        </label>
+        <p id="adminLoginMessage" class="admin-auth-message" aria-live="polite"></p>
+        <div class="admin-auth-actions">
+          <button id="adminLoginCancel" type="button" class="ghost">Отмена</button>
+          <button id="adminLoginSubmit" type="submit">Войти</button>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      if (window.location.protocol === "file:") {
+        document.write('<script src="data.js"><\/script>');
+      }
+    </script>
+  <script src="km_sales_planning.js?v=20260910-client-marketplaces-growth-v2"></script>
+  <script src="km_sales_planning_matrix_v3.js?v=20260911-orders-row-v33"></script>
+  <script src="km_media_plan.js?v=20260813-client-media-plan-v1"></script>
+  <script src="inventory_monitor.js?v=20260731-km-stock-monitor-v1"></script>
+  <script src="yandex_market_dashboard.js?v=20260908-yandex-reports-v1"></script>
+<script src="app.js?v=20260915-toptop-r15"></script>
+    <script src="seo_projects.js?v=20260825-full-run-roadmap-v28"></script>
+  <script src="commercial_radar_extension.js?v=20260913-shared-health-v3"></script>
+  <script src="km_unit_economics_parity.js?v=20260908-cost-model-v1"></script>
+  <script src="km_profit_loss_parity.js?v=20260908-cost-model-v1"></script>
+  <script src="km_profit_loss_planning.js?v=20260816-pulse-client-report-audit-v1"></script>
+  <script src="sportmaster_run_rate.js?v=20260721-sportmaster-run-rate-daily-v2"></script>
+  <script src="compact_shell_v2.js?v=20260814-sidebar-planfact-media-v1"></script>
+  <script src="pulse_report_workbenches.js?v=20260908-operations-v1"></script>
+</body>
+</html>

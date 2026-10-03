@@ -1,0 +1,16 @@
+.pulse-home-lamoda .pulse-home-kpi { text-align: left; cursor: pointer; }
+.pulse-home-lamoda .pulse-home-kpi small { color: #7b8794; font-size: 11px; }
+.pulse-home-lamoda-panel { margin-top: 14px; padding: 18px; border: 1px solid #dfe5e9; border-radius: 4px; background: #fff; }
+.pulse-home-lamoda-panel h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.pulse-home-lamoda-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pulse-home-lamoda-chart { display: grid; gap: 8px; }
+.pulse-home-lamoda-day { display: grid; grid-template-columns: 88px minmax(100px,1fr) 105px; align-items: center; gap: 12px; font-size: 12px; }
+.pulse-home-lamoda-day strong { text-align: right; }
+.pulse-home-lamoda-track { height: 9px; background: #f2f4f6; border-radius: 9px; overflow: hidden; }
+.pulse-home-lamoda-track > div { height: 100%; background: #b83e32; border-radius: 9px; }
+.pulse-home-lamoda-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.pulse-home-lamoda-panel p { margin: 12px 0 0; color: #66727e; font-size: 12px; line-height: 1.5; }
+@media (max-width: 620px) { .pulse-home-lamoda-day { grid-template-columns: 70px minmax(60px,1fr) 88px; gap: 7px; } }
+
+.pulse-home-lamoda .pulse-home-toolbar { flex-wrap: wrap; }
+.pulse-home-lamoda .pulse-home-period { white-space: nowrap; }

@@ -597,7 +597,7 @@ def _build_signal_payload(app, client, planfact_metrics, marketplace=None):
     lifecycle_available = bool(funnel_rows) and not ((orders or 0) > 0 and not any((row.get("bought_units") or row.get("delivered_units") or row.get("returned_units") or row.get("cancelled_units")) for row in funnel_rows))
     cancellations = _sum_present(funnel_rows, "cancelled_units") if lifecycle_available else None
     returns = _sum_present(funnel_rows, "returned_units") if lifecycle_available else None
-    bought = _sum_present(funnel_rows, "bought_units") if lifecycle_available else None
+    bought = _sum_present(funnel_rows, "cohort_bought_units" if marketplace == "wb" else "bought_units") if lifecycle_available else None
     put("funnel_orders", orders, "funnel", "Воронка", reason=funnel_reason)
     put("funnel_revenue", revenue, "funnel", "Воронка", reason=funnel_reason)
     put("funnel_impressions", impressions if upper_available else None, "funnel", "Воронка", reason=funnel_reason or "Верх воронки источник не передал")

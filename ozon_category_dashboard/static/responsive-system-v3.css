@@ -1,0 +1,310 @@
+/*
+ * KOKOC BI responsive contract v3.
+ * Loaded after every theme/client stylesheet so layout rules always win.
+ * Reflow controls and cards; keep wide analytical matrices scrollable inside
+ * their own card instead of widening the document.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.layout,
+.shell,
+.shell > *,
+.topbar,
+.brand-left,
+.filters,
+.kpis,
+.visuals,
+.panel,
+.panel-head,
+.table-wrap,
+.admin-dashboard,
+.admin-dashboard > *,
+.finance-dashboard,
+.finance-dashboard > *,
+.finance-card,
+.finance-grid,
+.km-sales-plan-section,
+.km-sales-plan-card,
+.sales-planning-dashboard,
+.sportmaster-run-rate,
+.ku3,
+.ku3-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
+img,
+svg,
+canvas {
+  max-width: 100%;
+}
+
+.topbar,
+.panel-head,
+.table-toolbar,
+.admin-client-bar,
+.admin-daily-section > header,
+.admin-terminal > header,
+.finance-toolbar,
+.finance-card-head,
+.km-sales-plan-head,
+.km-sales-plan-actions,
+.sales-planning-actions,
+.sportmaster-runrate-head,
+.ku3-section-title,
+.ku3-actions {
+  flex-wrap: wrap;
+}
+
+.brand-left,
+.panel-head > div,
+.table-context,
+.finance-card-head > div,
+.ku3-section-title > div {
+  min-width: 0;
+}
+
+.brand-left h1,
+.brand-left #status,
+.panel-head h2,
+.panel-head span,
+.finance-card-head h2,
+.finance-card-head p,
+.ku3-section-title h3,
+.ku3-section-title p {
+  overflow-wrap: anywhere;
+}
+
+button,
+input,
+select,
+textarea,
+.dropdown-toggle {
+  max-width: 100%;
+}
+
+/* All report matrices own their horizontal overflow. Never let a table widen
+   the page itself. */
+.table-wrap,
+.sku-card-table-wrap,
+.finance-table-wrap,
+.boiron-planfact-table-wrap,
+.sales-planning-chart-scroll,
+.sales-planning-table-wrap,
+.sportmaster-plan-editor,
+.ku3-table-wrap,
+[data-responsive-table],
+.kokoc-table-scroll {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto !important;
+  overscroll-behavior-inline: contain;
+  scrollbar-gutter: stable;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-wrap {
+  overflow-y: auto;
+}
+
+.table-wrap table,
+.sku-card-table-wrap table,
+.finance-table-wrap table,
+.boiron-planfact-table-wrap table,
+.sales-planning-table-wrap table,
+.sportmaster-plan-editor table,
+.ku3-table-wrap table,
+[data-responsive-table] table,
+.kokoc-table-scroll table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.table-wrap::-webkit-scrollbar,
+.sku-card-table-wrap::-webkit-scrollbar,
+.finance-table-wrap::-webkit-scrollbar,
+.sales-planning-table-wrap::-webkit-scrollbar,
+.sportmaster-plan-editor::-webkit-scrollbar,
+.ku3-table-wrap::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.table-wrap::-webkit-scrollbar-thumb,
+.sku-card-table-wrap::-webkit-scrollbar-thumb,
+.finance-table-wrap::-webkit-scrollbar-thumb,
+.sales-planning-table-wrap::-webkit-scrollbar-thumb,
+.sportmaster-plan-editor::-webkit-scrollbar-thumb,
+.ku3-table-wrap::-webkit-scrollbar-thumb {
+  border: 3px solid #edf2f7;
+  border-radius: 999px;
+  background: #94a3b8;
+}
+
+/* Konstex unit economics: settings are a responsive form. Actions always get
+   a complete row, so two buttons can never collide in a narrow grid cell. */
+.ku3-toolbar {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 168px), 1fr)) !important;
+  align-items: end;
+}
+
+.ku3-toolbar > label,
+.ku3-toolbar > .ku3-date-range,
+.ku3-toolbar > .ku3-actions {
+  min-width: 0;
+}
+
+.ku3-toolbar > .ku3-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+}
+
+.ku3-toolbar > .ku3-actions > button,
+.ku3-section-title .ku3-actions > button {
+  width: auto;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.ku3-period-label,
+.ku3-tax-note {
+  grid-column: 1 / -1 !important;
+}
+
+.ku3-tabs {
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+/* Shared dense forms: auto-fit removes abrupt "eight columns or one" jumps. */
+.filters.compact-filters,
+.finance-settings-grid,
+.finance-settings-grid-4,
+.finance-settings-grid-model,
+.sales-planning-filter-grid,
+.wb-api-filter-grid,
+.admin-form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 165px), 1fr));
+}
+
+.finance-toolbar > *,
+.finance-card-head > *,
+.km-sales-plan-head > *,
+.sales-planning-actions > *,
+.ku3-actions > * {
+  min-width: 0;
+}
+
+@media (max-width: 1450px) and (min-width: 901px) {
+  .topbar {
+    align-items: flex-start;
+  }
+
+  .brand-left {
+    flex: 1 1 420px;
+  }
+
+  .client-switcher {
+    flex: 0 1 220px;
+  }
+
+  .finance-kpi-grid,
+  .km-sales-plan-kpis {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .shell {
+    width: 100%;
+    max-width: 100vw;
+  }
+
+  .topbar,
+  .panel-head,
+  .table-toolbar,
+  .finance-toolbar,
+  .finance-card-head,
+  .km-sales-plan-head,
+  .km-sales-plan-actions,
+  .sales-planning-actions,
+  .ku3-section-title {
+    align-items: stretch;
+  }
+
+  .brand-left,
+  .client-switcher,
+  .table-context {
+    flex-basis: 100%;
+  }
+
+  .finance-grid-2,
+  .km-sales-plan-chart-grid,
+  .sales-planning-grid,
+  .sportmaster-runrate-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ku3-toolbar {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)) !important;
+  }
+}
+
+@media (max-width: 560px) {
+  .topbar > button,
+  .filter-actions,
+  .filter-actions > button,
+  .finance-toolbar > button,
+  .finance-card-head button,
+  .km-sales-plan-actions > button,
+  .sales-planning-actions > button,
+  .ku3-actions > button {
+    width: 100%;
+  }
+
+  .ku3-toolbar,
+  .filters,
+  .filters.compact-filters,
+  .finance-settings-grid,
+  .finance-settings-grid-4,
+  .finance-settings-grid-model,
+  .sales-planning-filter-grid,
+  .wb-api-filter-grid,
+  .admin-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .ku3-kpis {
+    grid-template-columns: repeat(5, minmax(138px, 1fr));
+    overflow-x: auto;
+  }
+
+  .table-wrap,
+  .sku-card-table-wrap,
+  .finance-table-wrap,
+  .sales-planning-table-wrap,
+  .sportmaster-plan-editor,
+  .ku3-table-wrap {
+    scrollbar-gutter: auto;
+  }
+}
+
+@supports not (overflow: clip) {
+  html,
+  body {
+    overflow-x: hidden;
+  }
+}

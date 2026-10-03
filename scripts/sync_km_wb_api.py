@@ -15,6 +15,7 @@ import json
 import os
 import sys
 import time
+from contextlib import closing
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
@@ -37,6 +38,7 @@ import inventory_history  # noqa: E402
 from build_dashboard_aggregates import INDEX_SQL, ROLLUP_SQL  # noqa: E402
 from import_wb_funnel_reports import COLUMNS, DB_COLUMNS  # noqa: E402
 from rebuild_sportmaster_wb_base_views import PRODUCT_ABC_SQL  # noqa: E402
+from wb_calendar_sales import create_calendar_funnel
 from wb_rate_limit import TokenBucketLimiter  # noqa: E402
 from wb_advertising_view import rebuild_wb_advertising_view  # noqa: E402
 
@@ -259,13 +261,13 @@ def funnel_record(product: dict[str, Any], metric: dict[str, Any], fallback_date
             "category_name": text(first(product, "subjectName", "subject_name", "categoryName")),
             "brand": text(first(product, "brandName", "brand_name", "brand")),
             "is_deleted": text(first(product, "isDeleted", "deleted")),
-            "card_rating": number(first(product, "rating", "cardRating")),
+            "card_rating": number(first(product, "productRating", "rating", "cardRating")),
             "review_rating": number(first(product, "feedbackRating", "reviewRating")),
             # The v3 history method exposes card opens, not WB impressions.
             "impressions_total": None,
             "card_visits": number(first(metric, "openCount", "openCardCount", "cardOpenCount")),
             "cart_adds": number(first(metric, "cartCount", "addToCartCount")),
-            "favorites_adds": number(first(metric, "addToWishlistCount", "addToWishList")),
+            "favorites_adds": number(first(metric, "addToWishlist", "addToWishlistCount", "addToWishList")),
             "ordered_units": ordered_units,
             "bought_units": bought_units,
             "cancelled_units": cancelled_units,
@@ -537,7 +539,15 @@ def upsert_products(cur: Any, records: Iterable[dict[str, Any]]) -> int:
 def import_funnel(cur: Any, records: list[dict[str, Any]], date_from: date, date_to: date) -> int:
     if not records:
         raise RuntimeError("WB вернул пустую воронку; существующие строки не удалены")
-    source_file = f"wb-api:{FUNNEL_PATH}:{date_from.isoformat()}:{date_to.isoformat()}"
+    seen = set()
+    for record in records:
+        key = (record.get("report_date"), str(record.get("wb_nmid") or ""))
+        if not key[1] or not isinstance(key[0], date) or not date_from <= key[0] <= date_to:
+            raise RuntimeError("WB funnel row is missing its product or outside the requested period")
+        if key in seen:
+            raise RuntimeError("WB funnel contains duplicate product/date rows; existing data kept")
+        seen.add(key)
+    source_file = f"wb-api:{FUNNEL_PRODUCTS_PATH}:{date_from.isoformat()}:{date_to.isoformat()}"
     cur.execute(
         "DELETE FROM public.wb_funnel_daily WHERE report_date BETWEEN %s AND %s",
         (date_from, date_to),
@@ -635,9 +645,8 @@ def rebuild_views(cur: Any) -> None:
     print(f"ПЛАН: {CLIENT_KEY} WB витрины | этапов {stages} | БД {TARGET_DB}", flush=True)
     drop_wb_views(cur)
     print("ПРОГРЕСС: 1/6 (16.7%) | старые WB-витрины удалены | errors=0", flush=True)
-    cur.execute(
+    create_calendar_funnel(cur,
         """
-        CREATE MATERIALIZED VIEW public.mv_wb_funnel_daily_by_article_category AS
         SELECT
             f.report_date,
             f.wb_nmid::text AS sku,
@@ -1101,7 +1110,9 @@ def discover_funnel_products(
             "brandNames": [],
             "subjectIds": [],
             "tagIds": [],
-            "skipDeletedNm": True,
+            # Historical sales must include archived/deleted cards; otherwise a
+            # day can look complete while orders for removed nmIDs are omitted.
+            "skipDeletedNm": False,
             "orderBy": {"field": "openCard", "mode": "desc"},
             "limit": 1000,
             "offset": offset,
@@ -1133,6 +1144,7 @@ def discover_funnel_products(
 
 
 FUNNEL_CHECKPOINT_RETENTION_DAYS = 14
+FUNNEL_RESUME_MAX_AGE_HOURS = 6
 
 
 def funnel_batch_key(batch: list[int]) -> str:
@@ -1146,11 +1158,18 @@ def load_funnel_checkpoint(cur: Any, date_from: date, date_to: date) -> dict[str
         return {}
     cur.execute(
         """
-        SELECT batch_key, rows_json
-        FROM public.wb_funnel_sync_batches
-        WHERE date_from = %s AND date_to = %s
+        SELECT b.batch_key, b.rows_json
+        FROM public.wb_funnel_sync_batches b
+        WHERE b.date_from = %s AND b.date_to = %s
+          AND b.fetched_at >= now() - make_interval(hours => %s)
+          AND NOT EXISTS (
+              SELECT 1 FROM public.km_wb_api_runs r
+              WHERE r.step = 'funnel' AND r.status = 'ok'
+                AND r.date_from <= b.date_from AND r.date_to >= b.date_to
+                AND r.finished_at >= b.fetched_at
+          )
         """,
-        (date_from, date_to),
+        (date_from, date_to, FUNNEL_RESUME_MAX_AGE_HOURS),
     )
     done: dict[str, list[dict[str, Any]]] = {}
     for batch_key, rows_json in cur.fetchall():
@@ -1228,78 +1247,76 @@ def fetch_funnel(
     conn: Any = None,
     cur: Any = None,
 ) -> tuple[list[dict[str, Any]], int]:
-    days = (date_to - date_from).days + 1
-    if days > MAX_FUNNEL_DAYS:
-        raise ValueError(f"WB v3 history отдаёт максимум {MAX_FUNNEL_DAYS} дней за один запуск")
-    earliest = date.today() - timedelta(days=MAX_FUNNEL_DAYS)
-    if date_from < earliest:
-        raise ValueError(
-            f"WB v3 history доступна только за последнюю неделю; минимальная дата {earliest.isoformat()}"
-        )
-    nm_ids, requests_count = discover_funnel_products(token, date_from, date_to)
-    if not nm_ids:
-        raise RuntimeError(f"WB не вернул список товаров клиента {CLIENT_KEY}; существующие строки не изменены")
-    batches = [
-        nm_ids[index:index + FUNNEL_NMID_BATCH_SIZE]
-        for index in range(0, len(nm_ids), FUNNEL_NMID_BATCH_SIZE)
-    ]
+    # /products supports the preceding year; /products/history only one week.
+    # Request one day at a time to retain the daily grain and refresh late buyouts.
+    today = app.marketplace_today()
+    if date_from > date_to or date_from < today - timedelta(days=365) or date_to > today:
+        raise ValueError("WB products analytics period must be within the preceding 365 days")
     records: list[dict[str, Any]] = []
-    request_total = requests_count + len(batches)
-    done_batches = load_funnel_checkpoint(cur, date_from, date_to)
-    batch_keys = [funnel_batch_key(batch) for batch in batches]
-    resumed_batches = sum(1 for key in batch_keys if key in done_batches)
-    print(
-        f"ПЛАН: воронка WB | батчей {len(batches)} | из чекпоинта {resumed_batches} | "
-        f"к загрузке {len(batches) - resumed_batches} | "
-        f"период {date_from.isoformat()}..{date_to.isoformat()}",
-        flush=True,
-    )
-    performed_requests = requests_count
-    for batch_index, (batch, batch_key) in enumerate(zip(batches, batch_keys), start=1):
-        cached_rows = done_batches.get(batch_key)
-        if cached_rows is not None:
-            records.extend(cached_rows)
-            print(
-                f"ПРОГРЕСС: батч {batch_index}/{len(batches)} | nmID batch={len(batch)} | "
-                f"rows={len(cached_rows)} | accumulated={len(records)} | "
-                f"источник=чекпоинт | errors=0",
-                flush=True,
-            )
+    requests_count = 0
+    checkpoints = load_funnel_checkpoint(cur, date_from, date_to)
+    day = date_from
+    while day <= date_to:
+        key = "products-day-v2:" + day.isoformat()
+        if key in checkpoints:
+            records.extend(checkpoints[key])
+            day += timedelta(days=1)
             continue
-        body = {
-            "selectedPeriod": {"start": date_from.isoformat(), "end": date_to.isoformat()},
-            "nmIds": batch,
-            "skipDeletedNm": True,
-            "aggregationLevel": "day",
-        }
-        request_no = requests_count + batch_index
-        payload = post_json(
-            FUNNEL_PATH,
-            token,
-            body,
-            request_no=request_no,
-            request_total=request_total,
-        )
-        performed_requests += 1
-        batch_rows = parse_funnel_response(payload, date_from)
-        records.extend(batch_rows)
-        save_funnel_batch(
-            conn,
-            cur,
-            date_from,
-            date_to,
-            batch_key,
-            batch_index,
-            len(batch),
-            batch_rows,
-        )
-        print(
-            f"ПРОГРЕСС: запрос {request_no}/{request_total} | батч {batch_index}/{len(batches)} | "
-            f"nmID batch={len(batch)} | rows={len(batch_rows)} | accumulated={len(records)} | "
-            f"чекпоинт=сохранён | errors=0",
-            flush=True,
-        )
-    return records, performed_requests
+        daily: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        offset = 0
+        while True:
+            body = {
+                "selectedPeriod": {"start": day.isoformat(), "end": day.isoformat()},
+                "nmIds": [], "brandNames": [], "subjectIds": [], "tagIds": [],
+                "skipDeletedNm": False,
+                "orderBy": {"field": "openCard", "mode": "desc"},
+                "limit": 1000, "offset": offset,
+            }
+            requests_count += 1
+            payload = post_json(FUNNEL_PRODUCTS_PATH, token, body,
+                                request_no=requests_count, request_total=requests_count)
+            data = payload.get("data") if isinstance(payload, dict) else None
+            items = data.get("products") if isinstance(data, dict) else None
+            if not isinstance(items, list):
+                raise RuntimeError("WB products analytics response has no products array")
+            for item in items:
+                product = product_payload(item)
+                metric = item.get("statistic", {}).get("selected")
+                if not isinstance(metric, dict):
+                    raise RuntimeError("WB products analytics response has no selected statistics")
+                period = metric.get("period") or {}
+                if period.get("start") != day.isoformat() or period.get("end") != day.isoformat():
+                    raise RuntimeError("WB products analytics returned an unexpected date")
+                if any(metric.get(field) is None for field in ("orderCount", "orderSum", "buyoutCount", "buyoutSum")):
+                    raise RuntimeError("WB products analytics is missing order/buyout metrics")
+                metric = dict(metric)
+                conversions = metric.get("conversions") or {}
+                metric.update(buyoutPercent=conversions.get("buyoutPercent"),
+                              addToCartConversion=conversions.get("addToCartPercent"),
+                              cartToOrderConversion=conversions.get("cartToOrderPercent"))
+                record = funnel_record(product, metric, day)
+                # Preserve the source metrics in the resumable batch/audit
+                # record; DB_COLUMNS deliberately excludes this evidence key.
+                record["_api_selected"] = metric
+                nmid = record.get("wb_nmid")
+                if not nmid or nmid in seen:
+                    raise RuntimeError("WB products analytics returned a missing or duplicate nmID")
+                seen.add(nmid)
+                daily.append(record)
+            if len(items) < 1000:
+                break
+            offset += 1000
+            if offset >= 1000000:
+                raise RuntimeError("WB products analytics pagination limit exceeded")
+        if not daily:
+            raise RuntimeError("WB products analytics returned no products; existing data preserved")
+        save_funnel_batch(conn, cur, date_from, date_to, key,
+                          (day - date_from).days, len(daily), daily)
+        records.extend(daily)
+        print(f"PROGRESS: WB API {day} | products={len(daily)} | requests={requests_count}", flush=True)
+        day += timedelta(days=1)
+    return records, requests_count
 
 
 def fetch_stock(token: str, date_from: date, date_to: date) -> tuple[list[dict[str, Any]], int]:
@@ -1325,7 +1342,7 @@ def fetch_stock(token: str, date_from: date, date_to: date) -> tuple[list[dict[s
             request_no=requests_count,
             request_total=max(requests_count, 1),
         )
-        page_rows = parse_stock_response(payload, date.today())
+        page_rows = parse_stock_response(payload, app.marketplace_today())
         rows.extend(page_rows)
         print(
             f"ПРОГРЕСС: запрос {requests_count} | остатки offset={offset} | "
@@ -1341,7 +1358,7 @@ def fetch_stock(token: str, date_from: date, date_to: date) -> tuple[list[dict[s
 
 def current_stock_period(today: date | None = None) -> tuple[date, date]:
     """WB stock-report returns a current snapshot, not historical inventory."""
-    current = today or date.today()
+    current = today or app.marketplace_today()
     return current, current
 
 
@@ -1352,14 +1369,19 @@ def run_step(step: str, date_from: date, date_to: date) -> dict[str, Any]:
     rows_count = 0
     effective_date_from = date_from
     effective_date_to = date_to
-    with db_connection() as conn, conn.cursor() as cur:
+    with closing(db_connection()) as conn, conn, conn.cursor() as cur:
+        if step == "funnel":
+            # Session lock survives per-batch commits and is released on close.
+            cur.execute("SELECT pg_try_advisory_lock(2026093001)")
+            if not cur.fetchone()[0]:
+                raise RuntimeError("WB funnel refresh is already running for this database")
         ensure_schema(cur)
         if step == "funnel":
             rows, requests_count = fetch_funnel(token, date_from, date_to, conn=conn, cur=cur)
             rows_count = import_funnel(cur, rows, date_from, date_to)
-            # Keep the completed checkpoint for a short TTL: a retry after a
-            # later transaction/view failure must not download every nmID batch.
-            purge_funnel_checkpoints(cur)
+            # Commit publication and checkpoint removal atomically. Only a
+            # failed, recent attempt may resume; a completed refresh starts anew.
+            clear_funnel_checkpoint(cur, date_from, date_to)
         elif step == "stock":
             effective_date_from, effective_date_to = current_stock_period()
             rows, requests_count = fetch_stock(token, effective_date_from, effective_date_to)
@@ -1396,8 +1418,8 @@ def main() -> None:
     configure_stdout()
     parser = argparse.ArgumentParser()
     parser.add_argument("--step", choices=("funnel", "stock", "views", "all"), default="all")
-    parser.add_argument("--date-from", default=(date.today() - timedelta(days=1)).isoformat())
-    parser.add_argument("--date-to", default=(date.today() - timedelta(days=1)).isoformat())
+    parser.add_argument("--date-from", default=(app.marketplace_today() - timedelta(days=1)).isoformat())
+    parser.add_argument("--date-to", default=(app.marketplace_today() - timedelta(days=1)).isoformat())
     args = parser.parse_args()
     date_from = date.fromisoformat(args.date_from)
     date_to = date.fromisoformat(args.date_to)

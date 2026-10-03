@@ -1,0 +1,36 @@
+.pulse-home-lamoda .pulse-home-kpi { text-align: left; cursor: pointer; }
+.pulse-home-lamoda .pulse-home-kpi small { color: #7b8794; font-size: 11px; }
+.pulse-home-lamoda-panel { margin-top: 14px; padding: 18px; border: 1px solid #dfe5e9; border-radius: 4px; background: #fff; }
+.pulse-home-lamoda-panel h2 { margin: 0; font-size: 16px; font-weight: 700; }
+.pulse-home-lamoda-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pulse-home-lamoda-chart { display: grid; gap: 8px; }
+.pulse-home-lamoda-day { display: grid; grid-template-columns: 88px minmax(100px,1fr) 105px; align-items: center; gap: 12px; font-size: 12px; }
+.pulse-home-lamoda-day strong { text-align: right; }
+.pulse-home-lamoda-track { height: 9px; background: #f2f4f6; border-radius: 9px; overflow: hidden; }
+.pulse-home-lamoda-track > div { height: 100%; background: #b83e32; border-radius: 9px; }
+.pulse-home-lamoda-links { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.pulse-home-lamoda-panel p { margin: 12px 0 0; color: #66727e; font-size: 12px; line-height: 1.5; }
+@media (max-width: 620px) { .pulse-home-lamoda-day { grid-template-columns: 70px minmax(60px,1fr) 88px; gap: 7px; } }
+
+.pulse-home-lamoda .pulse-home-toolbar { flex-wrap: wrap; }
+.pulse-home-lamoda .pulse-home-period { white-space: nowrap; }
+
+.trend-db-indicators { display:flex; align-items:center; gap:5px; margin-right:8px; white-space:nowrap; }
+.trend-db-indicator { display:inline-flex; align-items:center; gap:5px; padding:4px 7px; border:1px solid #dce5df; border-radius:20px; background:#f8fbf9; color:#375548; font-size:10px; font-weight:700; line-height:1; }
+.trend-db-dot { width:7px; height:7px; flex:none; border-radius:50%; background:#228b57; box-shadow:0 0 0 2px #d9f1e3; }
+.trend-db-indicator.is-offline { border-color:#f0d7d3; color:#a5483e; background:#fff7f6; }
+.trend-db-indicator.is-offline .trend-db-dot { background:#bf493c; box-shadow:0 0 0 2px #fae5e2; }
+.trend-db-indicator.is-checking { color:#7b8794; background:#f7f8fa; border-color:#e3e7eb; }
+.trend-db-indicator.is-checking .trend-db-dot { background:#9aa4af; box-shadow:none; }
+.pulse-home-lamoda-groups { display:grid; gap:12px; }
+.pulse-home-lamoda-group { padding:14px 16px 5px; border:1px solid #dfe5e9; background:#fff; border-radius:4px; }
+.pulse-home-lamoda-group h2 { margin:0 0 10px; font-size:14px; font-weight:700; }
+.pulse-home-lamoda-group .pulse-home-kpis { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); margin:0; border:0; }
+.pulse-home-lamoda-group .pulse-home-kpi { min-width:0; padding:8px 14px 12px; }
+.pulse-home-lamoda-chart-actions { display:flex; align-items:center; flex-wrap:wrap; gap:6px; }
+.pulse-home-lamoda-panel .combo-chart-shell { min-width:0; width:100%; }
+.pulse-home-lamoda-chart-note { margin-top:0 !important; }
+@media (max-width:760px) { .pulse-home-lamoda-group .pulse-home-kpis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:650px) { .trend-db-indicator-label { display:none; } .trend-db-indicator { padding:5px; } .trend-db-indicators { margin-right:3px; } .pulse-home-lamoda-heading { align-items:flex-start; flex-direction:column; } }
+.trend-db-indicator.is-warning { border-color:#eddcae; color:#896913; background:#fffaf0; }
+.trend-db-indicator.is-warning .trend-db-dot { background:#d39b25; box-shadow:0 0 0 2px #faedc9; }

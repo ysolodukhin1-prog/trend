@@ -292,7 +292,10 @@ def _yandex(cur,start,end,client,totals_only=False):
       FROM yandex_analytics_raw r JOIN yandex_analytics_jobs j USING(job_key)
       CROSS JOIN LATERAL jsonb_array_elements(coalesce(r.payload->'offer'->'campaigns','[]'::jsonb)) c
       WHERE j.client_key=%s AND j.source_key='catalog' AND j.state='completed'
-      ORDER BY c->>'campaignId',r.payload->'offer'->>'offerId',j.finished_at DESC,r.row_no DESC''',(client,))
+        AND r.payload->'offer'->>'offerId'=ANY(%s)
+        AND c->>'campaignId'=ANY(%s)
+      ORDER BY c->>'campaignId',r.payload->'offer'->>'offerId',j.finished_at DESC,r.row_no DESC''',
+      (client,sorted({r['sku'] for r in rows}),sorted({str(r['cabinet']) for r in rows})))
     sizes={(d['cabinet'],d['sku']):d for d in cur.fetchall()}
     for r in rows:
         source=sizes.get((str(r['cabinet']),r['sku']))
@@ -308,7 +311,20 @@ def _yandex(cur,start,end,client,totals_only=False):
     return rows, list(stores.values())
 
 
-def storage_history(cur, start, client):
+def _wb_storage_totals(cur, start, end, client):
+    # Storage history only consumes units and storage. Preserve the exact WB
+    # grouping and sale/return signs, without calculating the detailed ledger.
+    cur.execute('''SELECT coalesce(nullif(nm_id::text,'0'),'__unallocated__') sku,
+      CASE WHEN sku ~ '^[0-9]{8,14}$' THEN sku ELSE '' END barcode,
+      coalesce(nullif(raw_payload->>'deliveryMethod',''),'UNKNOWN') scheme,
+      sum(quantity * CASE WHEN lower(seller_oper_name) IN ('возврат','return') THEN -1
+        WHEN lower(seller_oper_name) IN ('продажа','sale') THEN 1 ELSE 0 END) units,
+      sum(paid_storage) storage_cost
+      FROM wb_finance_lines WHERE operation_date BETWEEN %s AND %s GROUP BY 1,2,3''',(start,end))
+    return [dict(r,marketplace='wb',cabinet=client) for r in cur.fetchall()]
+
+
+def storage_history(cur, start, client, marketplace=''):
     """Account-wide historical reserve. Never mix cabinets or infer missing storage as zero."""
     month_index = start.year * 12 + start.month - 1
     periods = []
@@ -319,10 +335,11 @@ def storage_history(cur, start, client):
         following = date((idx + 1) // 12, (idx + 1) % 12 + 1, 1)
         last = date.fromordinal(following.toordinal() - 1)
         periods.append((first, last))
-        ozon, _ = _ozon(cur, first, last, client, totals_only=True)
-        ya, _ = _yandex(cur, first, last, client, totals_only=True)
+        ozon = _ozon(cur, first, last, client, totals_only=True)[0] if marketplace in ('', 'ozon') else []
+        ya = _yandex(cur, first, last, client, totals_only=True)[0] if marketplace in ('', 'yandex') else []
+        wb = _wb_storage_totals(cur, first, last, client) if marketplace in ('', 'wb') else []
         monthly = {}
-        for row in ozon + _wb(cur, first, last, client, totals_only=True) + ya:
+        for row in ozon + wb + ya:
             key = (row['marketplace'], row['cabinet'])
             entry = monthly.setdefault(key, {'expense': 0., 'units': 0.})
             entry['expense'] += float(row.get('storage_cost') or 0)
@@ -352,7 +369,7 @@ def storage_history(cur, start, client):
         reports_seen+=1
         zero_reports=zero_reports and amount==0
         covered.update(range(a.toordinal(),b.toordinal()+1))
-    if reports_seen and zero_reports and len(covered)==(last-first).days+1:
+    if marketplace in ('', 'wb') and reports_seen and zero_reports and len(covered)==(last-first).days+1:
         result=[r for r in result if not(r['marketplace']=='wb' and r['cabinet']==client)]
         result.append(dict(marketplace='wb',cabinet=client,months=[],expense=0,units=None,per_unit=0,
             status='confirmed_zero',note='Сводные финансовые отчёты WB полностью покрывают период и явно содержат 0 ₽ хранения.'))
@@ -363,11 +380,18 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
     end=date.fromisoformat(end) if end else date.fromordinal(default_end)
     start=date.fromisoformat(start) if start else end.replace(day=1)
     if start>end or (end-start).days>366:raise ValueError('Период должен быть от 1 до 367 дней')
+    marketplace={'yandex_market':'yandex','wildberries':'wb'}.get(marketplace,marketplace)
+    if marketplace not in ('', 'ozon', 'wb', 'yandex'): raise ValueError('Неизвестная площадка')
     with connect_km(checked_config(config,client)) as conn,conn.cursor() as cur:
-        storage_baseline = storage_history(cur, start, client)
-        rows,breakdown=_ozon(cur,start,end,client)
-        rows+=_wb(cur,start,end,client)
-        ya,stores=_yandex(cur,start,end,client)
+        storage_baseline = storage_history(cur, start, client, marketplace)
+        rows=[];breakdown={};stores=[]
+        if marketplace in ('', 'ozon'):
+            rows,breakdown=_ozon(cur,start,end,client)
+        if marketplace in ('', 'wb'):
+            rows+=_wb(cur,start,end,client)
+        ya=[]
+        if marketplace in ('', 'yandex'):
+            ya,stores=_yandex(cur,start,end,client)
         article_barcodes=defaultdict(set)
         for r in rows:
             if r.get('article'):
@@ -378,7 +402,19 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
                 r['barcodes']=sorted(candidates)
                 r['barcode_source']='exact seller article, unique barcode in same client catalogue'
         rows+=ya
-        cost_catalog=planning_catalog(cur,client,stores)
+        # Yandex offers do not carry barcodes. Preserve the existing exact
+        # cross-market article match there; other scoped views only need their
+        # own catalogue.
+        cost_catalog=planning_catalog(cur,client,stores,'' if marketplace=='yandex' else marketplace)
+        if marketplace == 'yandex':
+            for item in cost_catalog:
+                if item.get('marketplace') != 'yandex' and item.get('article'):
+                    article_barcodes[item['article']].update(item.get('barcodes') or [])
+            for r in ya:
+                candidates=article_barcodes.get(r['sku'],set())
+                if len(candidates)==1:
+                    r['barcodes']=sorted(candidates)
+                    r['barcode_source']='exact seller article, unique barcode in same client catalogue'
         catalog=cost_catalog if catalog_mode else []
         catalog_total=len(catalog)
         # Catalogue identities are separate from finance rows, including products
@@ -402,7 +438,7 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
         cur.execute('SELECT * FROM unit_portfolio_versions ORDER BY created_at DESC LIMIT 50')
         portfolios=[dict(r,id=str(r['id']),created_at=str(r['created_at'])) for r in cur.fetchall()]
         hypotheses=unit_hypotheses.list_projects(cur)
-        order_activity=unit_order_activity.load(cur,client,start,end)
+        order_activity=unit_order_activity.load(cur,client,start,end,marketplace)
         metadata={(r['marketplace'],str(r['cabinet']),str(r['sku'])):r for r in order_activity}
         for r in rows:
             meta=metadata.get((r['marketplace'],str(r['cabinet']),str(r['sku'])),{})
@@ -410,7 +446,7 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
         for s in scenarios:
             s['id']=str(s['id']);s['created_at']=str(s['created_at']);s['result']=calculate(s['inputs'])
         from unit_current_stocks import attach as attach_current_stocks
-        attach_current_stocks(cur,client,rows+catalog)
+        attach_current_stocks(cur,client,rows+catalog,marketplace)
         for r in rows+catalog:
             if not r['barcodes'] and r['sku']!='__unallocated__':
                 resolver=resolve_wb_cost if r['marketplace']=='wb' else resolve_cost
@@ -437,14 +473,21 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
         if catalog_mode:
             return json_numbers({'ok':True,'client':client,'catalog':catalog,'total':catalog_total,'limit':250})
         rows.sort(key=lambda r: (r['sku']=='__unallocated__',-(r['revenue'] or 0),r['key']))
-        cur.execute('''SELECT 'ozon' marketplace,operation_date dt FROM ozon_finance_lines WHERE operation_date BETWEEN %s AND %s
-          UNION SELECT 'wb',operation_date FROM wb_finance_lines WHERE operation_date BETWEEN %s AND %s
-          UNION SELECT 'yandex',event_date FROM yandex_fact_realization WHERE client_key=%s AND event_date BETWEEN %s AND %s''',
-          (start,end,start,end,client,start,end))
+        observed_sql=[];observed_params=[]
+        if marketplace in ('', 'ozon'):
+            observed_sql.append("SELECT 'ozon' marketplace,operation_date dt FROM ozon_finance_lines WHERE operation_date BETWEEN %s AND %s")
+            observed_params.extend((start,end))
+        if marketplace in ('', 'wb'):
+            observed_sql.append("SELECT 'wb' marketplace,operation_date dt FROM wb_finance_lines WHERE operation_date BETWEEN %s AND %s")
+            observed_params.extend((start,end))
+        if marketplace in ('', 'yandex'):
+            observed_sql.append("SELECT 'yandex' marketplace,event_date dt FROM yandex_fact_realization WHERE client_key=%s AND event_date BETWEEN %s AND %s")
+            observed_params.extend((client,start,end))
+        cur.execute(' UNION '.join(observed_sql),tuple(observed_params))
         observed=defaultdict(set)
         for item in cur.fetchall():observed[item['marketplace']].add(str(item['dt']))
         summary=[]
-        for mp in ('ozon','wb','yandex'):
+        for mp in ((marketplace,) if marketplace else ('ozon','wb','yandex')):
             group=[r for r in rows if r['marketplace']==mp]
             summary.append({'marketplace':mp,'rows':len(group),'source_rows':sum(r['source_rows'] for r in group),
                 'revenue':sum(r['revenue'] or 0 for r in group) if group else None,
@@ -465,26 +508,36 @@ def workspace(config,client,start=None,end=None,catalog_mode=False,query="",mark
         'generated_at':datetime.now(timezone.utc).isoformat()})
 
 
-def planning_catalog(cur,client,stores):
+def planning_catalog(cur,client,stores,marketplace=''):
     rows=[]
-    cur.execute('''SELECT DISTINCT ON(sku) sku,artikul article,nazvanie_tovara name,
-      barcodes_json,shtrihkod_seriynyy_nomer_ean ean FROM ozon_cat_products
-      WHERE nullif(sku,'') IS NOT NULL ORDER BY sku''')
-    for p in cur.fetchall():
-        rows.append(dict(marketplace='ozon',cabinet=client,sku=str(p['sku']),article=p['article'],name=p['name'],
-          scheme='UNKNOWN',barcodes=sorted(set(barcode_list(p['barcodes_json'])+barcode_list(p['ean'])))))
-    cur.execute('''SELECT artikul_wb sku,artikul_prodavtsa article,naimenovanie name,barkod
-      FROM products WHERE nullif(artikul_wb::text,'') IS NOT NULL''')
-    for p in cur.fetchall():
-        for b in barcode_list(p['barkod']) or ['']:
-            rows.append(dict(marketplace='wb',cabinet=client,sku=str(p['sku']),article=p['article'],name=p['name'],
-              scheme='UNKNOWN',barcodes=[b] if b else [],variant=b or 'unknown'))
-    cur.execute('''SELECT DISTINCT o.offer_id,o.offer_name,s.campaign_id,s.placement_type,s.store_name
-      FROM yandex_dim_offer o JOIN yandex_dim_store s ON s.client_key=o.client_key AND s.business_id=o.business_id
-      WHERE o.client_key=%s AND coalesce(o.archived,false)=false''',(client,))
-    for p in cur.fetchall():
-        rows.append(dict(marketplace='yandex',cabinet=p['campaign_id'],cabinet_label=p['store_name'],sku=p['offer_id'],
-          article=p['offer_id'],name=p['offer_name'],scheme=p['placement_type'] or 'UNKNOWN',barcodes=[]))
+    if marketplace in ('', 'ozon'):
+        cur.execute('''SELECT DISTINCT ON(sku) sku,artikul article,nazvanie_tovara name,
+          barcodes_json,shtrihkod_seriynyy_nomer_ean ean FROM ozon_cat_products
+          WHERE nullif(sku,'') IS NOT NULL ORDER BY sku''')
+        for p in cur.fetchall():
+            rows.append(dict(marketplace='ozon',cabinet=client,sku=str(p['sku']),article=p['article'],name=p['name'],
+              scheme='UNKNOWN',barcodes=sorted(set(barcode_list(p['barcodes_json'])+barcode_list(p['ean'])))))
+    if marketplace in ('', 'wb'):
+        cur.execute('''SELECT artikul_wb sku,artikul_prodavtsa article,naimenovanie name,barkod
+          FROM products WHERE nullif(artikul_wb::text,'') IS NOT NULL''')
+        for p in cur.fetchall():
+            for b in barcode_list(p['barkod']) or ['']:
+                rows.append(dict(marketplace='wb',cabinet=client,sku=str(p['sku']),article=p['article'],name=p['name'],
+                  scheme='UNKNOWN',barcodes=[b] if b else [],variant=b or 'unknown'))
+    if marketplace in ('', 'yandex'):
+        # Deduplicate catalogue versions before joining cabinets. The former
+        # join multiplied historical offer versions, only to discard them later.
+        cur.execute('''WITH offers AS MATERIALIZED (
+          SELECT DISTINCT business_id,offer_id,offer_name FROM yandex_dim_offer
+          WHERE client_key=%s AND coalesce(archived,false)=false),
+        cabinets AS MATERIALIZED (
+          SELECT DISTINCT business_id,campaign_id,placement_type,store_name
+          FROM yandex_dim_store WHERE client_key=%s)
+        SELECT DISTINCT o.offer_id,o.offer_name,s.campaign_id,s.placement_type,s.store_name
+          FROM offers o JOIN cabinets s USING(business_id)''',(client,client))
+        for p in cur.fetchall():
+            rows.append(dict(marketplace='yandex',cabinet=p['campaign_id'],cabinet_label=p['store_name'],sku=p['offer_id'],
+              article=p['offer_id'],name=p['offer_name'],scheme=p['placement_type'] or 'UNKNOWN',barcodes=[]))
     unique={}
     for r in rows:
         identity=(r['marketplace'],r['cabinet'],r['sku'],r.get('variant',''))

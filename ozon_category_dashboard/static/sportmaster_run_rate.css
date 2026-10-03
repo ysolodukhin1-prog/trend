@@ -1,0 +1,185 @@
+.sportmaster-plan-editor {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #d8e3e5;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 118, 110, 0.06);
+}
+
+.sportmaster-plan-editor header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sportmaster-plan-editor h2,
+.sportmaster-plan-editor p {
+  margin: 0;
+}
+
+.sportmaster-plan-editor h2 {
+  font-size: 18px;
+}
+
+.sportmaster-plan-editor p,
+.sportmaster-plan-status {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sportmaster-plan-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sportmaster-plan-editor table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 7px;
+}
+
+.sportmaster-plan-editor th,
+.sportmaster-plan-editor td {
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.sportmaster-plan-editor thead th {
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.sportmaster-plan-editor tbody tr {
+  background: #f5f9f9;
+}
+
+.sportmaster-plan-editor tbody th {
+  border-radius: 8px 0 0 8px;
+  font-size: 13px;
+}
+
+.sportmaster-plan-editor tbody td:last-child {
+  border-radius: 0 8px 8px 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sportmaster-plan-editor input {
+  width: 100%;
+  height: 38px;
+  padding: 0 10px;
+  border: 1px solid #e5bf62;
+  border-radius: 7px;
+  background: #fff8dc;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 750;
+  text-align: right;
+}
+
+.sportmaster-runrate-card-grid {
+  display: grid;
+  gap: 12px;
+  margin: 4px 0 18px;
+}
+
+.sportmaster-runrate-card-grid.two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sportmaster-runrate-card-grid .planfact-mini-card {
+  border-radius: 12px;
+}
+
+.sportmaster-daily-dynamics {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.sportmaster-daily-dynamics header,
+.sportmaster-daily-dynamics h3,
+.sportmaster-daily-dynamics p {
+  margin: 0;
+}
+
+.sportmaster-daily-dynamics h3 {
+  font-size: 15px;
+}
+
+.sportmaster-daily-dynamics p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sportmaster-source-freshness {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.sportmaster-source-freshness h3,
+.sportmaster-source-freshness p {
+  margin: 0;
+}
+
+.sportmaster-source-freshness p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sportmaster-source-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sportmaster-source-item {
+  padding: 9px 10px;
+  border: 1px solid #bfe5d3;
+  border-radius: 8px;
+  background: #f0fdf4;
+  font-size: 12px;
+}
+
+.sportmaster-source-item.is-lagging {
+  border-color: #f3ce77;
+  background: #fff7df;
+}
+
+.sportmaster-source-item strong,
+.sportmaster-source-item span {
+  display: block;
+}
+
+.sportmaster-source-item span {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
+@media (max-width: 900px) {
+  .sportmaster-runrate-card-grid.two,
+  .sportmaster-source-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sportmaster-plan-editor {
+    overflow-x: auto;
+  }
+
+  .sportmaster-plan-editor table {
+    min-width: 620px;
+  }
+}

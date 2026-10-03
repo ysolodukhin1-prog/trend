@@ -105,8 +105,17 @@ def attach_commercial_plan(products, months, versions, anchor, filtered, marketp
             if marketplace == 'wb':
                 row['approved_plan_units'] = row['commercial_plan_units']
                 row['approved_plan_revenue'] = row['commercial_plan_revenue']
+    # Preserve product/row order and NULL semantics while indexing each scope once.
+    rows_by_scope = {}
     def aggregate(items, month):
-        rows = [r for p in items for r in p['monthly'] if r['month_start'] == month]
+        scope = id(items)
+        if scope not in rows_by_scope:
+            indexed = defaultdict(list)
+            for product in items:
+                for row in product['monthly']:
+                    indexed[row['month_start']].append(row)
+            rows_by_scope[scope] = indexed
+        rows = rows_by_scope[scope].get(month, [])
         result = {'month_start': month, 'sku_count': len(items)}
         for key in ('actual_units', 'actual_revenue', 'forecast_units', 'forecast_revenue', 'commercial_plan_units', 'commercial_plan_revenue', 'achievable_units', 'achievable_revenue'):
             vals = [r.get(key) for r in rows]

@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 import re
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
 
 _IDENTIFIER_RE = re.compile(r"^[a-z][a-z0-9_]{1,62}$")
+MARKETPLACE_TIMEZONE = ZoneInfo("Europe/Moscow")
+
+
+def marketplace_today() -> date:
+    """Return the business date used by TOPTOP marketplace reports."""
+    return datetime.now(MARKETPLACE_TIMEZONE).date()
 
 
 API_COMPLETENESS_SPECS = {
@@ -43,6 +50,9 @@ API_COMPLETENESS_SPECS = {
     "wb_orders_sales": {
         "run_table": "km_wb_extended_api_runs",
         "run_step": "statistics",
+        # flag=0 is a change feed: repeat recent change dates even when a
+        # previous successful import already covers these calendar dates.
+        "refresh_days": 2,
     },
     "wb_stock_current": {
         "relation": "wb_stock_api_current",
@@ -61,7 +71,8 @@ API_COMPLETENESS_SPECS = {
         "run_step": "funnel",
         "relation": "wb_funnel_daily",
         "date_column": "report_date",
-        "retention_days": 7,
+        "retention_days": 365,
+        "refresh_days": 31,
     },
     "wb_advertising": {
         "run_table": "km_wb_extended_api_runs",
@@ -230,7 +241,7 @@ def inspect_client_api_completeness(
     history_date_from: str = "",
     today: date | None = None,
 ) -> dict[str, dict]:
-    current_day = today or date.today()
+    current_day = today or marketplace_today()
     historical_target = current_day - timedelta(days=1)
     configured_start = _as_date(history_date_from)
     result: dict[str, dict] = {}
@@ -283,7 +294,7 @@ def inspect_client_api_completeness(
 
 
 def fallback_client_api_completeness(*, today: date | None = None, reason: str = "") -> dict[str, dict]:
-    current_day = today or date.today()
+    current_day = today or marketplace_today()
     result = {}
     for step_key, spec in API_COMPLETENESS_SPECS.items():
         target = current_day if spec.get("snapshot") or spec.get("include_current_day") else current_day - timedelta(days=1)

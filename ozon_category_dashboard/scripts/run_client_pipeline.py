@@ -20,6 +20,8 @@ DASHBOARD_ROOT = PROJECT_ROOT / "ozon_category_dashboard"
 sys.path.insert(0, str(DASHBOARD_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from api_completeness import marketplace_today
+
 
 def duration(seconds: float) -> str:
     total = max(0, int(seconds))
@@ -35,8 +37,26 @@ def calendar_months_ago(value: date, months: int) -> date:
     return date(year, month, min(value.day, monthrange(year, month)[1]))
 
 
-def credentials_to_env(client_key: str) -> dict[str, str]:
+def is_historical_backfill(date_to: date, *, today: date | None = None) -> bool:
+    """Return true when a range ends before the current daily refresh window."""
+
+    current_day = today or marketplace_today()
+    return date_to < current_day - timedelta(days=1)
+
+
+def configure_runtime_scope():
     import app
+
+    # CLI workers do not pass through pulse_vps_admin.main(). Configure the
+    # same scoped DB credentials and registry before touching client secrets.
+    if os.environ.get("PULSE_DB_PASSWORD_FILE"):
+        import pulse_vps_admin
+        pulse_vps_admin.configure_scope()
+    return app
+
+
+def credentials_to_env(client_key: str) -> dict[str, str]:
+    app = configure_runtime_scope()
 
     # Registered clients are loaded by the web server at startup, but this
     # command runs independently.  Hydrating here makes the environment-name
@@ -161,6 +181,9 @@ def run_step(label: str, command: list[str], env: dict[str, str]) -> str:
     if returncode == 3 and any(str(value).endswith("sync_yandex_market.py") for value in command):
         print("SOURCE_LIMITED: Яндекс | отдельные магазины или разделы недоступны | очередь продолжена", flush=True)
         return "limited"
+    if returncode == 3 and any(str(value).endswith("sync_lamoda.py") for value in command):
+        print("SOURCE_LIMITED: Lamoda | финансовый источник требует отдельного экспорта Seller/LAB | очередь продолжена", flush=True)
+        return "limited"
     if returncode and _is_ozon_performance_access_limit(label, command, output):
         print(
             "ОГРАНИЧЕНИЕ: Ozon Performance API недоступен для организации | "
@@ -271,17 +294,18 @@ def main() -> int:
     if args.wb_stock_history_date_from and args.wb_stock_history_date_to:
         if args.wb_stock_history_date_from > args.wb_stock_history_date_to:
             raise ValueError("В периоде истории остатков WB дата начала позже даты окончания")
-        earliest_stock_date = calendar_months_ago(date.today(), 3)
+        earliest_stock_date = calendar_months_ago(marketplace_today(), 3)
         if args.wb_stock_history_date_from < earliest_stock_date:
             raise ValueError(
                 "История остатков WB доступна максимум за 3 месяца: "
                 f"дата начала должна быть не раньше {earliest_stock_date.isoformat()}"
             )
     marketplaces = [value.strip().lower() for value in args.marketplaces.split(",") if value.strip()]
-    if not marketplaces or set(marketplaces) - {"ozon", "wb", "avito", "yandex_market"}:
+    if not marketplaces or set(marketplaces) - {"ozon", "wb", "avito", "lamoda", "yandex_market"}:
         raise ValueError("Поддерживаются ozon, wb, avito и yandex_market")
 
     started = time.monotonic()
+    credential_env = credentials_to_env(args.client_key)
     env = {
         **os.environ,
         "PYTHONUNBUFFERED": "1",
@@ -291,7 +315,7 @@ def main() -> int:
         "DASHBOARD_DB_NAME": args.database_name,
         "KM_DB_NAME": args.database_name,
     }
-    env.update(credentials_to_env(args.client_key))
+    env.update(credential_env)
     steps: list[tuple[str, str, list[str]]] = []
     if args.mode != "views" and "ozon" in marketplaces:
         ozon_script = str(PROJECT_ROOT / "scripts" / "sync_km_ozon_api.py")
@@ -338,6 +362,11 @@ def main() -> int:
             sys.executable, "-X", "utf8", "-u",
             str(PROJECT_ROOT / "scripts" / "sync_km_ozon_finance.py"),
             "--source", "api", *common,
+            *(
+                ["--skip-catalog-refresh"]
+                if args.mode == "history" or is_historical_backfill(args.date_to)
+                else []
+            ),
         ]))
         steps.append(("ozon_views", "Ozon BI views", [
             sys.executable, "-X", "utf8", "-u", ozon_script, "--step", "views", *common,
@@ -384,10 +413,9 @@ def main() -> int:
             "--step", "stock_history", *wb_stock_history_period,
             *(["--overwrite"] if args.overwrite else []),
         ]))
-        recent_from = max(args.date_from, date.today() - timedelta(days=7))
         steps.append(("wb_funnel", "WB воронка продаж", [
             sys.executable, "-X", "utf8", "-u", wb_script,
-            "--step", "funnel", "--date-from", min(recent_from, args.date_to).isoformat(),
+            "--step", "funnel", "--date-from", args.date_from.isoformat(),
             "--date-to", args.date_to.isoformat(),
         ]))
         wb_optional_steps = (
@@ -438,6 +466,27 @@ def main() -> int:
         ]))
     elif args.mode != "views" and "avito" in marketplaces and any(avito_credentials):
         print("ПРЕДУПРЕЖДЕНИЕ: Avito Ads | пропуск: сохранён неполный комплект Account ID / Client ID / Client Secret", flush=True)
+    if args.mode != "views" and "lamoda" in marketplaces:
+        for lamoda_step, lamoda_label in (
+            ("orders", "Lamoda · Заказы"),
+            ("stock", "Lamoda · Остатки"),
+            ("catalog", "Lamoda · Каталог"),
+            ("prices", "Lamoda · Цены и скидки"),
+            ("promotions", "Lamoda · Продвижение и акции"),
+            ("fbo_shipments", "Lamoda · Поставки и приёмка FBO"),
+            ("fbs_returns", "Lamoda · Возвраты FBS"),
+        ):
+            command=[sys.executable,"-X","utf8","-u",str(DASHBOARD_ROOT/"scripts"/"sync_lamoda.py"),"--client-key",args.client_key,"--database-name",args.database_name,"--date-from",args.date_from.isoformat(),"--date-to",args.date_to.isoformat(),"--step",lamoda_step]
+            if args.resume: command.append("--resume")
+            if args.overwrite: command.append("--overwrite")
+            steps.append((f"lamoda_{lamoda_step}",lamoda_label,command))
+        if "lamoda_finance" in {value.strip() for value in args.steps.split(",") if value.strip()}:
+            steps.append(("lamoda_finance", "Lamoda · Расходы и финансовые документы", [
+                sys.executable, "-X", "utf8", "-u", str(DASHBOARD_ROOT / "scripts" / "sync_lamoda.py"),
+                "--client-key", args.client_key, "--database-name", args.database_name,
+                "--date-from", args.date_from.isoformat(), "--date-to", args.date_to.isoformat(),
+                "--step", "finance",
+            ]))
     if args.mode == "views":
         steps.append(("all_views", "BI materialized views", [
             sys.executable, "-X", "utf8", "-u", str(PROJECT_ROOT / "scripts" / "rebuild_km_dashboard_views.py"),
@@ -485,6 +534,13 @@ def main() -> int:
                     str(PROJECT_ROOT / "scripts" / "rebuild_api_planfact_views.py"),
                 ],
             ))
+    if "lamoda" in marketplaces:
+        selected_lamoda = any(value.startswith("lamoda_") and value not in {"lamoda_finance", "lamoda_views"} for value in selected_steps)
+        if args.mode == "views" or (not args.defer_views and (selected_lamoda or not selected_steps)):
+            steps.append(("lamoda_views", "Lamoda · Витрины и отчёты", [
+                sys.executable, "-X", "utf8", "-u", str(DASHBOARD_ROOT / "scripts" / "rebuild_lamoda_views.py"),
+                "--client", args.client_key,
+            ]))
     if not steps:
         raise ValueError("Не выбран ни один доступный шаг загрузки")
 
@@ -499,7 +555,7 @@ def main() -> int:
         f"ПЛАН: клиент={args.client_key} | БД={args.database_name} | режим={args.mode} | "
         f"период={args.date_from}..{args.date_to}{wb_stock_plan} | шагов={len(steps)} | "
         f"режим={'ПЕРЕЗАПИСЬ' if args.overwrite else 'обычный'} | "
-        "API read-only | токены не выводятся | WB funnel ограничен последними 7 днями",
+        "API read-only | токены не выводятся | WB funnel: дневные данные products API за запрошенный период, глубина до 365 дней",
         flush=True,
     )
     completed_count = 0

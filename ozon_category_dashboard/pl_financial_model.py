@@ -129,6 +129,8 @@ def model_rows(arts):
 
 
 def attach_financial_model(config, payload, raw_tax=None):
+    if payload.get('financial_model'):
+        return payload
     if payload.get('available') is False and payload.get('marketplace') != 'all':
         from pl_monthly_budgets import budget_only
         return budget_only(config, payload)

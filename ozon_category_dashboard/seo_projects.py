@@ -29,6 +29,9 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 
 
+SEO_MARKETPLACES = {"ozon", "wb", "yandex_market"}
+
+
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS public.seo_monitoring_projects (
     project_id uuid PRIMARY KEY,
@@ -72,7 +75,7 @@ CREATE TABLE IF NOT EXISTS public.seo_monitoring_keyword_snapshots (
 CREATE INDEX IF NOT EXISTS idx_seo_monitoring_snapshots_project_date
     ON public.seo_monitoring_keyword_snapshots(project_id, snapshot_date DESC);
 CREATE TABLE IF NOT EXISTS public.seo_catalog_position_snapshots (
-    marketplace text NOT NULL CHECK (marketplace IN ('ozon', 'wb')),
+    marketplace text NOT NULL CHECK (marketplace IN ('ozon', 'wb', 'yandex_market')),
     snapshot_date date NOT NULL,
     period_from date NOT NULL,
     period_to date NOT NULL,
@@ -448,6 +451,9 @@ ALTER TABLE public.seo_generation_ai_settings ADD COLUMN IF NOT EXISTS primary_p
 ALTER TABLE public.seo_generation_ai_settings ADD COLUMN IF NOT EXISTS fallback_provider text NOT NULL DEFAULT 'openrouter';
 ALTER TABLE public.seo_monitoring_projects ADD COLUMN IF NOT EXISTS sku_filters jsonb;
 ALTER TABLE public.seo_monitoring_projects ADD COLUMN IF NOT EXISTS project_kind text NOT NULL DEFAULT 'monitoring';
+ALTER TABLE public.seo_monitoring_projects DROP CONSTRAINT IF EXISTS seo_monitoring_projects_marketplace_check;
+ALTER TABLE public.seo_monitoring_projects ADD CONSTRAINT seo_monitoring_projects_marketplace_check
+    CHECK (marketplace IN ('ozon', 'wb', 'yandex_market'));
 CREATE INDEX IF NOT EXISTS idx_seo_monitoring_projects_kind_updated
     ON public.seo_monitoring_projects(project_kind, updated_at DESC);
 """
@@ -723,7 +729,7 @@ def _assert_project_kind(cur, project_id, project_kind, for_update=False):
 def _default_project_name(cur, today=None, client_label="", project_kind="monitoring", marketplace=""):
     today = today or date.today()
     if project_kind == "generation":
-        marketplace_label = "WB" if marketplace == "wb" else "Ozon"
+        marketplace_label = {"wb": "WB", "yandex_market": "Яндекс Маркет"}.get(marketplace, "Ozon")
         return f"{marketplace_label} · {today.strftime('%d.%m.%Y')} · Генерация SEO"
     cur.execute(
         "SELECT count(*)::int AS project_count FROM public.seo_monitoring_projects WHERE project_kind=%s AND created_at >= %s AND created_at < %s",
@@ -773,8 +779,8 @@ def create_project(config, payload):
     client_label = _clean_text(payload.get("client_label"), 80)
     project_kind = _project_kind(payload.get("project_kind"))
     marketplace = _clean_text(payload.get("marketplace"), 20).lower()
-    if marketplace not in {"ozon", "wb"}:
-        raise ValueError("Маркетплейс должен быть Ozon или WB")
+    if marketplace not in SEO_MARKETPLACES:
+        raise ValueError("Маркетплейс должен быть Ozon, WB или Яндекс Маркет")
     raw_skus = payload.get("skus") or []
     sku_rows = []
     seen = set()
@@ -857,7 +863,7 @@ def update_project_skus(config, payload):
                 [(project_id, sku, product_name) for sku, product_name in rows],
             )
             marketplace = _clean_text(payload.get("marketplace"), 20).lower()
-            if marketplace in {"ozon", "wb"}:
+            if marketplace in SEO_MARKETPLACES:
                 cur.execute(
                     "UPDATE public.seo_monitoring_projects SET marketplace=%s WHERE project_id=%s",
                     (marketplace, project_id),
@@ -907,7 +913,7 @@ def list_projects(config, marketplace=None, project_kind="monitoring"):
     project_kind = _project_kind(project_kind)
     values = [project_kind]
     conditions = ["p.project_kind = %s"]
-    if marketplace in {"ozon", "wb"}:
+    if marketplace in SEO_MARKETPLACES:
         conditions.append("p.marketplace = %s")
         values.append(marketplace)
     where = "WHERE " + " AND ".join(conditions)
@@ -953,6 +959,12 @@ def list_projects(config, marketplace=None, project_kind="monitoring"):
 
 def _catalog_attribute_filter_sql(marketplace, selected_filters, values, alias="products"):
     filters = []
+    if marketplace == "yandex_market":
+        brand = selected_filters.get("brand")
+        if brand:
+            filters.append(f"lower(coalesce({alias}.brand, '')) = lower(%s)")
+            values.append(brand)
+        return filters
     if marketplace == "wb":
         for name, column in WB_CATALOG_FILTER_COLUMNS.items():
             selected = selected_filters.get(name)
@@ -997,6 +1009,13 @@ def _catalog_filter_options(cur, marketplace, cache_key=""):
     if cached and time.monotonic() - cached[0] < 300:
         return cached[1]
     options = {name: [] for name in CATALOG_ATTRIBUTE_FILTERS}
+    if marketplace == "yandex_market":
+        cur.execute(
+            """SELECT array_remove(array_agg(DISTINCT brand ORDER BY brand), NULL) AS brand
+               FROM seo_yandex_candidate_products"""
+        )
+        options["brand"] = list(cur.fetchone().get("brand") or [])[:400]
+        return options
     if marketplace == "wb":
         if not _relation_exists(cur, "products"):
             return options
@@ -1061,7 +1080,57 @@ def _catalog_filter_options(cur, marketplace, cache_key=""):
     return options
 
 
-def _prepare_catalog_metrics(cur, marketplace):
+def _prepare_catalog_metrics(cur, marketplace, client=""):
+    if marketplace == "yandex_market":
+        if not _relation_exists(cur, "yandex_fact_order_items"):
+            cur.execute(
+                """CREATE TEMP TABLE seo_candidate_metrics (
+                    sku text, funnel_date_to date, orders_7d numeric, orders_prev_7d numeric, orders_14d numeric,
+                    sales_7d_rub numeric, sales_prev_7d_rub numeric, sales_14d_rub numeric,
+                    average_position_7d numeric, average_position_prev_7d numeric, average_position_14d numeric,
+                    position_date_to date, position_checked_through date, position_query_count numeric
+                ) ON COMMIT DROP"""
+            )
+            return {"funnel_date_to": None, "position_date_to": None}
+        client_sql = "AND f.client_key = %s" if client else ""
+        params = [client] if client else []
+        cur.execute(
+            f"""CREATE TEMP TABLE seo_candidate_metrics ON COMMIT DROP AS
+                WITH latest AS (
+                    SELECT max(f.order_date) AS date_to
+                    FROM public.yandex_fact_order_items f
+                    WHERE NOT f.is_test AND f.currency = 'RUR' {client_sql}
+                )
+                SELECT f.offer_id::text AS sku,
+                       max(latest.date_to) AS funnel_date_to,
+                       sum(f.units) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date > latest.date_to - 7) AS orders_7d,
+                       sum(f.units) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date BETWEEN latest.date_to - 13 AND latest.date_to - 7) AS orders_prev_7d,
+                       sum(f.units) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date BETWEEN latest.date_to - 13 AND latest.date_to) AS orders_14d,
+                       sum(f.buyer_payment) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date > latest.date_to - 7) AS sales_7d_rub,
+                       sum(f.buyer_payment) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date BETWEEN latest.date_to - 13 AND latest.date_to - 7) AS sales_prev_7d_rub,
+                       sum(f.buyer_payment) FILTER (WHERE f.status <> 'CANCELLED' AND f.order_date BETWEEN latest.date_to - 13 AND latest.date_to) AS sales_14d_rub,
+                       NULL::numeric AS average_position_7d,
+                       NULL::numeric AS average_position_prev_7d,
+                       NULL::numeric AS average_position_14d,
+                       NULL::date AS position_date_to,
+                       NULL::date AS position_checked_through,
+                       NULL::numeric AS position_query_count
+                FROM public.yandex_fact_order_items f
+                CROSS JOIN latest
+                WHERE NOT f.is_test AND f.currency = 'RUR' {client_sql}
+                  AND f.order_date BETWEEN latest.date_to - 13 AND latest.date_to
+                  AND nullif(f.offer_id, '') IS NOT NULL
+                GROUP BY f.offer_id""",
+            params + params,
+        )
+        cur.execute("CREATE INDEX ON seo_candidate_metrics (sku)")
+        cur.execute(
+            """SELECT max(funnel_date_to) AS funnel_date_to,
+                      NULL::date AS position_date_to,
+                      NULL::date AS position_checked_through
+               FROM seo_candidate_metrics"""
+        )
+        return _serialize(cur.fetchone())
     funnel_view = f"mv_{marketplace}_funnel_daily_by_article_category"
     if not _relation_exists(cur, funnel_view):
         cur.execute(
@@ -1290,19 +1359,97 @@ def sync_ozon_catalog_positions(config, ozon_fetcher, date_from, date_to, batch_
         }
 
 
+def _prepare_yandex_candidate_products(cur, client=""):
+    """Build one honest Yandex offer catalog from catalog, orders and latest inventory."""
+    sources = []
+    params = []
+    if _relation_exists(cur, "yandex_dim_offer"):
+        client_sql = "WHERE client_key = %s" if client else ""
+        sources.append(
+            f"""SELECT offer_id::text AS sku, offer_name AS product_name,
+                       category_name, brand, NULL::numeric AS total_stock_qty, 1 AS source_priority
+                FROM public.yandex_dim_offer {client_sql}
+                WHERE nullif(offer_id, '') IS NOT NULL"""
+            if not client else
+            """SELECT offer_id::text AS sku, offer_name AS product_name,
+                      category_name, brand, NULL::numeric AS total_stock_qty, 1 AS source_priority
+               FROM public.yandex_dim_offer
+               WHERE client_key = %s AND nullif(offer_id, '') IS NOT NULL"""
+        )
+        if client:
+            params.append(client)
+    if _relation_exists(cur, "yandex_fact_order_items"):
+        sources.append(
+            """SELECT offer_id::text AS sku, max(offer_name) AS product_name,
+                      NULL::text AS category_name, NULL::text AS brand,
+                      NULL::numeric AS total_stock_qty, 2 AS source_priority
+               FROM public.yandex_fact_order_items
+               WHERE NOT is_test AND nullif(offer_id, '') IS NOT NULL"""
+            + (" AND client_key = %s" if client else "")
+            + " GROUP BY offer_id"
+        )
+        if client:
+            params.append(client)
+    has_inventory = False
+    if _relation_exists(cur, "inventory_history_daily"):
+        cur.execute(
+            "SELECT EXISTS (SELECT 1 FROM public.inventory_history_daily WHERE marketplace = 'yandex_market') AS available"
+        )
+        has_inventory = bool(cur.fetchone()["available"])
+    if has_inventory:
+        sources.append(
+            """SELECT stock.sku::text AS sku, max(stock.product_name) AS product_name,
+                      max(stock.category_name) AS category_name, NULL::text AS brand,
+                      sum(stock.stock_total_qty) AS total_stock_qty, 3 AS source_priority
+               FROM public.inventory_history_daily stock
+               WHERE stock.marketplace = 'yandex_market'
+                 AND stock.snapshot_date = (
+                     SELECT max(snapshot_date) FROM public.inventory_history_daily
+                     WHERE marketplace = 'yandex_market'
+                 )
+                 AND nullif(stock.sku, '') IS NOT NULL
+               GROUP BY stock.sku"""
+        )
+    if not sources:
+        return {"available": False, "stock_available": False}
+    cur.execute(
+        f"""CREATE TEMP TABLE seo_yandex_candidate_products ON COMMIT DROP AS
+            WITH source_rows AS ({' UNION ALL '.join(sources)})
+            SELECT sku,
+                   (array_agg(product_name ORDER BY source_priority) FILTER (WHERE product_name IS NOT NULL AND product_name <> ''))[1] AS product_name,
+                   (array_agg(category_name ORDER BY source_priority) FILTER (WHERE category_name IS NOT NULL AND category_name <> ''))[1] AS category_name,
+                   NULL::text AS subcategory_name,
+                   (array_agg(category_name ORDER BY source_priority) FILTER (WHERE category_name IS NOT NULL AND category_name <> ''))[1] AS niche_name,
+                   max(total_stock_qty) AS total_stock_qty,
+                   NULL::numeric AS reyting_kartochki,
+                   NULL::numeric AS reyting_po_otzyvam,
+                   NULL::text AS gj_model,
+                   NULL::text AS assortment_bia,
+                   NULL::text AS tg,
+                   NULL::text AS tg_plus,
+                   NULL::text AS cg,
+                   NULL::text AS season,
+                   (array_agg(brand ORDER BY source_priority) FILTER (WHERE brand IS NOT NULL AND brand <> ''))[1] AS brand
+            FROM source_rows
+            GROUP BY sku""",
+        params,
+    )
+    cur.execute("CREATE INDEX ON seo_yandex_candidate_products (sku)")
+    return {"available": True, "stock_available": has_inventory}
+
+
 def project_candidates(
     config, marketplace, query="", limit=100, category="", subcategory="", page=1,
     gj_model="", assortment_bia="", tg="", tg_plus="", cg="", season="", selection=False,
     brand="", gender="", age="", collection="", style="", color="", material="",
     material_composition="", russian_size="", manufacturer_size="", target_audience="",
     availability="", rating_min="", catalog_category="", sort_col="product_name", sort_dir="asc",
-    column_filters="", categories="", project_id="",
+    column_filters="", categories="", project_id="", client="",
 ):
     """Return the current product catalog from the indexed stock base."""
-    if marketplace not in {"ozon", "wb"}:
-        raise ValueError("Маркетплейс должен быть Ozon или WB")
-    prefix = "ozon" if marketplace == "ozon" else "wb"
-    stock_view = f"mv_{prefix}_abc_product_stock_base"
+    if marketplace not in SEO_MARKETPLACES:
+        raise ValueError("Маркетплейс должен быть Ozon, WB или Яндекс Маркет")
+    stock_view = "" if marketplace == "yandex_market" else f"mv_{marketplace}_abc_product_stock_base"
     clean_query = _clean_text(query, 200)
     clean_category = _clean_text(category, 300)
     clean_catalog_category = _clean_text(catalog_category, 300)
@@ -1396,7 +1543,7 @@ def project_candidates(
     category_filters.extend(_catalog_attribute_filter_sql(marketplace, catalog_attribute_filters, category_values))
     clean_availability = _clean_text(availability, 30)
     if clean_availability in {"in_stock", "out_of_stock"}:
-        availability_sql = "coalesce(total_stock_qty, 0) > 0" if clean_availability == "in_stock" else "coalesce(total_stock_qty, 0) <= 0"
+        availability_sql = "total_stock_qty > 0" if clean_availability == "in_stock" else "total_stock_qty IS NOT NULL AND total_stock_qty <= 0"
         filters.append(availability_sql)
         category_filters.append(availability_sql)
     clean_rating_min = _number(rating_min)
@@ -1493,7 +1640,11 @@ def project_candidates(
         FROM public.{stock_view}
     """
     with _conn(config) as conn, conn.cursor() as cur:
-        if not _relation_exists(cur, stock_view):
+        yandex_catalog = _prepare_yandex_candidate_products(cur, client) if marketplace == "yandex_market" else None
+        if marketplace == "yandex_market":
+            source_sql = "SELECT * FROM seo_yandex_candidate_products"
+        catalog_available = yandex_catalog["available"] if yandex_catalog is not None else _relation_exists(cur, stock_view)
+        if not catalog_available:
             if selection:
                 return {
                     "ok": True, "rows": [], "total": 0,
@@ -1505,7 +1656,8 @@ def project_candidates(
                     *CATALOG_ATTRIBUTE_FILTERS.keys(),
                 )
             }
-            empty_options["availability"] = ["in_stock", "out_of_stock"]
+            if marketplace != "yandex_market":
+                empty_options["availability"] = ["in_stock", "out_of_stock"]
             return {
                 "ok": True, "rows": [], "total": 0, "page": 1, "page_size": limit,
                 "total_pages": 1, "category_rows": [], "category_values": [],
@@ -1516,7 +1668,7 @@ def project_candidates(
             }
         # Selection mode needs the metric columns too: the saved filters and the
         # table sort may reference orders, sales, position or the SEO signal.
-        metrics_meta = _prepare_catalog_metrics(cur, marketplace)
+        metrics_meta = _prepare_catalog_metrics(cur, marketplace, client)
         metric_columns = """, metrics.orders_7d, metrics.orders_prev_7d, metrics.orders_14d,
                 metrics.sales_7d_rub, metrics.sales_prev_7d_rub, metrics.sales_14d_rub,
                 metrics.average_position_7d, metrics.average_position_prev_7d, metrics.average_position_14d,
@@ -1524,7 +1676,7 @@ def project_candidates(
                 metrics.position_checked_through, metrics.position_query_count,
                 CASE WHEN metrics.orders_prev_7d IS NULL OR metrics.orders_prev_7d = 0 THEN NULL
                      ELSE round((metrics.orders_7d - metrics.orders_prev_7d) * 100.0 / metrics.orders_prev_7d, 1) END AS orders_trend_pct,
-                CASE WHEN coalesce(products.total_stock_qty, 0) <= 0 THEN 'no_stock'
+                CASE WHEN products.total_stock_qty IS NOT NULL AND products.total_stock_qty <= 0 THEN 'no_stock'
                      WHEN metrics.average_position_14d IS NULL
                           AND metrics.position_checked_through IS NOT NULL
                           AND coalesce(metrics.position_query_count, 0) = 0 THEN 'no_queries'
@@ -1731,7 +1883,8 @@ def project_candidates(
     category_rows = [_decorate_catalog_metrics(row) for row in category_rows]
     filter_options = {key: value or [] for key, value in option_values.items()}
     filter_options.update(native_options)
-    filter_options["availability"] = ["in_stock", "out_of_stock"]
+    if marketplace != "yandex_market" or (yandex_catalog and yandex_catalog["stock_available"]):
+        filter_options["availability"] = ["in_stock", "out_of_stock"]
     return {
         "ok": True, "rows": rows, "total": total, "page": page, "page_size": limit,
         "total_pages": total_pages, "category_rows": category_rows,

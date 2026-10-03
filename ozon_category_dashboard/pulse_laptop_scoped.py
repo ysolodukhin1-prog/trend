@@ -19,15 +19,18 @@ import app
 
 ALLOWED_CLIENTS = frozenset({"toptop", "lera_nena"})
 REPORTS = [
+    'assortmentProducts', 'assortmentPrices', 'assortmentABC', 'assortmentXYZ',
     "abc", "product", "sku", "adv", "mediaAdv", "funnel",
     "weeklyDynamics", "inventoryHistory", "planfact", "salesPlanning",
     "mediaPlan", "profitLoss", "unitEconomics", "seoMonitoring",
     "wbSearchQueries", "wbAdSearchQueries", "reviews", "commercialRadar",
     "yandexOverview", "yandexFunnel", "yandexFinance",
     "yandexPromotion", "yandexInventory",
+    "lamodaSales", "lamodaReturns", "lamodaCatalog", "lamodaOperations",
 ]
 READ_ONLY_API_PATHS = frozenset({
-    "/api/health", "/api/filters", "/api/summary", "/api/stats",
+    "/api/assortment",
+    "/api/health", "/api/database-status", "/api/service-status", "/api/filters", "/api/summary", "/api/stats",
     "/api/product-summary", "/api/product-stats", "/api/sku-summary",
     "/api/sku-stats", "/api/sku-card", "/api/adv-summary", "/api/adv-daily",
     "/api/adv-waterfalls", "/api/adv-stats", "/api/adv-campaigns",
@@ -46,10 +49,12 @@ READ_ONLY_API_PATHS = frozenset({
     "/api/planfact-funnel-matrix", "/api/health-check-hypothesis-analysis",
     "/api/km-trade/sales-forecast", "/api/km-trade/media-plan",
     "/api/km-trade/pl", "/api/km-trade/pl-monthly-budget",
+    "/api/km-trade/pl-cost-registry",
     "/api/km-trade/unit-workspace",
     "/api/km-trade/unit-economics",
     "/api/wb-ad-search-queries-dashboard", "/api/reviews-dashboard",
     "/api/reviews-insights", "/api/yandex-market/analytics",
+    "/api/lamoda/dashboard",
     "/api/seo-projects", "/api/seo-project",
     "/api/seo-project-candidates", "/api/seo-project-full-run/status",
 })
@@ -72,7 +77,7 @@ def configure_scope() -> None:
             "show_in_dashboard": True,
             "root_path": "",
             "reports": REPORTS + (["wbEntrance"] if key == "lera_nena" else []),
-            "marketplaces": ["ozon", "wb", "yandex_market"],
+            "marketplaces": ["ozon", "wb", "yandex_market", "lamoda"],
         }
     app.DEFAULT_CLIENT = "toptop"
     original_read_db_config = app.read_db_config

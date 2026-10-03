@@ -1,0 +1,594 @@
+/* KM Trade uses the same P&L visual contract as Konstex. */
+.pl3,
+.pl3 * {
+  box-sizing: border-box;
+}
+
+.pl3 {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.pl3-report-card {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+  border: 1px solid #e3e8ef;
+  border-radius: 20px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, .04);
+}
+
+.pl3-report-title h2,
+.pl3-title h3 {
+  margin: 0;
+  color: #111;
+  font-weight: 850;
+}
+
+.pl3-report-title h2 {
+  font-size: 22px;
+}
+
+.pl3-report-title p,
+.pl3-title p {
+  margin: 4px 0 0;
+  color: #667085;
+  font-size: 12px;
+}
+
+.pl3-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.pl3-kpi {
+  position: relative;
+  min-width: 0;
+  min-height: 98px;
+  overflow: hidden;
+  border: 1px solid #d9dee6;
+  border-top: 4px solid #ff4d58;
+  border-radius: 17px;
+  background: #fff;
+  padding: 18px;
+  box-shadow: 0 3px 10px rgba(16, 24, 40, .07);
+}
+
+.pl3-kpi::after {
+  position: absolute;
+  right: -18px;
+  bottom: -24px;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: #ffd9e7;
+  content: "";
+}
+
+.pl3-kpi span,
+.pl3-kpi strong {
+  position: relative;
+  z-index: 1;
+  display: block;
+}
+
+.pl3-kpi span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.pl3-kpi strong {
+  margin-top: 8px;
+  color: #111827;
+  font-size: clamp(20px, 1.5vw, 27px);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+}
+
+.pl3 .negative {
+  color: #b42318 !important;
+}
+
+.pl3-warning {
+  border: 1px solid #f79009;
+  border-radius: 14px;
+  background: #fffaeb;
+  padding: 11px 13px;
+  color: #7a2e0e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.pl3-toolbar-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 12px;
+  border: 1px solid #e3e8ef;
+  border-radius: 16px;
+  padding: 14px;
+}
+
+.pl3-toolbar-card .finance-toolbar {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
+}
+
+.pl3-primary {
+  min-height: 42px;
+  border: 1px solid #111827;
+  border-radius: 11px;
+  background: #111827;
+  padding: 9px 15px;
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pl3-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: 14px;
+}
+
+.pl3-card {
+  min-width: 0;
+  border: 1px solid #e3e8ef;
+  border-radius: 18px;
+  background: #fff;
+  padding: 16px;
+  box-shadow: 0 3px 12px rgba(16, 24, 40, .035);
+}
+
+.pl3-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.pl3-title h3 {
+  font-size: 18px;
+}
+
+.pl3-chart-wrap {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.pl3-chart {
+  display: block;
+  width: 100%;
+  min-width: 640px;
+  height: auto;
+}
+
+.pl3-statement-chart {
+  min-height: 350px;
+}
+
+.pl3-monthly-chart {
+  min-height: 330px;
+}
+
+.pl3-axis {
+  stroke: #cfd8e3;
+  stroke-width: 1;
+}
+
+.pl3-grid-line {
+  stroke: #e8edf3;
+  stroke-width: 1;
+}
+
+.pl3-profit-zero {
+  stroke: #98a2b3;
+  stroke-width: 1;
+  stroke-dasharray: 5 5;
+}
+
+.pl3-axis-label,
+.pl3-chart-value {
+  fill: #667085;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.pl3-chart-value {
+  fill: #111827;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl3-chart-value.negative {
+  fill: #b42318 !important;
+}
+
+.pl3-empty {
+  display: grid;
+  min-height: 290px;
+  place-items: center;
+  color: #667085;
+  font-size: 13px;
+}
+
+.pl3-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding-bottom: 5px;
+  scrollbar-gutter: stable both-edges;
+}
+
+.pl3-table {
+  width: 100%;
+  min-width: 720px;
+  border-collapse: collapse;
+}
+
+.pl3-wide-table {
+  min-width: 1180px;
+}
+
+.pl3-product-table {
+  min-width: 1660px;
+}
+
+.pl3-expense-table {
+  min-width: 920px;
+}
+
+.pl3-table th,
+.pl3-table td {
+  border-bottom: 1px solid #e8edf3;
+  padding: 10px 9px;
+  color: #111827;
+  font-size: 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pl3-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #fff;
+  color: #667085;
+  font-weight: 700;
+}
+
+.pl3-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.pl3-table .emphasis {
+  font-weight: 800;
+}
+
+.pl3-table .muted {
+  color: #667085;
+}
+
+.pl3-table tr.subtotal td {
+  background: #f4f7fb;
+  font-weight: 800;
+}
+
+.pl3-table tr.total td {
+  background: #ecfdf3;
+  font-weight: 900;
+}
+
+.pl3-product {
+  min-width: 230px;
+  white-space: normal;
+}
+
+.pl3-product strong,
+.pl3-product span,
+.pl3-product small {
+  display: block;
+}
+
+.pl3-product span,
+.pl3-product small {
+  margin-top: 3px;
+  color: #667085;
+}
+
+.pl3-table input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 130px;
+  min-height: 36px;
+  border: 1px solid #d0d5dd;
+  border-radius: 8px;
+  background: #fff;
+  padding: 6px 8px;
+  color: #111827;
+  font: inherit;
+}
+
+.pl3-table input[type="checkbox"] {
+  width: auto;
+}
+
+.pl3-card > .pl3-primary {
+  margin-top: 12px;
+}
+
+@media (max-width: 1120px) {
+  .pl3-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pl3-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .pl3-report-card,
+  .pl3-card {
+    padding: 11px;
+  }
+
+  .pl3-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .pl3-toolbar-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pl3-export {
+    width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .pl3-kpi-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+
+.pl3-mode-tabs {
+  display: inline-flex;
+  width: fit-content;
+  max-width: 100%;
+  gap: 4px;
+  border: 1px solid #d0d5dd;
+  border-radius: 12px;
+  background: #f2f4f7;
+  padding: 4px;
+}
+
+.pl3-mode-tabs button {
+  min-height: 36px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  padding: 7px 14px;
+  color: #475467;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.pl3-mode-tabs button.is-active {
+  background: #111;
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, .18);
+}
+
+.pl3-mode-tabs button:focus-visible,
+.pl3-goal-controls input:focus-visible {
+  outline: 3px solid rgba(18, 183, 106, .28);
+  outline-offset: 2px;
+}
+
+.pl3-plan-kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.pl3-goal-card {
+  border-color: #9bd8be;
+  background: #f6fef9;
+}
+
+.pl3-goal-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.pl3-goal-controls label {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.pl3-goal-controls input {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #98a2b3;
+  border-radius: 9px;
+  background: #fff;
+  padding: 8px 10px;
+  color: #101828;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl3-goal-status {
+  display: grid;
+  gap: 5px;
+  border: 1px solid #75c7a5;
+  border-radius: 12px;
+  background: #ecfdf3;
+  padding: 12px;
+  color: #065f46;
+}
+
+.pl3-goal-status.is-blocked {
+  border-color: #fda29b;
+  background: #fff1f0;
+  color: #912018;
+}
+
+.pl3-goal-status strong,
+.pl3-goal-status span,
+.pl3-goal-status small {
+  display: block;
+}
+
+.pl3-goal-status span {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.pl3-goal-status small {
+  opacity: .82;
+}
+
+.pl3-goal-result-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.pl3-goal-result-grid .pl3-kpi {
+  min-height: 82px;
+  border-top-color: #12b76a;
+  padding: 14px;
+}
+
+.pl3-goal-result-grid .pl3-kpi::after {
+  background: #d1fadf;
+}
+
+
+.pl3-plan-trajectory {
+  display: grid;
+  gap: 12px;
+  min-height: 290px;
+  align-content: center;
+}
+
+.pl3-plan-trajectory-row {
+  display: grid;
+  grid-template-columns: 82px minmax(120px, 1fr) 100px 104px;
+  align-items: center;
+  gap: 9px;
+  color: #475467;
+  font-size: 11px;
+}
+
+.pl3-plan-trajectory-row > div {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #eaecf0;
+}
+
+.pl3-plan-trajectory-row i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #53b1fd;
+}
+
+.pl3-plan-trajectory-row strong,
+.pl3-plan-trajectory-row em {
+  color: #101828;
+  font-style: normal;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.pl3-plan-trajectory-legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #eaecf0;
+  padding-top: 10px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.pl3-plan-trajectory-legend span:first-child {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pl3-plan-trajectory-legend i {
+  width: 12px;
+  height: 8px;
+  border-radius: 2px;
+  background: #53b1fd;
+}
+
+.pl3-plan-month-table {
+  min-width: 1320px;
+}
+
+.pl3-plan-gap-table {
+  min-width: 880px;
+}
+
+.pl3-goal-month-table {
+  min-width: 680px;
+}
+
+@media (max-width: 1240px) {
+  .pl3-plan-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .pl3-goal-result-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 820px) {
+  .pl3-goal-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .pl3-mode-tabs,
+  .pl3-mode-tabs button {
+    width: 100%;
+  }
+
+  .pl3-mode-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pl3-plan-kpis,
+  .pl3-goal-result-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

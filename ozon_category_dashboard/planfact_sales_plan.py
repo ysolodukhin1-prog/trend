@@ -100,7 +100,12 @@ def synchronize(payload, kind, raw_query, snapshots):
             selected_months = months if kind == 'summary' else [month]
             order_rows = [next((r for r in snapshots.get(m, {}).get('months', []) if r['month_start'] == mo), {}) for m in relevant for mo in selected_months]
             orders_plan = strict_sum(r.get('orders_plan_rub') for r in order_rows)
-            orders_fact = strict_sum(r.get('actual_revenue') for r in order_rows) if kind in ('scorecard', 'monthly') else None
+            snapshot_orders_fact = strict_sum(r.get('actual_revenue') for r in order_rows) if kind in ('scorecard', 'monthly') else None
+            # The Plan/Fact payload is the reconciled Seller Analytics control.
+            # Keep it authoritative instead of replacing it with the product-funnel
+            # snapshot, whose portfolio total can omit orders without SKU detail.
+            payload_orders_fact = row.get('orders_rub') if kind in ('scorecard', 'monthly') else None
+            orders_fact = float(payload_orders_fact) if payload_orders_fact is not None else snapshot_orders_fact
             orders_runrate = None
             if kind == 'scorecard' and len(relevant) == 1:
                 anchor = snapshots[relevant[0]]['period']['anchor_month']
@@ -112,6 +117,9 @@ def synchronize(payload, kind, raw_query, snapshots):
                        orders_plan_source='sales_planning_approved',
                        orders_plan_version_ids=sorted({v for r in order_rows for v in r.get('version_ids', [])}),
                        orders_plan_fact_pct=ratio(orders_fact, orders_plan))
+            if kind == 'daily':
+                value = row.get('orders_rub')
+                row['orders_fact_daily_rub'] = float(value) if value is not None else None
             # No buyout/revenue plan is inferred from an orders target.
             plan, source = None, 'buyout_plan_missing'
         row.update(sales_plan_rub=plan, sales_plan_source="sales_planning", sales_plan_kind=source)
@@ -142,20 +150,8 @@ def apply_sales_planning(payload, kind, raw_query, client, config, marketplaces)
     snapshots = {m: sales_forecast_payload(config, urlencode({"client": client, "marketplace": m, "horizon": "rolling"})) for m in markets}
     result = synchronize(payload, kind, raw_query, snapshots)
     if selected == 'wb' and snapshots.get('wb', {}).get('metric_contract', {}).get('primary') == 'orders':
-        from km_trade_finance import connect_km
         snapshot = snapshots['wb']
         rows = result.get('rows', []) if kind != 'summary' else [result]
-        daily = {}
-        if kind == 'daily' and rows:
-            dates = [str(r['report_date'])[:10] for r in rows if r.get('report_date')]
-            if dates:
-                with connect_km(config) as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("""SELECT report_date::text AS day,
-                            sum(ordered_amount_rub) AS amount FROM public.wb_funnel_daily
-                            WHERE nullif(wb_nmid, '') IS NOT NULL AND report_date BETWEEN %s AND %s
-                            GROUP BY report_date""", (min(dates), min(max(dates), snapshot['period']['available_to'])))
-                        daily = {r['day']: r['amount'] for r in cur.fetchall()}
         media_months = {}
         if kind == 'scorecard':
             from km_trade_media_plan import media_plan_payload
@@ -168,9 +164,6 @@ def apply_sales_planning(payload, kind, raw_query, client, config, marketplaces)
                 media_month = media_months.get(str(row.get('plan_month', ''))[:7], {})
                 row['ad_budget_target_rub'] = media_month.get('plan', {}).get('ad_expense_rub')
                 row['ad_budget_target_source'] = 'Расчёт медиаплана по сохранённым параметрам'
-            if kind == 'daily':
-                value = daily.get(str(row.get('report_date', ''))[:10])
-                row['orders_fact_daily_rub'] = float(value) if value is not None else None
             month = str(row.get('plan_month') or row.get('report_date') or '')[:7]
             scenario = next((v for v in snapshot.get('plan_versions', [])
                              if v.get('assumptions', {}).get('snapshot', {}).get('metric') == 'orders'

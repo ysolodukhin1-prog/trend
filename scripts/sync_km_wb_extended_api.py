@@ -9,6 +9,7 @@ It never reuses another client's token and never calls mutation endpoints.
 from __future__ import annotations
 
 import argparse
+from contextlib import closing
 import csv
 import hashlib
 import io
@@ -494,6 +495,50 @@ def entity_key(row: dict[str, Any], index: int) -> str:
     return f"row-{index}-{hashlib.sha256(raw.encode('utf-8')).hexdigest()[:20]}"
 
 
+def statistics_identity(source_key: str, row: dict[str, Any]) -> str:
+    field = "saleID" if source_key == "statistics.sales" else "srid"
+    value = str(row.get(field) or "").strip()
+    if not value:
+        raise ValueError(f"WB {source_key}: missing {field}; import not complete")
+    return f"{field}:{value}"
+
+
+def fetch_statistics(token: str, source_key: str, path: str, date_from: date):
+    """Consume the change feed to its documented empty-page terminator."""
+    cursor = f"{date_from.isoformat()}T00:00:00"
+    records = {}
+    pages = []
+    for page_number in range(1, 1001):
+        query = urlencode({"dateFrom": cursor, "flag": 0})
+        payload, status, _ = api_request(
+            "https://statistics-api.wildberries.ru", f"{path}?{query}", token,
+            request_label=source_key,
+        )
+        if status != 200 or not isinstance(payload, list) or any(not isinstance(r, dict) for r in payload):
+            raise RuntimeError(f"WB {source_key}: invalid page; import not complete")
+        pages.append({"dateFrom": cursor, "rows": len(payload)})
+        if not payload:
+            return list(records.values()), len(pages), pages
+        for row in payload:
+            key = statistics_identity(source_key, row)
+            if not row.get("date") or not parse_record_date(row) or not row.get("lastChangeDate"):
+                raise RuntimeError(f"WB {source_key}: missing event/change date")
+            if source_key == 'statistics.sales':
+                from decimal import Decimal
+                if str(row['saleID'])[:1] not in {'S', 'R'} or not row.get('nmId'):
+                    raise ValueError('WB sales: invalid operation type/product')
+                if not Decimal(str(row.get('priceWithDisc'))).is_finite():
+                    raise ValueError('WB sales: invalid amount')
+            if key not in records or str(row["lastChangeDate"]) >= str(records[key]["lastChangeDate"]):
+                records[key] = row
+        next_cursor = str(payload[-1]["lastChangeDate"])
+        if next_cursor <= cursor:
+            raise RuntimeError(f"WB {source_key}: pagination cursor did not advance; import not complete")
+        cursor = next_cursor
+        print(f"ПРОГРЕСС: {source_key} | page={page_number} | rows={len(payload)} | accumulated={len(records)}", flush=True)
+    raise RuntimeError(f"WB {source_key}: pagination safety limit; import not complete")
+
+
 def upsert_entities(cur: Any, source_key: str, rows: list[dict[str, Any]], *, replace: bool) -> int:
     if replace:
         cur.execute("DELETE FROM public.wb_api_entities WHERE source_key = %s", (source_key,))
@@ -501,10 +546,20 @@ def upsert_entities(cur: Any, source_key: str, rows: list[dict[str, Any]], *, re
     for index, row in enumerate(rows, start=1):
         if not isinstance(row, dict):
             continue
-        key = entity_key(row, index)
+        key = statistics_identity(source_key, row) if source_key in {"statistics.orders", "statistics.sales"} else entity_key(row, index)
         value_by_key[key] = (source_key, key, parse_record_date(row), Json(row))
     values = list(value_by_key.values())
     if values:
+        if source_key in {"statistics.orders", "statistics.sales"}:
+            # Remove legacy srid:date keys for these exact identities. A mutable
+            # date must not duplicate an order; saleID keeps sale/return distinct.
+            field = "saleID" if source_key == "statistics.sales" else "srid"
+            ids = [key.split(":", 1)[1] for key in value_by_key]
+            cur.execute(
+                "DELETE FROM public.wb_api_entities WHERE source_key=%s "
+                "AND payload->>%s = ANY(%s) AND entity_key <> %s || (payload->>%s)",
+                (source_key, field, ids, field + ":", field),
+            )
         execute_values(
             cur,
             """
@@ -514,6 +569,9 @@ def upsert_entities(cur: Any, source_key: str, rows: list[dict[str, Any]], *, re
                 record_date = EXCLUDED.record_date,
                 captured_at = now(),
                 payload = EXCLUDED.payload
+            WHERE EXCLUDED.source_key NOT IN ('statistics.orders','statistics.sales')
+               OR coalesce(public.wb_api_entities.payload->>'lastChangeDate','')
+                  <= coalesce(EXCLUDED.payload->>'lastChangeDate','')
             """,
             values,
             page_size=1000,
@@ -769,7 +827,16 @@ def fetch_wb_finance_details(
             request_label="детали отчётов реализации",
         )
         requests += 1
-        page = rows_from_payload(payload)
+        if status == 204:
+            pages.append({"payload": payload, "status": status, "request": body})
+            break
+        if status != 200 or not isinstance(payload, list) or any(not isinstance(row, dict) for row in payload):
+            raise RuntimeError("WB Finance: некорректная страница; загрузка не завершена")
+        page = payload
+        if not page:
+            raise RuntimeError("WB Finance: пустая страница без завершающего 204")
+        if any(wb_optional_int(row, 'rrdId') is None for row in page):
+            raise RuntimeError("WB Finance: отсутствует rrdId; загрузка не завершена")
         pages.append({"payload": payload, "status": status, "request": body})
         all_rows.extend(page)
         elapsed = time.monotonic() - started
@@ -780,13 +847,13 @@ def fetch_wb_finance_details(
             f"скорость={speed:,.1f} строк/с | elapsed={duration(elapsed)} | errors=0",
             flush=True,
         )
-        if status == 204 or not page or len(page) < limit:
-            break
         next_cursor = wb_optional_int(page[-1], "rrdId")
         if next_cursor is None or next_cursor <= cursor:
-            raise RuntimeError("WB Finance вернул полную страницу без корректного следующего rrdId")
+            raise RuntimeError("WB Finance вернул страницу без корректного следующего rrdId")
         cursor = next_cursor
-    return all_rows, pages, requests
+    # Boundary overlap must not duplicate money or rows in downstream consumers.
+    unique = {wb_optional_int(row, 'rrdId'): row for row in all_rows}
+    return list(unique.values()), pages, requests
 
 
 def fetch_content_cards(token: str) -> tuple[list[dict[str, Any]], int]:
@@ -1796,7 +1863,7 @@ def fetch_stock_history_csv(token: str, date_from: date, date_to: date) -> tuple
     )
     requests = 1
     status = ""
-    for poll in range(1, 19):
+    for poll in range(1, 91):
         sleep_progress(20, f"история остатков | ожидание готовности | poll={poll}")
         query = urlencode({"filter[downloadIds][]": str(report_id)})
         payload, _, _ = api_request(
@@ -1806,13 +1873,13 @@ def fetch_stock_history_csv(token: str, date_from: date, date_to: date) -> tuple
         requests += 1
         status_rows = rows_from_payload(payload)
         status = str(status_rows[0].get("status") if status_rows else "").upper()
-        print(f"ПРОГРЕСС: Stock CSV poll={poll}/18 | status={status or 'UNKNOWN'}", flush=True)
+        print(f"ПРОГРЕСС: Stock CSV poll={poll}/90 | status={status or 'UNKNOWN'}", flush=True)
         if status == "SUCCESS":
             break
         if status == "FAILED":
             raise RuntimeError(f"WB не сформировал историю остатков: report_id={report_id}")
     if status != "SUCCESS":
-        raise RuntimeError(f"История остатков не готова за 6 минут: report_id={report_id}")
+        raise RuntimeError(f"История остатков не готова за 30 минут: report_id={report_id}")
     archive, _, _ = api_request(
         "https://seller-analytics-api.wildberries.ru", f"/api/v2/nm-report/downloads/file/{report_id}",
         token, binary=True, request_label="скачивание истории остатков",
@@ -1950,7 +2017,11 @@ def run_step(
     outputs: list[str] = []
     run_status = "ok"
     run_error = ""
-    with db_connection() as conn, conn.cursor() as cur:
+    with closing(db_connection()) as conn, conn, conn.cursor() as cur:
+        if step == "statistics":
+            cur.execute("SELECT pg_try_advisory_lock(2026093002)")
+            if not cur.fetchone()[0]:
+                raise RuntimeError("WB statistics import is already running for this database")
         ensure_schema(cur)
         if step == "content":
             payload, requests = fetch_content_cards(token)
@@ -1963,14 +2034,11 @@ def run_step(
                 ("statistics.sales", "/api/v1/supplier/sales"),
 
             ):
-                query = urlencode({"dateFrom": f"{date_from.isoformat()}T00:00:00", "flag": 0})
-                payload, status, _ = api_request(
-                    "https://statistics-api.wildberries.ru", f"{path}?{query}", token,
-                    request_label=key,
-                )
-                requests += 1
-                page = rows_from_payload(payload)
-                save_snapshot(cur, key, payload, date_from, date_to, status, {"method": "GET", "flag": 0})
+                page, request_count, pages = fetch_statistics(token, key, path, date_from)
+                requests += request_count
+                save_snapshot(cur, key, page, date_from, date_to, 200,
+                              {"method": "GET", "flag": 0, "pages": pages,
+                               "complete": True, "cursor_basis": "lastChangeDate"})
                 if overwrite:
                     overwritten_rows += delete_entity_period(cur, key, date_from, date_to)
                 upsert_entities(cur, key, page, replace=False)
@@ -2322,8 +2390,8 @@ def main() -> None:
         choices=("content", "statistics", "marketplace", "promotion", "analytics", "communication", "finance", "stock_history", "all"),
         default="all",
     )
-    parser.add_argument("--date-from", default=(date.today() - timedelta(days=89)).isoformat())
-    parser.add_argument("--date-to", default=(date.today() - timedelta(days=1)).isoformat())
+    parser.add_argument("--date-from", default=(app.marketplace_today() - timedelta(days=89)).isoformat())
+    parser.add_argument("--date-to", default=(app.marketplace_today() - timedelta(days=1)).isoformat())
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument(
         "--resume",

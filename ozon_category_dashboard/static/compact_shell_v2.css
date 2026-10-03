@@ -1,0 +1,652 @@
+/* Permanent compact shell for the legacy KOKOC BI desktop UI. */
+.pfm-nav-icon,
+.pfm-ui-switch-icon {
+  display: none;
+}
+
+.pfm-nav-tooltip {
+  display: none;
+}
+
+.admin-icon-button {
+  display: inline-grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.admin-icon-button svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.admin-icon-button:focus-visible {
+  outline: 3px solid rgba(30, 102, 255, 0.3);
+  outline-offset: 2px;
+}
+
+@media (min-width: 901px) {
+  body.pfm-compact-sidebar-active {
+    --kokoc-sidebar-width: 68px;
+  }
+
+  .pfm-compact-sidebar-active .layout {
+    grid-template-columns: var(--kokoc-sidebar-width) minmax(0, 1fr);
+  }
+
+  .pfm-compact-sidebar-active .sidebar {
+    width: var(--kokoc-sidebar-width);
+    padding: 10px 8px 8px;
+    overflow-x: visible;
+    scrollbar-width: none;
+  }
+
+  .pfm-compact-sidebar-active .sidebar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pfm-compact-sidebar-active .shell {
+    grid-column: 2;
+    width: min(1600px, calc(100vw - var(--kokoc-sidebar-width) - 28px));
+    max-width: calc(100vw - var(--kokoc-sidebar-width) - 28px);
+  }
+
+  /* One lightweight chrome contract for every legacy report and every client. */
+  .pfm-compact-sidebar-active .topbar {
+    min-height: 42px;
+    gap: 8px;
+    margin: 0 0 8px;
+    padding: 3px 0 8px;
+    border: 0;
+    border-bottom: 1px solid var(--topbar-line, #e5e5e5);
+    border-radius: 0;
+    background: transparent;
+    color: var(--topbar-title, #0a0a0a);
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .topbar .brand-left {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pfm-compact-sidebar-active .topbar .brand {
+    color: var(--topbar-eyebrow, #ff4747);
+    font-size: 10px;
+    letter-spacing: 0;
+  }
+
+  .pfm-compact-sidebar-active .topbar h1 {
+    margin: 0;
+    color: #152c31;
+    font-size: 13px;
+    line-height: 1.1;
+    letter-spacing: 0;
+  }
+
+  .pfm-compact-sidebar-active .topbar #status {
+    max-width: min(56vw, 760px);
+    overflow: hidden;
+    color: #587276;
+    font-size: 9px;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pfm-compact-sidebar-active .topbar .client-switcher {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 5px;
+    color: #607479;
+    font-size: 8px;
+    white-space: nowrap;
+  }
+
+  .pfm-compact-sidebar-active .topbar .client-switcher select {
+    height: 29px;
+    min-width: 142px;
+    padding-block: 3px;
+    border-color: #d7e8e8;
+    background: #ffffff;
+    color: var(--topbar-title, #0a0a0a);
+    font-size: 11px;
+  }
+
+  .pfm-compact-sidebar-active .topbar #exportExcel.topbar-export-button {
+    display: grid;
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: #40575c;
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .topbar #exportExcel.topbar-export-button:hover {
+    background: var(--tiffany-soft, #fff0f0);
+    color: var(--tiffany-dark, #e03535);
+  }
+
+  .pfm-compact-sidebar-active .topbar #exportExcel.topbar-export-button svg {
+    width: 16px;
+    height: 16px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2;
+  }
+
+  .pfm-compact-sidebar-active.admin-shell-active .topbar {
+    align-items: center;
+  }
+
+  .pfm-compact-sidebar-active.admin-shell-active .topbar .brand-left {
+    flex: 1 1 auto;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tabs {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    max-width: none;
+    margin: 0;
+    padding: 0 2px;
+    border: 0;
+    background: transparent;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button {
+    position: relative;
+    display: grid;
+    width: 52px;
+    min-width: 52px;
+    height: 48px;
+    min-height: 48px;
+    grid-template-rows: 24px auto;
+    gap: 2px;
+    place-items: center;
+    padding: 4px 3px 3px;
+    border: 0;
+    border-radius: 11px;
+    background: #111111;
+    color: rgba(255, 255, 255, .92);
+    box-shadow: none;
+    font-size: 8px;
+    line-height: 1;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button svg {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.9;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button span {
+    max-width: 48px;
+    overflow: hidden;
+    color: currentColor;
+    font-size: 7.5px;
+    font-weight: 800;
+    line-height: 1.05;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-transform: none;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button[data-admin-mode="clientOnboarding"] {
+    width: 108px;
+    min-width: 108px;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button[data-admin-mode="clientOnboarding"] span {
+    max-width: 100px;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button:hover {
+    background: #1c1c1c;
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button.active {
+    background: #ffffff;
+    color: #111111;
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button.active svg,
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button:focus-visible svg {
+    color: #ff4650;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button:focus-visible {
+    outline: none;
+    background: #ffffff;
+    color: #111111;
+  }
+
+  .pfm-compact-sidebar-active .admin-topbar-tab.admin-icon-button:focus-visible::after {
+    position: absolute;
+    right: 14px;
+    bottom: 3px;
+    left: 14px;
+    height: 3px;
+    border-radius: 99px;
+    background: #ff4650;
+    content: "";
+  }
+
+  .pfm-compact-sidebar-active .filters,
+  .pfm-compact-sidebar-active .filters.compact-filters {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(65px, auto);
+    align-items: end;
+    gap: 5px;
+    margin-bottom: 7px;
+    padding: 6px 8px;
+    border-top-width: 1px;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .filters label,
+  .pfm-compact-sidebar-active .filters.compact-filters label {
+    gap: 2px;
+    font-size: 9px;
+    line-height: 1;
+  }
+
+  .pfm-compact-sidebar-active .filters input,
+  .pfm-compact-sidebar-active .filters select,
+  .pfm-compact-sidebar-active .filters .dropdown-toggle {
+    height: 29px;
+    min-height: 29px;
+    padding-inline: 7px;
+    border-radius: 7px;
+    font-size: 10px;
+  }
+
+  .pfm-compact-sidebar-active .filters .filter-group-title {
+    display: none;
+  }
+
+  .pfm-compact-sidebar-active .filters .filter-actions {
+    grid-column: auto;
+    display: flex;
+    align-items: center;
+    align-self: end;
+    gap: 5px;
+    justify-content: flex-end;
+  }
+
+  .pfm-compact-sidebar-active .filters .filter-actions span {
+    display: none;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard {
+    gap: 7px;
+    margin: 6px 0 18px;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard .panel {
+    min-height: 0;
+    padding: 10px;
+    border-radius: 11px;
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard .panel-head {
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard .panel-head > div {
+    flex-basis: auto;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard .panel-head h2 {
+    margin: 0;
+    font-size: 16px;
+    line-height: 1.1;
+  }
+
+  .pfm-compact-sidebar-active .admin-dashboard .panel-head span {
+    display: block;
+    margin-top: 2px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-bar {
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    padding: 7px 9px;
+    border-radius: 9px;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-bar label {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 7px;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-bar label span {
+    font-size: 9px;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-bar select {
+    width: 210px;
+    height: 30px;
+    padding-inline: 8px;
+    font-size: 11px;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-meta {
+    display: flex;
+    min-width: 0;
+    margin-left: auto;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 7px;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-meta strong {
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-meta > span:last-child {
+    max-width: min(42vw, 520px);
+    overflow: hidden;
+    font-size: 9px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pfm-compact-sidebar-active .admin-client-status {
+    padding: 3px 7px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .pfm-compact-sidebar-active .admin-tabs {
+    width: max-content;
+    max-width: 100%;
+    gap: 4px;
+    margin: 0 0 7px;
+    padding: 3px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #f7fafb;
+  }
+
+  .pfm-compact-sidebar-active .admin-icon-button:not(.admin-topbar-tab),
+  .pfm-compact-sidebar-active .admin-tab.admin-icon-button:not(.admin-topbar-tab),
+  .pfm-compact-sidebar-active .admin-daily-actions .admin-icon-button,
+  .pfm-compact-sidebar-active .admin-terminal header .admin-icon-button,
+  .pfm-compact-sidebar-active .admin-import-action .admin-icon-button {
+    width: 30px;
+    min-width: 30px;
+    height: 30px;
+    min-height: 30px;
+    padding: 0;
+    border-radius: 8px;
+  }
+
+  .pfm-compact-sidebar-active .admin-tab.admin-icon-button:not(.admin-topbar-tab) {
+    position: relative;
+    border-color: transparent;
+    color: #3d575b;
+    background: transparent;
+  }
+
+  .pfm-compact-sidebar-active .admin-tab.admin-icon-button:not(.admin-topbar-tab):hover {
+    border-color: #cfe1e3;
+    color: var(--tiffany-dark);
+    background: #fff;
+  }
+
+  .pfm-compact-sidebar-active .admin-tab.admin-icon-button:not(.admin-topbar-tab).active {
+    border-color: #1e66ff;
+    color: #fff;
+    background: #1e66ff;
+    box-shadow: inset 0 -2px 0 #0f45b8;
+  }
+
+  .pfm-compact-sidebar-active .admin-daily-head {
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 7px;
+    padding: 8px 10px;
+    border-radius: 9px;
+  }
+
+  .pfm-compact-sidebar-active .admin-daily-head strong {
+    font-size: 12px;
+  }
+
+  .pfm-compact-sidebar-active .admin-daily-head span {
+    font-size: 9px;
+    line-height: 1.25;
+  }
+
+  .pfm-compact-sidebar-active .admin-daily-actions {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .pfm-compact-sidebar-active .admin-terminal {
+    margin-bottom: 8px;
+    border-radius: 9px;
+    box-shadow: none;
+  }
+
+  .pfm-compact-sidebar-active .admin-terminal header {
+    min-height: 38px;
+    padding: 5px 8px;
+  }
+
+  .pfm-compact-sidebar-active .admin-terminal h3 {
+    font-size: 12px;
+  }
+
+  .pfm-compact-sidebar-active .admin-terminal header span {
+    font-size: 9px;
+  }
+
+  .pfm-compact-sidebar-active .admin-import-action {
+    justify-items: end;
+  }
+
+  .pfm-compact-sidebar-active #applyFilters,
+  .pfm-compact-sidebar-active #resetFilters {
+    display: grid;
+    width: 30px;
+    min-width: 30px;
+    height: 29px;
+    padding: 0;
+    place-items: center;
+    border-radius: 8px;
+    font-size: 0;
+  }
+
+  .pfm-compact-sidebar-active #applyFilters::before {
+    content: "\2713";
+    font-size: 16px;
+    font-weight: 800;
+  }
+
+  .pfm-compact-sidebar-active #resetFilters::before {
+    content: "\21BB";
+    font-size: 17px;
+    font-weight: 750;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .side-title,
+  .pfm-compact-sidebar-active .sidebar .nav-group-title {
+    height: 1px;
+    width: 24px;
+    margin: 6px auto;
+    overflow: hidden;
+    color: transparent;
+    background: rgba(255, 255, 255, 0.16);
+  }
+
+  .pfm-compact-sidebar-active .sidebar .legacy-ui-mode {
+    display: block;
+    width: 44px;
+    margin: 6px auto 5px;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .legacy-ui-mode > .side-title,
+  .pfm-compact-sidebar-active .sidebar .legacy-ui-mode-options .is-active {
+    display: none;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .legacy-ui-mode-options {
+    display: block;
+    width: 44px;
+    padding: 0;
+    background: transparent;
+    border: 0;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .pfm-ui-switch-link,
+  .pfm-compact-sidebar-active .sidebar .nav-item {
+    position: relative;
+    display: grid;
+    width: 52px;
+    min-height: 44px;
+    margin: 0 auto 3px;
+    padding: 3px 0 2px;
+    grid-template-rows: 20px auto;
+    gap: 2px;
+    place-items: center;
+    justify-content: center;
+    overflow: visible;
+    color: rgba(255, 255, 255, 0.88);
+    border-radius: 12px;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .pfm-ui-switch-link {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    text-decoration: none;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .nav-pinned {
+    margin-bottom: 9px;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .pfm-nav-icon,
+  .pfm-compact-sidebar-active .sidebar .pfm-ui-switch-icon {
+    display: grid;
+    width: 18px;
+    height: 18px;
+    place-items: center;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .pfm-nav-icon svg,
+  .pfm-compact-sidebar-active .sidebar .pfm-ui-switch-icon svg {
+    display: block;
+    width: 18px;
+    height: 18px;
+    max-width: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .pfm-compact-sidebar-active .sidebar .pfm-nav-label,
+  .pfm-compact-sidebar-active .sidebar .pfm-ui-switch-label {
+    position: static;
+    width: 48px;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: hidden;
+    font-size: 8px;
+    font-weight: 750;
+    line-height: 1.05;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pfm-nav-tooltip {
+    position: fixed;
+    z-index: 1000;
+    display: block;
+    max-width: min(280px, calc(100vw - 100px));
+    padding: 8px 11px;
+    color: #ffffff;
+    background: #0a0a0a;
+    border: 1px solid #262626;
+    border-radius: 9px;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.3), 0 2px 8px rgba(15, 23, 42, 0.18);
+    font-size: 11px;
+    font-weight: 750;
+    letter-spacing: 0.01em;
+    line-height: 1.25;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-5px, -50%) scale(0.98);
+    transform-origin: left center;
+    transition: opacity 110ms ease, transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    white-space: nowrap;
+  }
+
+  .pfm-nav-tooltip::before {
+    position: absolute;
+    top: 50%;
+    left: -5px;
+    width: 9px;
+    height: 9px;
+    content: "";
+    background: #0a0a0a;
+    border-bottom: 1px solid #262626;
+    border-left: 1px solid #262626;
+    transform: translateY(-50%) rotate(45deg);
+  }
+
+  .pfm-nav-tooltip[data-visible="true"] {
+    opacity: 1;
+    transform: translate(0, -50%) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pfm-nav-tooltip {
+    transition: none;
+  }
+}

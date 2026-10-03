@@ -22,7 +22,7 @@ def main():
     mode.add_argument('--resume', action='store_true')
     mode.add_argument('--overwrite', action='store_true')
     args = parser.parse_args()
-    if args.date_from > args.date_to or args.date_to >= date.today():
+    if args.date_from > args.date_to or args.date_to >= app.marketplace_today():
         raise ValueError('Исторический период должен заканчиваться не позже вчерашнего дня')
     with app.client_registry_connection() as conn:
         client = get_client(conn, args.client_key)

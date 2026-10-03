@@ -46,6 +46,11 @@ def jsonable(value):
     if isinstance(value,(list,tuple)):return [jsonable(v) for v in value]
     return value
 
+def _fast_relation(cursor, mart, fallback):
+    cursor.execute("SELECT to_regclass(%s) AS relation",(f"public.{mart}",))
+    row=cursor.fetchone()
+    return mart if row and row.get('relation') else fallback
+
 def summary(conn,client_key,start,end,store=None):
     """Never infer a store for business-grain facts; coverage is returned with metrics."""
     params=[client_key,start,end]
@@ -57,9 +62,23 @@ def summary(conn,client_key,start,end,store=None):
         c.execute('SELECT * FROM yandex_dim_store WHERE client_key=%s ORDER BY campaign_id',(client_key,));stores=c.fetchall()
         if store and not any(s['campaign_id']==store for s in stores):raise ValueError('Unknown Yandex store for this client')
         result={'ok':True,'client':client_key,'date_from':start,'date_to':end,'store':store,'stores':stores,'status_scope':'client_dataset','quality_scope':'client_dataset'}
-        version=source_version(conn)
         c.execute("SELECT source_version,refreshed_at FROM yandex_analytics_mart_state WHERE mart_name='summary'")
-        cache=c.fetchone();cached=bool(cache and cache['source_version']==version)
+        cache=c.fetchone()
+        home_marts_ready=_fast_relation(c,'mv_pulse_yandex_data_coverage_v1','') != ''
+        version=cache['source_version'] if home_marts_ready and cache else source_version(conn)
+        cached=bool(cache and cache['source_version']==version)
+        sources={
+            'yandex_orders_daily':_fast_relation(c,'mv_pulse_yandex_orders_daily_v1','yandex_orders_daily'),
+            'yandex_services_daily':_fast_relation(c,'mv_pulse_yandex_services_daily_v1','yandex_services_daily'),
+            'yandex_transactions_daily':_fast_relation(c,'mv_pulse_yandex_transactions_daily_v1','yandex_transactions_daily'),
+            'yandex_sku_orders_daily':_fast_relation(c,'mv_pulse_yandex_sku_orders_daily_v1','yandex_sku_orders_daily'),
+            'yandex_fact_returns':_fast_relation(c,'mv_pulse_yandex_returns_v1','yandex_fact_returns'),
+            'yandex_fact_stocks':_fast_relation(c,'mv_pulse_yandex_stocks_v1','yandex_fact_stocks'),
+            'yandex_fact_realization':_fast_relation(c,'mv_pulse_yandex_realization_v1','yandex_fact_realization'),
+            'yandex_marketing_daily':_fast_relation(c,'mv_pulse_yandex_marketing_daily_v1','yandex_marketing_daily'),
+            'yandex_fact_boost_sales_period':_fast_relation(c,'mv_pulse_yandex_boost_sales_v1','yandex_fact_boost_sales_period'),
+            'yandex_data_coverage':_fast_relation(c,'mv_pulse_yandex_data_coverage_v1','yandex_data_coverage'),
+        }
         result['aggregate_cache_current']=cached
         for key,view,day in [
             ('orders_daily','yandex_orders_daily','order_date'),
@@ -67,25 +86,26 @@ def summary(conn,client_key,start,end,store=None):
             ('services_daily','yandex_services_daily','service_date'),
             ('transactions_daily','yandex_transactions_daily','transaction_date')]:
             if view=='yandex_funnel_daily' and cached:view='yandex_mart_funnel_daily'
+            view=sources.get(view,view)
             c.execute(f'SELECT * FROM {view} WHERE '+scope.format(day=day)+f' ORDER BY {day},campaign_id',params)
             result[key]=c.fetchall()
-        c.execute('SELECT campaign_id,offer_id,currency,sum(ordered_units) ordered_units,sum(buyer_payment) buyer_payment,sum(delivered_units_current_status) delivered_units_current_status FROM yandex_sku_orders_daily WHERE '+scope.format(day='order_date')+' GROUP BY 1,2,3 ORDER BY sum(buyer_payment) DESC NULLS LAST,offer_id LIMIT 100',params)
+        c.execute('SELECT campaign_id,offer_id,currency,sum(ordered_units) ordered_units,sum(buyer_payment) buyer_payment,sum(delivered_units_current_status) delivered_units_current_status FROM '+sources['yandex_sku_orders_daily']+' WHERE '+scope.format(day='order_date')+' GROUP BY 1,2,3 ORDER BY sum(buyer_payment) DESC NULLS LAST,offer_id LIMIT 100',params)
         result['top_sku_by_buyer_payment']=c.fetchall()
-        c.execute('SELECT campaign_id,return_date,return_type,count(*) returns,sum(amount) amount FROM yandex_fact_returns WHERE '+scope.format(day='return_date')+' GROUP BY 1,2,3 ORDER BY 2,1',params)
+        c.execute('SELECT campaign_id,return_date,return_type,count(*) returns,sum(amount) amount FROM '+sources['yandex_fact_returns']+' WHERE '+scope.format(day='return_date')+' GROUP BY 1,2,3 ORDER BY 2,1',params)
         result['returns_daily']=c.fetchall()
-        c.execute('SELECT campaign_id,snapshot_date,warehouse,count(*) sku_warehouse_rows,sum(available_for_order) available_for_order,sum(reserved) reserved,count(available_for_order) rows_with_available_stock FROM yandex_fact_stocks WHERE client_key=%s AND snapshot_date<=%s'+(' AND campaign_id=%s' if store else '')+' GROUP BY 1,2,3 ORDER BY 2 DESC,1,3',[client_key,end]+([store] if store else []))
+        c.execute('SELECT campaign_id,snapshot_date,warehouse,count(*) sku_warehouse_rows,sum(available_for_order) available_for_order,sum(reserved) reserved,count(available_for_order) rows_with_available_stock FROM '+sources['yandex_fact_stocks']+' WHERE client_key=%s AND snapshot_date<=%s'+(' AND campaign_id=%s' if store else '')+' GROUP BY 1,2,3 ORDER BY 2 DESC,1,3',[client_key,end]+([store] if store else []))
         result['stock_snapshots']=c.fetchall()
-        c.execute('SELECT campaign_id,date_from,date_to,event_type,sum(units) units,sum(amount) amount,count(*) source_rows,count(amount) priced_rows FROM yandex_fact_realization WHERE client_key=%s AND date_from<=%s AND date_to>=%s'+(' AND campaign_id=%s' if store else '')+' GROUP BY 1,2,3,4 ORDER BY 2,1',[client_key,end,start]+([store] if store else []))
+        c.execute('SELECT campaign_id,date_from,date_to,event_type,sum(units) units,sum(amount) amount,count(*) source_rows,count(amount) priced_rows FROM '+sources['yandex_fact_realization']+' WHERE client_key=%s AND date_from<=%s AND date_to>=%s'+(' AND campaign_id=%s' if store else '')+' GROUP BY 1,2,3,4 ORDER BY 2,1',[client_key,end,start]+([store] if store else []))
         result['realization_periods']=c.fetchall()
         if store:
             result['marketing_daily']=None
             result['boost_sales_periods']=None
         else:
-            c.execute('SELECT * FROM yandex_marketing_daily WHERE client_key=%s AND metric_date BETWEEN %s AND %s ORDER BY metric_date,source_key',(client_key,start,end))
+            c.execute('SELECT * FROM '+sources['yandex_marketing_daily']+' WHERE client_key=%s AND metric_date BETWEEN %s AND %s ORDER BY metric_date,source_key',(client_key,start,end))
             result['marketing_daily']=c.fetchall()
-            c.execute('SELECT business_id,date_from,date_to,sum(attributed_units) attributed_units,sum(attributed_delivered_amount) attributed_delivered_amount,sum(billed_amount) billed_amount FROM yandex_fact_boost_sales_period WHERE client_key=%s AND date_from<=%s AND date_to>=%s GROUP BY 1,2,3',(client_key,end,start))
+            c.execute('SELECT business_id,date_from,date_to,sum(attributed_units) attributed_units,sum(attributed_delivered_amount) attributed_delivered_amount,sum(billed_amount) billed_amount FROM '+sources['yandex_fact_boost_sales_period']+' WHERE client_key=%s AND date_from<=%s AND date_to>=%s GROUP BY 1,2,3',(client_key,end,start))
             result['boost_sales_periods']=c.fetchall()
-        c.execute('SELECT * FROM yandex_data_coverage WHERE client_key=%s ORDER BY source_key,campaign_id,actual_date_from',(client_key,))
+        c.execute('SELECT * FROM '+sources['yandex_data_coverage']+' WHERE client_key=%s ORDER BY source_key,campaign_id,actual_date_from',(client_key,))
         result['coverage']=c.fetchall()
         c.execute('SELECT * FROM '+('yandex_mart_quality' if cached else 'yandex_analytics_quality')+' WHERE client_key=%s',(client_key,))
         result['quality']=c.fetchall()

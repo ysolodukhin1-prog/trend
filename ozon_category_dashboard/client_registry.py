@@ -42,19 +42,15 @@ def normalize_client_payload(payload: dict, report_ids: set[str]) -> dict:
         raise ValueError("Выберите хотя бы один маркетплейс")
     if not reports:
         raise ValueError("Выберите хотя бы один доступный отчёт")
-    root = Path(root_path)
-    try:
-        relative_root = root.relative_to(DEFAULT_CLIENTS_ROOT)
-    except ValueError as exc:
-        raise ValueError(f"Папка клиента должна находиться внутри {DEFAULT_CLIENTS_ROOT}") from exc
-    if not relative_root.parts or ".." in relative_root.parts:
-        raise ValueError(f"Укажите отдельную подпапку клиента внутри {DEFAULT_CLIENTS_ROOT}")
+    # TREND stores marketplace access in PostgreSQL and no longer provisions
+    # a per-client Windows folder during connection saves. Keep root_path only
+    # as backward-compatible metadata; never reject or create it here.
 
     return {
         "key": key,
         "label": label,
         "db_name": db_name,
-        "root_path": str(root),
+        "root_path": root_path,
         "status": status,
         "marketplaces": marketplaces,
         "reports": list(dict.fromkeys(reports)),
@@ -320,12 +316,14 @@ def credential_fingerprint(value: str) -> str:
 
 
 def save_client(conn, client: dict, credentials: dict[str, str], master_key: str) -> dict:
+    if any(credentials.get(k) for k in ("lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id")):
+        raise ValueError("Lamoda: используйте отдельный аккаунт FBO/FBS")
     ensure_schema(conn)
     allowed = {
         "wb_api_token", "wb_service_api_token", "ozon_client_id", "ozon_api_key",
         "ozon_performance_client_id", "ozon_performance_client_secret",
         "avito_ads_account_id", "avito_ads_client_id", "avito_ads_client_secret",
-        "lamoda_client_id", "lamoda_client_secret",
+        "lamoda_client_id", "lamoda_client_secret", "lamoda_seller_id",
         "yandex_market_api_key", "yandex_market_business_id", "yandex_market_campaign_id",
     }
     clean_credentials = {

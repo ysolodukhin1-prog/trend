@@ -470,7 +470,7 @@ def connect_km():
 def validate_date_range(date_from: date, date_to: date) -> None:
     if date_from > date_to:
         raise PipelineError("Дата начала позже даты окончания")
-    yesterday = date.today() - timedelta(days=1)
+    yesterday = app.marketplace_today() - timedelta(days=1)
     if date_to > yesterday:
         raise PipelineError(f"Дата окончания не может быть позже вчерашнего дня ({yesterday})")
 
@@ -483,7 +483,7 @@ def resolve_stock_snapshot_date(
 ) -> date:
     """Return the observation day; Seller stock API cannot backfill history."""
     del requested_from, requested_to
-    return actual_date or date.today()
+    return actual_date or app.marketplace_today()
 
 
 def default_range(conn, step: str) -> tuple[date, date]:
@@ -491,7 +491,7 @@ def default_range(conn, step: str) -> tuple[date, date]:
     with conn.cursor() as cur:
         cur.execute(f"SELECT max(report_date) FROM public.{table}")
         last_date = cur.fetchone()[0]
-    end = date.today() - timedelta(days=1)
+    end = app.marketplace_today() - timedelta(days=1)
     start = (last_date + timedelta(days=1)) if last_date else end
     return start, end
 
@@ -797,7 +797,7 @@ def detect_funnel_capability(
     return capability
 
 def standard_history_cutoff(today: date | None = None) -> date:
-    current = today or date.today()
+    current = today or app.marketplace_today()
     month_index = current.year * 12 + current.month - 1 - 3
     year, month_zero = divmod(month_index, 12)
     month = month_zero + 1
@@ -811,7 +811,7 @@ def capability_probe_range(
     *,
     today: date | None = None,
 ) -> tuple[date, date, bool]:
-    current = today or date.today()
+    current = today or app.marketplace_today()
     yesterday = current - timedelta(days=1)
     cutoff = standard_history_cutoff(current)
     if date_from >= cutoff and date_to <= yesterday:
@@ -1699,7 +1699,7 @@ def store_stock(
     dry_run: bool,
     snapshot_date: date | None = None,
 ) -> int:
-    snapshot_day = snapshot_date or date.today()
+    snapshot_day = snapshot_date or app.marketplace_today()
     if not rows:
         raise PipelineError("Пустой снимок: текущие остатки и история не изменены")
     if dry_run:
@@ -2379,8 +2379,8 @@ def fetch_advertising_product_window(
     # Ozon Performance product/SKU statistics accepts only today or yesterday.
     # Historical windows must still load campaign/all-SKU facts instead of
     # failing the whole account pipeline with HTTP 400.
-    supported_from = date.today() - timedelta(days=1)
-    supported_to = date.today()
+    supported_from = app.marketplace_today() - timedelta(days=1)
+    supported_to = app.marketplace_today()
     request_from = max(date_from, supported_from)
     request_to = min(date_to, supported_to)
     if request_from > request_to:
@@ -3107,7 +3107,7 @@ def sync_advertising_incremental(
 ) -> tuple[int, int]:
     windows = performance_date_windows(date_from, date_to)
     completed = set() if dry_run else completed_advertising_sources(conn, windows)
-    refresh_cutoff = date.today() - timedelta(days=PERFORMANCE_REFRESH_DAYS)
+    refresh_cutoff = app.marketplace_today() - timedelta(days=PERFORMANCE_REFRESH_DAYS)
     pending = [
         (start, end)
         for start, end in windows
