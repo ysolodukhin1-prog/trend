@@ -33,18 +33,22 @@ def build(app,parsed,identity):
  client=app.current_client_key();report=report_id(parsed)
  page=max(1,int(g('page','1')));limit=50;search=g('q').strip()[:120];status=g('status');market=g('market','wb')
  sort_col=g('sort_col');sort_dir=g('sort_dir','asc')
- if sort_col not in {'','product','status',*CHANNELS} or sort_dir not in {'asc','desc'}:raise ValueError('Invalid sort')
+ totals_columns={'orders_rub','orders_units','stock_units'}
+ if sort_col not in {'','product','status',*CHANNELS,*totals_columns} or sort_dir not in {'asc','desc'}:raise ValueError('Invalid sort')
+ if sort_col in totals_columns and report!='assortmentPrices':raise ValueError('Invalid totals sort')
+ days=int(g('days','29'))
+ if days not in {7,29,90}:raise ValueError('Invalid days')
  column_filters={}
  if report=='assortmentPrices' and g('column_filters'):
   try:column_filters=json.loads(g('column_filters'))
   except (TypeError,json.JSONDecodeError):raise ValueError('Invalid column filters')
-  if not isinstance(column_filters,dict) or len(column_filters)>len(CHANNELS)+2:raise ValueError('Invalid column filters')
+  if not isinstance(column_filters,dict) or len(column_filters)>len(CHANNELS)+5:raise ValueError('Invalid column filters')
   for key,config in column_filters.items():
-   if key not in {'product','status',*CHANNELS} or not isinstance(config,dict):raise ValueError('Invalid column filter')
+   if key not in {'product','status',*CHANNELS,*totals_columns} or not isinstance(config,dict):raise ValueError('Invalid column filter')
    op=config.get('op');value=str(config.get('value') or '').strip()[:120]
    valid={'contains','not_contains','eq','neq'} if key in {'product','status'} else {'with','without','eq','neq','gt','gte','lt','lte'}
    if op not in valid or (op not in {'with','without'} and not value):raise ValueError('Invalid column filter')
-   if key in CHANNELS and op not in {'with','without'}:
+   if key in {*CHANNELS,*totals_columns} and op not in {'with','without'}:
     try:
      if not Decimal(value.replace(',','.')).is_finite():raise ValueError()
     except Exception:raise ValueError('Invalid price value')
@@ -81,6 +85,10 @@ def build(app,parsed,identity):
     if status and row['status']!=status:continue
     if search and search.casefold() not in json.dumps(row['links'],ensure_ascii=False).casefold():continue
     selected.append(row)
+   totals_period={}
+   if report=='assortmentPrices':
+    from assortment_totals import attach_totals
+    totals_period=attach_totals(c,selected,days,client)
    for channel,mode in price_filters.items():
     column_filters.setdefault(channel,{'op':mode,'value':''})
    price_maps={}
@@ -92,13 +100,20 @@ def build(app,parsed,identity):
     return None
    for column,config in column_filters.items():
     op,value=config['op'],config['value']
-    if column in CHANNELS:
+    if column in totals_columns:
+     selected=[row for row in selected if price_filter_matches(row['totals'][column],op,value)]
+    elif column in CHANNELS:
      price_maps[column]=price_values(c,column,selected)
      selected=[row for row in selected if price_filter_matches(price_for(row,column),op,value)]
     else:
      selected=[row for row in selected if text_filter_matches(
       row['status'] if column=='status' else str(row['links'][0]['data'].get('name') or ''),op,value)]
-   if sort_col in CHANNELS:
+   if sort_col in totals_columns:
+    available=[row for row in selected if row['totals'][sort_col] is not None]
+    missing=[row for row in selected if row['totals'][sort_col] is None]
+    available.sort(key=lambda row:(row['totals'][sort_col],row['master_id']),reverse=sort_dir=='desc')
+    selected=available+missing
+   elif sort_col in CHANNELS:
     price_maps[sort_col]=price_values(c,sort_col,selected)
     available=[row for row in selected if price_for(row,sort_col) is not None]
     missing=[row for row in selected if price_for(row,sort_col) is None]
@@ -109,7 +124,7 @@ def build(app,parsed,identity):
    total=len(selected);selected=selected[(page-1)*limit:page*limit]
    if report=='assortmentPrices':attach_prices(c,selected)
    return {'client':client,'report':report,'rows':selected,'total':total,'page':page,'pages':max(1,math.ceil(total/limit)),
-    'counts':counts,'channels':CHANNELS,'retail_access':include_retail,'updated_at':str(run.get('finished_at') or ''),
+    'counts':counts,'channels':CHANNELS,'retail_access':include_retail,'updated_at':str(run.get('finished_at') or ''),'totals_period':totals_period,
     'limitations':['Связь по уникальному валидному GTIN на уровне размера/варианта. Совпадение названия или артикула не объединяет товары.',
       'Яндекс: штрихкоды пока не найдены в загруженном справочнике. Для Розницы загружены чеки, но не справочник цен 1С; доступ к её данным также требует отдельного права. Интернет-магазин и опт пока не подключены.',
       'Цены показываются с типом и датой. Сравнительная заливка применяется только к свежим сопоставимым ценам одного варианта в рублях.']}
