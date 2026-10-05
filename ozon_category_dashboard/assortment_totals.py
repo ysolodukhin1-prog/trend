@@ -82,7 +82,11 @@ def attach_totals(c, rows, days, client):
             if link['channel'] in LABELS:linked[link['channel']].append(link)
         values={'orders_rub':[],'orders_units':[],'stock_units':[]}
         notes={'orders':[],'stock':[]}; details={'orders':[],'stock':[]}
+        by_channel={}
         for channel,links in linked.items():
+            before={k:len(v) for k,v in values.items()}
+            note_start={k:len(v) for k,v in notes.items()}
+            detail_start={k:len(v) for k,v in details.items()}
             label=LABELS[channel]
             if len(links)!=1 or any(x['status']=='conflict' for x in links):
                 notes['orders'].append(label+': конфликт связи');notes['stock'].append(label+': конфликт связи');continue
@@ -99,6 +103,9 @@ def attach_totals(c, rows, days, client):
                     if metric[source] is not None:values[field].append(Decimal(str(metric[source])))
                 details[kind].append(label+': по '+metric['date'])
                 if metric['partial']:notes[kind].append(label+': неполные значения')
+            by_channel[channel]={k:sum(v[before[k]:]) if v[before[k]:] else None for k,v in values.items()}
+            by_channel[channel].update(orders_detail='; '.join(details['orders'][detail_start['orders']:]+notes['orders'][note_start['orders']:]),stock_detail='; '.join(details['stock'][detail_start['stock']:]+notes['stock'][note_start['stock']:]))
+        row['channel_totals']=by_channel
         row['totals']={k:sum(v) if v else None for k,v in values.items()}
         row['totals'].update(orders_partial=bool(notes['orders']),stock_partial=bool(notes['stock']),
             orders_detail='; '.join(details['orders']+notes['orders']),stock_detail='; '.join(details['stock']+notes['stock']))

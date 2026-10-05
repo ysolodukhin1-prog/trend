@@ -33,16 +33,18 @@ def build(app,parsed,identity):
  client=app.current_client_key();report=report_id(parsed)
  page=max(1,int(g('page','1')));limit=50;search=g('q').strip()[:120];status=g('status');market=g('market','wb')
  sort_col=g('sort_col');sort_dir=g('sort_dir','asc')
- totals_columns={'orders_rub','orders_units','stock_units'}
+ totals_columns={'orders_rub','orders_units','stock_units','margin_rub','margin_pct',*(f'{kind}_{ch}_{unit}' for ch in ['wb','ozon','yandex_market','lamoda'] for kind,unit in [('orders','rub'),('orders','units'),('stock','units'),('margin','rub'),('margin','pct')])}
  if sort_col not in {'','product','status',*CHANNELS,*totals_columns} or sort_dir not in {'asc','desc'}:raise ValueError('Invalid sort')
  if sort_col in totals_columns and report!='assortmentPrices':raise ValueError('Invalid totals sort')
+ margin_mode=g('margin_mode','actual')
+ if margin_mode not in {'actual','calculated'}:raise ValueError('Invalid margin mode')
  days=int(g('days','29'))
  if days not in {7,29,90}:raise ValueError('Invalid days')
  column_filters={}
  if report=='assortmentPrices' and g('column_filters'):
   try:column_filters=json.loads(g('column_filters'))
   except (TypeError,json.JSONDecodeError):raise ValueError('Invalid column filters')
-  if not isinstance(column_filters,dict) or len(column_filters)>len(CHANNELS)+5:raise ValueError('Invalid column filters')
+  if not isinstance(column_filters,dict) or len(column_filters)>len(CHANNELS)+len(totals_columns)+2:raise ValueError('Invalid column filters')
   for key,config in column_filters.items():
    if key not in {'product','status',*CHANNELS,*totals_columns} or not isinstance(config,dict):raise ValueError('Invalid column filter')
    op=config.get('op');value=str(config.get('value') or '').strip()[:120]
@@ -89,6 +91,15 @@ def build(app,parsed,identity):
    if report=='assortmentPrices':
     from assortment_totals import attach_totals
     totals_period=attach_totals(c,selected,days,client)
+    for row in selected:
+     for channel in ['wb','ozon','yandex_market','lamoda']:
+      metrics=row.get('channel_totals',{}).get(channel,{})
+      for key in ['orders_rub','orders_units','stock_units']:
+       kind,unit=key.split('_');row['totals'][kind+'_'+channel+'_'+unit]=metrics.get(key)
+    if g('include_margin')=='1' or sort_col.startswith('margin_') or any(k.startswith('margin_') for k in column_filters):
+     from assortment_margins import attach_margins
+     attach_prices(c,selected)
+     attach_margins(app,selected,days,client,margin_mode)
    for channel,mode in price_filters.items():
     column_filters.setdefault(channel,{'op':mode,'value':''})
    price_maps={}
