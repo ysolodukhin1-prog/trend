@@ -2802,6 +2802,16 @@ _SERVICE_STATUS_LOCK = threading.Lock()
 _SERVICE_STATUS_CACHE = {"expires": 0.0, "payload": None}
 
 
+def probe_atlas_connection():
+    """Check that the Atlas API can read its canonical PostgreSQL store."""
+    try:
+        with urlopen("http://galactica_ui_api:8080/readyz", timeout=2) as response:
+            payload = json.load(response)
+            return "connected" if response.status == 200 and payload.get("status") == "ok" else "unavailable"
+    except Exception:
+        return "unavailable"
+
+
 def service_connection_status_payload():
     """Bounded, cached checks for the TOPTOP header; never expose credentials."""
     import socket
@@ -2834,9 +2844,10 @@ def service_connection_status_payload():
             registry_failed = True
 
         statuses = {}
-        with ThreadPoolExecutor(max_workers=min(len(keys) + 1, 5)) as pool:
+        with ThreadPoolExecutor(max_workers=min(len(keys) + 2, 6)) as pool:
             futures = {pool.submit(probe_1c_connection, key): key for key in keys}
             mpstats_future = pool.submit(probe_mpstats_connection)
+            atlas_future = pool.submit(probe_atlas_connection)
             for future, key in futures.items():
                 try:
                     statuses[key] = future.result()[0]
@@ -2848,6 +2859,10 @@ def service_connection_status_payload():
                 mpstats_status = "not_configured"
             except Exception:
                 mpstats_status = "unavailable"
+            try:
+                atlas_status = atlas_future.result()
+            except Exception:
+                atlas_status = "unavailable"
 
         connected_count = sum(status == "connected" for status in statuses.values())
         one_c_status = (
@@ -2864,10 +2879,13 @@ def service_connection_status_payload():
                  "connected": connected_count, "total": len(keys)},
                 {"key": "mpstats", "label": "MPStats", "status": mpstats_status},
                 {"key": "vpn", "label": "VPN 1С", "status": "connected" if vpn_connected else "unavailable"},
+                {"key": "atlas", "label": "Атлас", "status": atlas_status,
+                 "detail": "API и каноническая БД Атласа отвечают" if atlas_status == "connected"
+                 else "API или каноническая БД Атласа недоступны"},
             ],
         }
         # Retry transient VPN/1C failures promptly; healthy checks stay cached.
-        ttl = 30 if not vpn_connected or one_c_status in {"unavailable", "partial"} else 300
+        ttl = 30 if not vpn_connected or one_c_status in {"unavailable", "partial"} or atlas_status != "connected" else 300
         _SERVICE_STATUS_CACHE.update(payload=payload, expires=time.monotonic() + ttl)
         return payload
 
