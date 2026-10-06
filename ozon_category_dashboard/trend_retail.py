@@ -57,12 +57,14 @@ def fetch_rows(app, parsed):
     return get,start,finish,cutoff,rows,imported
 
 def handle(app, handler, parsed):
+    from trend_channel_sales import handle as handle_channel_sales
+    if handle_channel_sales(app,handler,parsed): return True
     from trend_file_sales import handle as handle_file_sales
     if handle_file_sales(app,handler,parsed): return True
     q,get=context(parsed)
     channel=get('sales_channel')
     if not channel or not parsed.path.startswith('/api/') or parsed.path.startswith('/api/admin/') or parsed.path=='/api/health': return False
-    if channel not in {'retail','online','wholesale'}:
+    if channel not in {'retail','online','wholesale','corners','networks'}:
         handler.send_json({'ok':False,'error':'Неизвестный канал продаж'},status=400); return True
     identity=app.CURRENT_ACCESS_USER.get() or {}
     if (not identity.get('is_admin') and 'toptop' not in identity.get('clients',[])) or app.current_client_key()!='toptop' or get('client','toptop')!='toptop':
