@@ -57,6 +57,8 @@ def fetch_rows(app, parsed):
     return get,start,finish,cutoff,rows,imported
 
 def handle(app, handler, parsed):
+    from trend_file_sales import handle as handle_file_sales
+    if handle_file_sales(app,handler,parsed): return True
     q,get=context(parsed)
     channel=get('sales_channel')
     if not channel or not parsed.path.startswith('/api/') or parsed.path.startswith('/api/admin/') or parsed.path=='/api/health': return False
