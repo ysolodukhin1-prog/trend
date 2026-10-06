@@ -29,6 +29,11 @@ def handle(app,handler,parsed):
         from trend_retail import SOURCE_KEY,SOURCE_TABLES
         if not all(permits(identity.get('data_access'),SOURCE_KEY,t) for t in SOURCE_TABLES):
             handler.send_json({'ok':False,'error':'Нет доступа к источнику 1С Розница'},status=403);return True
+    if get('channel') in ('','corners','networks') and not identity.get('is_admin'):
+        from data_access import permits
+        tables=('dbo._AccumRg10016','dbo._Document236','dbo._Reference88','dbo._Reference104X1','dbo._Reference92','dbo._Reference157')
+        if not all(permits(identity.get('data_access'),'1c',t) for t in tables):
+            handler.send_json({'ok':False,'error':'Нет доступа к источнику 1С УТ'},status=403);return True
     try:handler.send_json(clean(build(app,get)))
     except ValueError as exc:handler.send_json({'ok':False,'error':str(exc)},status=400)
     except psycopg2.Error:handler.send_json({'ok':False,'error':'Источник продаж канала временно недоступен'},status=503)
@@ -36,7 +41,7 @@ def handle(app,handler,parsed):
 def build(app,get):
     channel=get('channel');basis=get('basis');sort=get('sort','sale_date');direction=get('direction','desc')
     if channel and channel not in CHANNELS:raise ValueError('Неизвестный канал')
-    if basis not in ('','ex_vat','unspecified','receipt_gross'):raise ValueError('Неизвестная база выручки')
+    if basis not in ('','ex_vat','unspecified','receipt_gross','commission_with_vat'):raise ValueError('Неизвестная база выручки')
     if sort not in SORTS or direction not in ('asc','desc'):raise ValueError('Некорректная сортировка')
     try:page=max(1,int(get('page','1')));limit=max(1,min(int(get('limit','50')),200))
     except ValueError:raise ValueError('Некорректная страница')
@@ -75,5 +80,5 @@ def build(app,get):
             for row in rows:row['source_file']=row.pop('source_path').split('\\')[-1]
     return {'ok':True,'client':'toptop','source':'Продажи каналов','channel':channel,'channels':[{'id':k,'label':v} for k,v in CHANNELS.items()],
         'coverage':coverage,'freshness':freshness,'dynamics':dynamics,'points':points,'products':products,'locations':locations,'rows':rows,'totals':totals,'total':total,'page':page,'page_size':limit,'total_pages':max(1,(total+limit-1)//limit),
-        'notice':'1С — основной источник розницы; файлы дополняют подтверждённую историю вне её покрытия. Пропуски между датами не означают нулевые продажи. Выручка без НДС и с неуказанной базой НДС рассчитана раздельно.'}
+        'notice':'1С — основной источник розницы; файлы дополняют подтверждённую историю вне её покрытия. Отчёты комиссионеров отражаются за месяц; дата строки — конец отчётного периода, а не день покупки. Пропуски между датами не означают нулевые продажи. Выручка без НДС и с неуказанной базой НДС рассчитана раздельно.'}
 
