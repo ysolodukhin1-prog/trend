@@ -1,5 +1,5 @@
 {
-  "image": "toptop-trend:channel-sales-r187-20261006",
+  "image": "toptop-trend:channel-sales-r188-20261006",
   "scope": "Live TREND code; excludes credentials, runtime data, unrelated client scripts. Frontend is compiled runtime.",
   "sha256": {
     "Dockerfile": "79e0a0ba5ac100d58931791a1caaa16c81907cbe0d24bfcb8ef7d22e7c3da8db",
@@ -239,6 +239,7 @@
     "ozon_category_dashboard/static/react/assets/index-r185-file-sales.js": "5ee4be28642db49e62881ce9f6f625be37c322a3aed0581a1d2a4400273f433d",
     "ozon_category_dashboard/static/react/assets/index-r186-channel-sales.js": "3315d867085b622f872e41ca4a78c279c0fd7d6a5dc11cfc2777a687be16a710",
     "ozon_category_dashboard/static/react/assets/index-r187-channel-sales.js": "c26569ddfd6d58bbffb38b40b0f5681cb993e7d1286d25642063eca906b2e16c",
+    "ozon_category_dashboard/static/react/assets/index-r188-channel-sales.js": "261e20f15dc9284ea2932ffd21b05f7b59c9f6ddbd96218376eca9cb4d5a4fea",
     "ozon_category_dashboard/static/react/assets/index-r94-admin-utf8.js": "a5692797001098ef90b3e30610350b45ff8137988cb91e73f9e3f041f8befa5d",
     "ozon_category_dashboard/static/react/assets/index-self-password-ce061.js": "c3f62807192682f5738d318a170d6ba19a1d2902168cf1560653c11cadf696ed",
     "ozon_category_dashboard/static/react/assets/index-xkmNLQ8P.js": "ef4fb187929082f0b29968ec81fdd327c0c2fe04958d3ead2aa6da6fdb68aa6a",
@@ -263,7 +264,7 @@
     "ozon_category_dashboard/static/react/assets/trend-marketplaces-r164.css": "13223cb2a3fc6e3692b4eebb18db4d24fe9fb04d2ce68c2ce6f62366043b8d6c",
     "ozon_category_dashboard/static/react/assets/user-profile-r161.css": "1ef8a432bb2aad4482405aae3ee75a33b63bbf33d6d3efffaad6f3a38a20d29f",
     "ozon_category_dashboard/static/react/channels.html": "00c8e6de94a7386aa122286eae377847fe4780f67fc56a2dde8c417871546868",
-    "ozon_category_dashboard/static/react/index.html": "1e40b02b4c4d21e0a737bc49089b8ed1e71218897180866acbf3882d8b201768",
+    "ozon_category_dashboard/static/react/index.html": "f9343500f29ccaea7316642948c1cb18d08a9e0df86fc9abf68bf938176c6f8e",
     "ozon_category_dashboard/static/responsive-system-v3.css": "b8f98e80a93f53b1f8339fb46377b8cdaaf986e3c86d0b613866f5a8991699e3",
     "ozon_category_dashboard/static/seo_project_builder.css": "3fc73d02b76e45e890232db84ceaad0de2d67538d9ab055be266e7bcd28c0b86",
     "ozon_category_dashboard/static/seo_projects.css": "128c1de910f97e8b080064aa32a3b921dd5147800c05d1f905cd719da1d4e09b",
