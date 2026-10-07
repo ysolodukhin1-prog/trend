@@ -97,6 +97,8 @@
     "ozon_category_dashboard/pulse_vps_admin.py": "9bc6a1dbae71d9c7d9168aaa0539ca6bc503e939268d0d3ca172917f8d65f6f9",
     "ozon_category_dashboard/pulse_vps_scoped.py": "1854e381867a993ec1e905aa05c1cceb191101f5832106a5db9ffb0e30a388d0",
     "ozon_category_dashboard/refresh_materialized_views.py": "b9211503413ce2ae2c82417eec3d498151a72603877e30698282f00c9361551e",
+    "ozon_category_dashboard/retail_freshness_now.py": "b5733d4372f274927617938c4512526d73c8d00620dac1c8a1e16d33815a38f4",
+    "ozon_category_dashboard/retail_mart_now.py": "125d1a8773ae2000f52ee186ded761424a7a7f6bb7051cc8f7b232a172b1df87",
     "ozon_category_dashboard/review_replies.py": "71f32c2cc280a5d63f08cb026fc723953f7fdde94a1c199269ac823eab8962b2",
     "ozon_category_dashboard/review_workbench.py": "8d0a6c166dec5773775e1aaafa62168fcee974a656fbaf5d7917d689db76dd73",
     "ozon_category_dashboard/run_dashboard_with_konstex.py": "8e1001eab72789fc8f7ba3b2ca2f6aa8f7a9c8be4080724b3523b84500a33d2b",
