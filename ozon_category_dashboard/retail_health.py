@@ -1,5 +1,6 @@
 """Source-backed retail checks, with explicit unknowns and operational thresholds."""
-from datetime import date,timedelta
+from datetime import date,timedelta,datetime
+from zoneinfo import ZoneInfo
 from urllib.parse import parse_qs
 import psycopg2
 from one_c_import import access
@@ -8,6 +9,19 @@ from retail_bi import build
 FRESH_WARNING=2
 FRESH_CRITICAL=7
 DROP_WARNING=-20
+
+def normalize_period(q,today=None):
+ q={k:list(v) for k,v in q.items()}
+ mode=q.pop('period',[''])[0]
+ if mode not in ('','28d','custom'):raise ValueError('Неизвестный период')
+ missing=lambda value:value in ('','undefined','null')
+ start=q.get('from',[''])[0];finish=q.get('to',[''])[0]
+ if mode=='28d' or not mode and missing(start) and missing(finish):
+  today=today or datetime.now(ZoneInfo('Europe/Moscow')).date()
+  q['from']=[(today-timedelta(days=28)).isoformat()];q['to']=[(today-timedelta(days=1)).isoformat()]
+  return q,'28d'
+ if missing(start) or missing(finish):raise ValueError('Укажите начало и конец периода')
+ return q,'custom'
 
 def assess(payload):
  today=date.fromisoformat(payload['today']);start=date.fromisoformat(payload['period']['from']);finish=date.fromisoformat(payload['period']['to']);end=min(finish,today-timedelta(days=1))
@@ -44,10 +58,11 @@ def handle(app,h,parsed):
  allowed=identity and app.current_client_key()=='toptop' and q.get('client',[''])[0]=='toptop' and (identity.get('is_admin') or ('toptop' in identity.get('clients',[]) and 'commercialRadar' in identity.get('reports',[]) and permits(identity.get('data_access'),'marketplace:toptop','commercialRadar')))
  if not allowed or not access(app,identity,'sales'):
   h.send_json({'ok':False,'error':'Нет доступа к Health Check розницы'},status=403);return True
- if set(q)-{'client','from','to','store','sales_channel'} or any(len(v)!=1 for v in q.values()) or q.get('sales_channel',['retail'])[0]!='retail':
+ if set(q)-{'client','from','to','store','sales_channel','period'} or any(len(v)!=1 for v in q.values()) or q.get('sales_channel',['retail'])[0]!='retail':
   h.send_json({'ok':False,'error':'Некорректные фильтры'},status=400);return True
  try:
-  payload=build(app,q,identity,allow_future=True,include_quality=True);payload['health']=assess(payload)
+  q,mode=normalize_period(q)
+  payload=build(app,q,identity,allow_future=True,include_quality=True);payload['period_mode']=mode;payload['health']=assess(payload)
   h.send_json(payload,headers={'Cache-Control':'no-store'})
  except ValueError as exc:h.send_json({'ok':False,'error':str(exc)},status=400)
  except psycopg2.Error:h.send_json({'ok':False,'error':'Источник Health Check розницы временно недоступен'},status=503)
