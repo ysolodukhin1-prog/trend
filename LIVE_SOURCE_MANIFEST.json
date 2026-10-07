@@ -122,6 +122,7 @@
     "ozon_category_dashboard/session_activity.js": "e9b9e8790d41845ec331025b17ecdb5a48a79c96b208a095810400a748315ca1",
     "ozon_category_dashboard/session_idle.py": "0cff13ff875f8ac98e7237c33e73ad93b2a2bdee62cb9494757216be561e357e",
     "ozon_category_dashboard/sportmaster_run_rate.py": "a65757c109c965b1891f7b5db28c443ab2a37a72520fb72062126558cfaa084f",
+    "ozon_category_dashboard/sql_migration_login_probe.py": "c02bbe340eb28895496cf65ad37c7ad7a70fa763ab6bafc334bf92a6c7ee9493",
     "ozon_category_dashboard/static/access-login.html": "0628d9e9daf6332073f9c8d9aebf27317d0abbcd683b6862dca9685682d8a41a",
     "ozon_category_dashboard/static/admin_header_light.css": "af5ad2bd9f730260b25b918c639b3e8117d6806c5381566d3f425daf320d01cb",
     "ozon_category_dashboard/static/app.js": "47e46c322b5b7ef35dac5495d330ba9f5456a3e366bd5e9701039249e36b5a05",
