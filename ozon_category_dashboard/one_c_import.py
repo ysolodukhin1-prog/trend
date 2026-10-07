@@ -1,0 +1,336 @@
+"""Admin-triggered 1C snapshots. SQL Server is read only; publication is atomic."""
+from __future__ import annotations
+from pathlib import Path
+from datetime import date,datetime,timedelta,timezone
+from contextlib import contextmanager
+import hashlib,json,os,re,subprocess,sys,uuid,threading
+from decimal import Decimal
+import psycopg2,pymssql
+from psycopg2.extras import Json,execute_values,RealDictCursor
+from one_c_endpoint import sql_endpoint
+
+PROFILES=json.loads(Path(__file__).with_name('one_c_profiles.json').read_text(encoding='utf-8-sig'))
+LABELS={'sales':'Продажи по чекам ККМ','catalog':'Ассортимент и штрихкоды','prices':'Цены номенклатуры'}
+DATABASES={'1c_retail_prod':'Розница','1c_ut_prod':'УТ','1c_erp_prod':'ERP'}
+STORES={'817900155D321E0311EA04897619B7D8':'Грибоедова, 18','820900155D321E0311EB362502AF06E2':'Авиапарк','BAA00050569E751211EC1D3088CECBE6':'Афимолл'}
+ZERO='0'*32
+MAX_ROWS=600000
+_READY=False
+_SCHEMA_LOCK=threading.Lock()
+
+def clean(v):
+ if isinstance(v,uuid.UUID):return str(v)
+ if isinstance(v,datetime):return v.isoformat()
+ if isinstance(v,date):return v.isoformat()
+ if isinstance(v,(bytes,bytearray)):return v.hex().upper()
+ if isinstance(v,dict):return {k:clean(x) for k,x in v.items()}
+ if isinstance(v,(list,tuple)):return [clean(x) for x in v]
+ if hasattr(v,'as_tuple'):return str(v)
+ return v
+def normalized(d):return d.replace(year=d.year-2000) if d and d.year>=4000 else d
+def ident(s):
+ if not re.fullmatch(r'_[A-Za-z0-9_]+',s):raise ValueError('Неподдерживаемая схема 1С')
+ return '['+s+']'
+def hexid(v):return v.hex().upper() if isinstance(v,(bytes,bytearray)) else str(v or ZERO).upper()
+def require_profile(database):
+ if database not in DATABASES:raise ValueError('База не поддерживается')
+ return PROFILES.get(database,{})
+def capabilities(database):
+ p=require_profile(database);out=[]
+ if database=='1c_retail_prod':out.append('sales')
+ if all(n in p for n in ['Номенклатура','ХарактеристикиНоменклатуры','ШтрихкодыНоменклатуры']):out.append('catalog')
+ if all(n in p for n in ['ЦеныНоменклатуры','ВидыЦен','Валюты']):out.append('prices')
+ return out
+
+DDL='''CREATE SCHEMA IF NOT EXISTS one_c_import;
+CREATE TABLE IF NOT EXISTS one_c_import.jobs(id uuid PRIMARY KEY,created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,status text NOT NULL,request jsonb NOT NULL,result jsonb NOT NULL DEFAULT '[]',message text NOT NULL DEFAULT '',pid integer,user_id bigint);
+CREATE UNIQUE INDEX IF NOT EXISTS one_c_single_active_job ON one_c_import.jobs((true)) WHERE status IN ('queued','running');
+CREATE TABLE IF NOT EXISTS one_c_import.snapshots(id uuid PRIMARY KEY,database_name text NOT NULL,dataset text NOT NULL,source_key text NOT NULL,loaded_at timestamptz NOT NULL DEFAULT now(),source_latest timestamp,row_count bigint NOT NULL,digest text NOT NULL,summary jsonb NOT NULL);
+CREATE TABLE IF NOT EXISTS one_c_import.active(database_name text NOT NULL,dataset text NOT NULL,snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),PRIMARY KEY(database_name,dataset));
+CREATE TABLE IF NOT EXISTS one_c_import.catalog(snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),product_id text NOT NULL,variant_id text NOT NULL,payload jsonb NOT NULL,PRIMARY KEY(snapshot_id,product_id,variant_id));
+CREATE TABLE IF NOT EXISTS one_c_import.prices(snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),product_id text NOT NULL,variant_id text NOT NULL,price_type_id text NOT NULL,payload jsonb NOT NULL,PRIMARY KEY(snapshot_id,product_id,variant_id,price_type_id));
+CREATE TABLE IF NOT EXISTS one_c_import.settings(key text PRIMARY KEY,value jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE IF NOT EXISTS one_c_import.sales_backups(job_id uuid NOT NULL,saved_at timestamptz NOT NULL DEFAULT now(),payload jsonb NOT NULL);
+CREATE OR REPLACE VIEW one_c_import.current_catalog AS SELECT c.*,s.database_name,s.source_key,s.loaded_at FROM one_c_import.catalog c JOIN one_c_import.active a ON a.snapshot_id=c.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='catalog';
+CREATE OR REPLACE VIEW one_c_import.current_prices AS SELECT p.*,s.database_name,s.source_key,s.loaded_at FROM one_c_import.prices p JOIN one_c_import.active a ON a.snapshot_id=p.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='prices';
+GRANT USAGE ON SCHEMA one_c_import TO pulse_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA one_c_import TO pulse_reader;'''
+def ensure(app):
+ global _READY
+ with _SCHEMA_LOCK:
+  if _READY:return
+  with app.client_registry_connection() as db:
+   with db.cursor() as c:c.execute(DDL)
+  _READY=True
+
+def sources(app):
+ with app.client_registry_connection() as db:
+  with db.cursor() as c:
+   c.execute("SELECT DISTINCT service_key FROM public.bi_service_credentials WHERE service_key='1c' OR service_key LIKE '1c:%' ORDER BY service_key")
+   keys=[r['service_key'] for r in c.fetchall()]
+ result=[]
+ for key in keys:
+  name=app.service_credential(key,'database')
+  if name in DATABASES:result.append({'key':key,'database':name,'label':DATABASES[name]+' · '+name,'datasets':[{'key':x,'label':LABELS[x]} for x in capabilities(name)]})
+ return result
+
+@contextmanager
+def sql(app,source,database):
+ v={k:app.service_credential(source,k) for k in ('host','port','database','username','password')}
+ if v['database']!=database:raise ValueError('Подключение изменилось. Обновите список и запустите импорт снова.')
+ host,port=sql_endpoint(v['host'],v['port'])
+ db=pymssql.connect(server=host,port=port,database=database,user=v['username'],password=v['password'],login_timeout=6,timeout=120,autocommit=False,appname='TREND 1C read-only import')
+ try:
+  with db.cursor() as c:c.execute('SET LOCK_TIMEOUT 3000')
+  # No writes or hints that permit dirty reads on the source.
+  yield db
+ finally:
+  try:db.rollback()
+  finally:db.close()
+
+def query(db,text,params=()):
+ with db.cursor(as_dict=True) as c:
+  c.execute(text,params);rows=c.fetchmany(MAX_ROWS+1)
+  if len(rows)>MAX_ROWS:raise ValueError('Превышен предел снимка. Данные не опубликованы.')
+  return rows
+def table(p,name):return 'dbo.'+ident(p[name]['table'])
+def field(p,name,label,alias=''):
+ col=p[name]['fields'].get(label)
+ if not col:raise ValueError('Схема 1С изменилась: не найдено поле '+label)
+ return (alias+'.' if alias else '')+ident(col)
+def check_schema(db,p):
+ for obj in p.values():
+  rows=query(db,'SELECT name FROM sys.columns WHERE object_id=OBJECT_ID(%s)',('dbo.'+obj['table'],))
+  if not set(obj['columns'])<= {r['name'] for r in rows}:raise ValueError('Схема 1С изменилась. Импорт остановлен до повторного сопоставления.')
+
+def extract_catalog(db,p):
+ products=query(db,'SELECT _IDRRef id,_Description name,'+field(p,'Номенклатура','Артикул')+' article FROM '+table(p,'Номенклатура')+' WHERE _Marked=0x00')
+ if not products:raise ValueError('Справочник номенклатуры пуст. Последний успешный снимок сохранён.')
+ variants=query(db,'SELECT _IDRRef id,_OwnerID_RRRef owner,_Description name FROM '+table(p,'ХарактеристикиНоменклатуры')+' WHERE _Marked=0x00')
+ codes=query(db,'SELECT '+field(p,'ШтрихкодыНоменклатуры','Номенклатура')+' product,'+field(p,'ШтрихкодыНоменклатуры','Характеристика')+' variant,'+field(p,'ШтрихкодыНоменклатуры','Штрихкод')+' barcode FROM '+table(p,'ШтрихкодыНоменклатуры'))
+ byproduct={};barcodes={}
+ for r in variants:byproduct.setdefault(hexid(r['owner']),[]).append(r)
+ for r in codes:barcodes.setdefault((hexid(r['product']),hexid(r['variant'])),set()).add(str(r['barcode'] or '').strip())
+ rows=[]
+ for r in products:
+  pid=hexid(r['id'])
+  # Keep an explicit product row for prices that have no characteristic.
+  for variant in [None]+byproduct.get(pid,[]):
+   vid=hexid(variant['id']) if variant else ZERO
+   rows.append({'product_id':pid,'variant_id':vid,'name':r['name'] or '', 'article':r['article'] or '', 'variant':variant['name'] if variant else '', 'barcodes':sorted(x for x in barcodes.get((pid,vid),[]) if x)})
+ return rows,{'products':len(products),'variants':len(variants),'barcode_rows':len(codes)},None
+
+def extract_prices(db,p):
+ name='ЦеныНоменклатуры';obj=p[name];f=obj['fields']
+ product=field(p,name,'Номенклатура','p');variant=field(p,name,'Характеристика','p')
+ typ=field(p,name,'ВидЦены' if 'ВидЦены' in f else 'ВидЦен','p')
+ cutoff=datetime.combine(date.today()+timedelta(days=1),datetime.min.time());cutoff=cutoff.replace(year=cutoff.year+2000)
+ predicate=' AND p._Active=0x01' if '_Active' in obj['columns'] else ''
+ raw=query(db,'WITH ranked AS (SELECT p.*,DENSE_RANK() OVER(PARTITION BY '+','.join([product,variant,typ])+' ORDER BY p._Period DESC) rk FROM '+table(p,name)+' p WHERE p._Period<%s'+predicate+') SELECT * FROM ranked WHERE rk=1',(cutoff,))
+ if not raw:raise ValueError('Регистр цен пуст. Последний успешный снимок сохранён.')
+ types={hexid(r['_IDRRef']):r for r in query(db,'SELECT _IDRRef,_Description,_Marked FROM '+table(p,'ВидыЦен'))}
+ currencies={hexid(r['_IDRRef']):str(r['_Code']).strip() for r in query(db,'SELECT _IDRRef,_Code FROM '+table(p,'Валюты'))}
+ rows={};latest=None
+ for r in raw:
+  pid,vid,tid=(hexid(r[f[k]]) for k in ['Номенклатура','Характеристика','ВидЦены' if 'ВидЦены' in f else 'ВидЦен'])
+  currency=currencies.get(hexid(r[f['Валюта' if 'Валюта' in f else 'ВалютаЦены']]),'')
+  currency={'643':'RUB','810':'RUB','840':'USD','978':'EUR'}.get(currency,currency)
+  active=(r.get(f.get('Актуальность'))!=b'\x00') and types.get(tid,{}).get('_Marked')!=b'\x01'
+  period=normalized(r['_Period']);latest=max(latest,period) if latest else period
+  item={'product_id':pid,'variant_id':vid,'price_type_id':tid,'type':types.get(tid,{}).get('_Description') or tid,'value':str(r[f['Цена']]),'currency':currency,'date':str(period),'active':active,'inherit':r.get(f.get('ВключаяХарактеристики'))==b'\x01'}
+  key=(pid,vid,tid)
+  if key in rows and rows[key]!=item:raise ValueError('Несколько разных цен на одну дату и вид цены. Снимок не опубликован.')
+  rows[key]=item
+ return list(rows.values()),{'price_types':sorted({r['type'] for r in rows.values()}),'active_prices':sum(r['active'] for r in rows.values())},latest
+
+def extract_sales(db,start,finish):
+ # Existing confirmed retail rule: only active movements of posted, unmarked KKM receipts.
+ end=finish+timedelta(days=1)
+ rows=query(db,'''SELECT r._Period period,r._RecorderRRef recorder_id,r._LineNo line_no,
+ r._Fld44752RRef product_id,r._Fld44753RRef variant_id,p._Description product_name,p._Fld8132 article,
+ r._Fld44761RRef store_id,s._Description store_name,r._Fld44758RRef organization_id,
+ r._Fld44766 quantity,r._Fld44767 revenue,r._Fld44768 vat,r._Fld44769 revenue_before_discount,
+ r._Fld52390 open_shift,d._Fld30572RRef shift_id
+ FROM dbo._AccumRg44751 r JOIN dbo._Document949 d ON d._IDRRef=r._RecorderRRef
+ LEFT JOIN dbo._Reference333 p ON p._IDRRef=r._Fld44752RRef
+ LEFT JOIN dbo._Reference558 s ON s._IDRRef=r._Fld44761RRef
+ WHERE r._Active=0x01 AND d._Posted=0x01 AND d._Marked=0x00 AND r._RecorderTRef=0x000003B5
+ AND r._Period>=%s AND r._Period<%s ORDER BY r._Period,r._RecorderRRef,r._LineNo''',(start.replace(year=start.year+2000),end.replace(year=end.year+2000)))
+ latest=None
+ for r in rows:
+  r['period']=normalized(r['period']);latest=max(latest,r['period']) if latest else r['period']
+  for key in ('recorder_id','product_id','variant_id','store_id','organization_id','shift_id'):r[key]=hexid(r[key])
+  r['line_no']=int(r['line_no']);r['open_shift']=1 if r['open_shift']==b'\x01' else 0
+  r['product_name']=r['product_name'] or '';r['article']=r['article'] or '';r['store_name']=r['store_name'] or ''
+  r['channel']='retail' if r['store_id'] in STORES else 'unclassified'
+ keys={(r['period'],r['recorder_id'],r['line_no']) for r in rows}
+ if len(keys)!=len(rows):raise ValueError('Дубли движений чеков в источнике. Витрина не обновлена.')
+ if not rows:raise ValueError('За выбранный период нет проведённых чеков. Прежние данные сохранены.')
+ # Reconcile aggregates with an independent source query before publication.
+ expected=query(db,'''SELECT COUNT_BIG(*) lines,COUNT(DISTINCT r._RecorderRRef) receipts,SUM(r._Fld44766) quantity,SUM(r._Fld44767) revenue
+ FROM dbo._AccumRg44751 r JOIN dbo._Document949 d ON d._IDRRef=r._RecorderRRef
+ WHERE r._Active=0x01 AND d._Posted=0x01 AND d._Marked=0x00 AND r._RecorderTRef=0x000003B5 AND r._Period>=%s AND r._Period<%s''',
+ (start.replace(year=start.year+2000),end.replace(year=end.year+2000)))[0]
+ actual={'lines':len(rows),'receipts':len({r['recorder_id'] for r in rows}),'quantity':sum(r['quantity'] for r in rows),'revenue':sum(r['revenue'] for r in rows)}
+ if actual!=expected:raise ValueError('Источник изменился во время чтения или сверка сумм не прошла. Повторите импорт.')
+ return rows,{**clean(actual),'date_from':str(start),'checked_through':str(finish),'source_key':None},latest
+
+def publish(app,job,source,database,dataset,rows,summary,latest,start,finish):
+ if dataset in {'catalog','prices'}:rows.sort(key=lambda r:(r['product_id'],r['variant_id'],r.get('price_type_id','')))
+ digest=hashlib.sha256(json.dumps(clean(rows),ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest();snapshot=str(uuid.uuid4())
+ summary={**summary,'database':database,'source_key':source,'date_from':str(start),'checked_through':str(finish)}
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute("SET LOCAL lock_timeout='5s'")
+   c.execute('SELECT pg_advisory_xact_lock(715001)')
+   c.execute('SELECT s.id,s.digest FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.database_name=%s AND a.dataset=%s',(database,dataset));old=c.fetchone()
+   unchanged=bool(old and old['digest']==digest)
+   if dataset=='sales':
+    # Back up affected rows and replace in one transaction, including corrected/unposted source records.
+    c.execute('INSERT INTO one_c_import.sales_backups(job_id,payload) SELECT %s,to_jsonb(s) FROM retail_1c.sales s WHERE period>=%s AND period<%s',(job,start,finish+timedelta(days=1)))
+    c.execute('DELETE FROM retail_1c.sales WHERE period>=%s AND period<%s',(start,finish+timedelta(days=1)))
+    cols=['period','recorder_id','line_no','product_id','variant_id','product_name','article','store_id','store_name','organization_id','quantity','revenue','vat','revenue_before_discount','open_shift','shift_id','channel']
+    execute_values(c,'INSERT INTO retail_1c.sales('+','.join(cols)+') VALUES %s',[[r[k] for k in cols] for r in rows],page_size=1000)
+    c.execute('DELETE FROM retail_1c.daily_store WHERE day>=%s AND day<=%s',(start,finish))
+    c.execute('''INSERT INTO retail_1c.daily_store SELECT period::date,store_id,MAX(store_name),channel,COUNT(DISTINCT recorder_id),SUM(quantity),SUM(revenue),SUM(vat),SUM(revenue_before_discount-revenue),COUNT(*) FROM retail_1c.sales WHERE period>=%s AND period<%s GROUP BY period::date,store_id,channel''',(start,finish+timedelta(days=1)))
+    c.execute('SELECT COUNT(*) lines,COUNT(DISTINCT recorder_id) receipts,SUM(quantity) quantity,SUM(revenue) revenue FROM retail_1c.sales WHERE period>=%s AND period<%s',(start,finish+timedelta(days=1)));check=c.fetchone()
+    if any(check[k]!=(Decimal(str(summary[k])) if k in {'quantity','revenue'} else summary[k]) for k in ('lines','receipts','quantity','revenue')):raise ValueError('Сверка витрины не прошла; изменения отменены.')
+    c.execute('INSERT INTO retail_1c.import_runs(export_sha,metadata,row_count,checked_receipts) VALUES(%s,%s,%s,%s) ON CONFLICT(export_sha) DO UPDATE SET metadata=EXCLUDED.metadata,loaded_at=now()', (digest,Json({**summary,'date_to_exclusive':str(finish+timedelta(days=1)),'table':'_AccumRg44751'}),len(rows),summary['receipts']))
+   if not unchanged:
+    c.execute('INSERT INTO one_c_import.snapshots(id,database_name,dataset,source_key,source_latest,row_count,digest,summary) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',(snapshot,database,dataset,source,latest,len(rows),digest,Json(summary)))
+    if dataset in {'catalog','prices'}:
+     cols=['snapshot_id','product_id','variant_id']+(['price_type_id'] if dataset=='prices' else [])+['payload']
+     vals=[[snapshot,r['product_id'],r['variant_id']]+([r['price_type_id']] if dataset=='prices' else [])+[Json(r)] for r in rows]
+     execute_values(c,'INSERT INTO one_c_import.'+dataset+'('+','.join(cols)+') VALUES %s',vals,page_size=1000)
+    c.execute('INSERT INTO one_c_import.active(database_name,dataset,snapshot_id) VALUES(%s,%s,%s) ON CONFLICT(database_name,dataset) DO UPDATE SET snapshot_id=EXCLUDED.snapshot_id',(database,dataset,snapshot))
+   c.execute('INSERT INTO one_c_import.settings(key,value) VALUES(%s,%s) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=now()',('source:'+database+':'+dataset,Json(source)))
+   if dataset=='prices' and database=='1c_retail_prod':
+    candidates={r['price_type_id'] for r in rows if r['type'].strip().lower() in {'розничная','розничные','розничная цена'}}
+    if len(candidates)==1:c.execute("INSERT INTO one_c_import.settings(key,value) VALUES('retail_price_type',%s) ON CONFLICT DO NOTHING",(Json(next(iter(candidates))),))
+ return {'database':database,'source':source,'dataset':dataset,'label':LABELS[dataset],'status':'completed','row_count':len(rows),'source_latest':str(latest or ''),'unchanged':unchanged,'summary':summary}
+
+def status(app):
+ ensure(app)
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute("SELECT * FROM one_c_import.jobs WHERE status IN ('queued','running')")
+   for row in c.fetchall():
+    if (datetime.now(timezone.utc)-row['created_at']).total_seconds()>60:
+     try:
+      if not row['pid']:raise ProcessLookupError()
+      os.kill(row['pid'],0)
+     except (ProcessLookupError,PermissionError):c.execute("UPDATE one_c_import.jobs SET status='interrupted',finished_at=now(),message='Процесс импорта прерван. Опубликованные данные сохранены; повторите запуск.' WHERE id=%s",(str(row['id']),))
+   c.execute('SELECT id,created_at,started_at,finished_at,status,result,message FROM one_c_import.jobs ORDER BY created_at DESC LIMIT 15');jobs=c.fetchall()
+   c.execute('SELECT a.database_name,a.dataset,s.source_key,s.loaded_at,s.source_latest,s.row_count,s.summary FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id ORDER BY a.database_name,a.dataset');snapshots=c.fetchall()
+   c.execute("SELECT DISTINCT price_type_id,payload->>'type' label FROM one_c_import.current_prices WHERE database_name='1c_retail_prod' ORDER BY label");types=c.fetchall()
+   c.execute("SELECT value FROM one_c_import.settings WHERE key='retail_price_type'");row=c.fetchone()
+ return clean({'ok':True,'sources':sources(app),'jobs':jobs,'snapshots':snapshots,'price_types':types,'retail_price_type':row['value'] if row else '', 'default_from':'2026-08-01','default_to':str(date.today())})
+
+def validate_request(app,payload):
+ available={s['key']:s for s in sources(app)}
+ selected=payload.get('sources');datasets=payload.get('datasets')
+ if not isinstance(selected,list) or not 1<=len(selected)<=3 or len(set(selected))!=len(selected) or any(s not in available for s in selected):raise ValueError('Выберите текущее подключение 1С')
+ if not isinstance(datasets,list) or not datasets or len(set(datasets))!=len(datasets) or any(d not in LABELS for d in datasets):raise ValueError('Выберите данные для импорта')
+ start=date.fromisoformat(str(payload.get('date_from') or '2026-08-01'));finish=date.fromisoformat(str(payload.get('date_to') or date.today()))
+ if start>finish or finish>date.today() or (finish-start).days>731:raise ValueError('Выберите период не больше двух лет, до сегодняшнего дня')
+ tasks=[]
+ for src in selected:
+  entry=available[src]
+  for dataset in datasets:
+   if dataset in capabilities(entry['database']):tasks.append({'source':src,'database':entry['database'],'dataset':dataset})
+ if not tasks:raise ValueError('Для выбранных данных схема этой базы пока не сопоставлена')
+ return {'tasks':tasks,'date_from':str(start),'date_to':str(finish)}
+
+def start(app,payload,user_id=None):
+ request=validate_request(app,payload);ensure(app);job=str(uuid.uuid4())
+ try:
+  with app.client_registry_connection() as pg:
+   with pg.cursor() as c:c.execute("INSERT INTO one_c_import.jobs(id,status,request,user_id) VALUES(%s,'queued',%s,%s)",(job,Json(request),user_id))
+ except psycopg2.errors.UniqueViolation:raise ValueError('Импорт из 1С уже выполняется. Дождитесь результата.')
+ try:
+  child=subprocess.Popen([sys.executable,str(Path(__file__).resolve()),'--job',job],cwd=str(Path(__file__).parent),stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+  with app.client_registry_connection() as pg:
+   with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET pid=%s WHERE id=%s',(child.pid,job))
+ except Exception:
+  with app.client_registry_connection() as pg:
+   with pg.cursor() as c:c.execute("UPDATE one_c_import.jobs SET status='failed',finished_at=now(),message='Не удалось запустить процесс импорта' WHERE id=%s",(job,))
+  raise ValueError('Не удалось запустить процесс импорта')
+ return {'ok':True,'job_id':job,'status':'queued'}
+
+def worker(app,job):
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute("UPDATE one_c_import.jobs SET status='running',started_at=now(),pid=%s WHERE id=%s AND status='queued' RETURNING request",(os.getpid(),job));row=c.fetchone()
+ if not row:return
+ request=row['request'];results=[]
+ for task in request['tasks']:
+  source,database,dataset=task['source'],task['database'],task['dataset']
+  try:
+   with sql(app,source,database) as db:
+    p=require_profile(database);check_schema(db,p)
+    start_date=date.fromisoformat(request['date_from']);finish=date.fromisoformat(request['date_to'])
+    if dataset=='sales':rows,summary,latest=extract_sales(db,start_date,finish)
+    elif dataset=='catalog':rows,summary,latest=extract_catalog(db,p)
+    else:rows,summary,latest=extract_prices(db,p)
+   result=publish(app,job,source,database,dataset,rows,summary,latest,start_date,finish)
+  except Exception as exc:
+   # Driver error text can contain credentials: never publish or log it.
+   message=str(exc) if isinstance(exc,ValueError) else 'Источник недоступен или импорт не прошёл сверку. Прежние данные сохранены.'
+   result={**task,'label':LABELS[dataset],'status':'failed','message':message,'error_class':type(exc).__name__}
+  results.append(result)
+  with app.client_registry_connection() as pg:
+   with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET result=%s,message=%s WHERE id=%s',(Json(results),'Завершено '+str(len(results))+' из '+str(len(request['tasks'])),job))
+ failed=sum(r['status']=='failed' for r in results)
+ final='completed' if not failed else 'failed' if failed==len(results) else 'partial'
+ # Rebuild crosswalk once after verified publication, scoped to TOPTOP only.
+ if any(r['status']=='completed' and r['database']=='1c_retail_prod' for r in results):
+  try:
+   import build_catalog
+   build_catalog.run('toptop')
+  except Exception:
+   final='partial';results.append({'dataset':'crosswalk','status':'failed','message':'Данные 1С загружены, но сопоставление ассортимента не обновилось. Повторите импорт.'})
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET status=%s,finished_at=now(),result=%s,message=%s WHERE id=%s',(final,Json(results),'Импорт завершён' if final=='completed' else 'Импорт завершён с ошибками; см. результаты',job))
+
+def source_key(app,dataset='sales'):
+ # Resolve from the currently configured source, not an obsolete credential UUID.
+ current=[s['key'] for s in sources(app) if s['database']=='1c_retail_prod']
+ return current[0] if len(current)==1 else ''
+def report_tables(dataset='sales'):
+ if dataset=='sales':return ('dbo._AccumRg44751','dbo._Document949','dbo._Reference333','dbo._Reference558')
+ p=PROFILES['1c_retail_prod'];names=['Номенклатура','ХарактеристикиНоменклатуры','ШтрихкодыНоменклатуры']
+ if dataset=='prices':names+=['ЦеныНоменклатуры','ВидыЦен','Валюты']
+ return tuple('dbo.'+p[n]['table'] for n in names)
+def access(app,identity,dataset='sales'):
+ if identity.get('is_admin'):return True
+ from data_access import permits
+ key=source_key(app,dataset)
+ return bool(key) and all(permits(identity.get('data_access'),key,t) for t in report_tables(dataset))
+
+def handle(rt,h,method):
+ from urllib.parse import urlparse,parse_qs
+ app=rt.app;parsed=urlparse(h.path)
+ if not h.dashboard_access_granted():h.send_dashboard_access_required(parsed);return
+ identity=h.dashboard_access_identity() or {}
+ if not identity.get('is_admin') and ('clientOnboarding' not in set(identity.get('admin_sections') or []) or 'toptop' not in identity.get('clients',[])):
+  h.send_json({'ok':False,'error':'Нет доступа к импорту из 1С'},status=403);return
+ if parse_qs(parsed.query).get('client',['toptop'])[0]!='toptop':h.send_json({'ok':False,'error':'Подключения 1С доступны в TOPTOP'},status=403);return
+ try:
+  if method=='GET':h.send_json(status(app),headers={'Cache-Control':'no-store'});return
+  payload=h.read_json_body()
+  if payload.get('action')=='settings':
+   value=str(payload.get('retail_price_type') or '');ensure(app)
+   with app.client_registry_connection() as pg:
+    with pg.cursor() as c:
+     c.execute("SELECT 1 FROM one_c_import.current_prices WHERE database_name='1c_retail_prod' AND price_type_id=%s LIMIT 1",(value,))
+     if value and not c.fetchone():raise ValueError('Выберите загруженный вид цен Розницы')
+     c.execute("INSERT INTO one_c_import.settings(key,value) VALUES('retail_price_type',%s) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=now()",(Json(value),))
+   h.send_json(status(app));return
+  h.send_json(start(app,payload,identity.get('user_id')),status=202)
+ except (ValueError,TypeError):h.send_json({'ok':False,'error':'Проверьте параметры импорта' if not isinstance(sys.exception(),ValueError) else str(sys.exception())},status=400)
+ except psycopg2.Error:h.send_json({'ok':False,'error':'Хранилище импорта недоступно'},status=503)
+
+if __name__=='__main__':
+ import pulse_vps_admin as rt
+ rt.configure_scope();rt._USE_WRITER_CONFIG.set(True)
+ worker(rt.app,str(uuid.UUID(sys.argv[2])))
