@@ -44,6 +44,9 @@ def capabilities(database):
  return out
 
 DDL='''CREATE TABLE IF NOT EXISTS one_c_import.jobs(id uuid PRIMARY KEY,created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,status text NOT NULL,request jsonb NOT NULL,result jsonb NOT NULL DEFAULT '[]',message text NOT NULL DEFAULT '',pid integer,user_id bigint);
+ALTER TABLE one_c_import.jobs ADD COLUMN IF NOT EXISTS events jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE one_c_import.jobs ADD COLUMN IF NOT EXISTS current_task jsonb;
+ALTER TABLE one_c_import.jobs ADD COLUMN IF NOT EXISTS stop_requested boolean NOT NULL DEFAULT false;
 CREATE UNIQUE INDEX IF NOT EXISTS one_c_single_active_job ON one_c_import.jobs((true)) WHERE status IN ('queued','running');
 CREATE TABLE IF NOT EXISTS one_c_import.snapshots(id uuid PRIMARY KEY,database_name text NOT NULL,dataset text NOT NULL,source_key text NOT NULL,loaded_at timestamptz NOT NULL DEFAULT now(),source_latest timestamp,row_count bigint NOT NULL,digest text NOT NULL,summary jsonb NOT NULL);
 ALTER TABLE one_c_import.snapshots ADD COLUMN IF NOT EXISTS checked_at timestamptz NOT NULL DEFAULT now();
@@ -252,7 +255,7 @@ def status(app):
       if not row['pid']:raise ProcessLookupError()
       os.kill(row['pid'],0)
      except (ProcessLookupError,PermissionError):c.execute("UPDATE one_c_import.jobs SET status='interrupted',finished_at=now(),message='Процесс импорта прерван. Опубликованные данные сохранены; повторите запуск.' WHERE id=%s",(str(row['id']),))
-   c.execute('SELECT id,created_at,started_at,finished_at,status,result,message FROM one_c_import.jobs ORDER BY created_at DESC LIMIT 15');jobs=c.fetchall()
+   c.execute('SELECT id,created_at,started_at,finished_at,status,result,message,request,events,current_task,stop_requested FROM one_c_import.jobs ORDER BY created_at DESC LIMIT 15');jobs=c.fetchall()
    c.execute('SELECT a.database_name,a.dataset,s.source_key,s.checked_at AS loaded_at,s.source_latest,s.row_count,s.summary,s.digest FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id ORDER BY a.database_name,a.dataset');snapshots=c.fetchall()
    price_snapshot=next((s for s in snapshots if s['database_name']=='1c_retail_prod' and s['dataset']=='prices'),None)
    types=[]
@@ -275,6 +278,15 @@ def validate_request(app,payload):
   entry=available[src]
   for dataset in datasets:
    if dataset in capabilities(entry['database']):tasks.append({'source':src,'database':entry['database'],'dataset':dataset})
+ if payload.get('tasks') is not None:
+  exact=payload['tasks']
+  if not isinstance(exact,list) or not exact or len(exact)>9:raise ValueError('Выберите этапы 1С')
+  pairs=[]
+  for item in exact:
+   if not isinstance(item,dict) or (item.get('source'),item.get('dataset')) not in {(t['source'],t['dataset']) for t in tasks}:raise ValueError('Выберите доступные этапы 1С')
+   pairs.append((item['source'],item['dataset']))
+  if len(set(pairs))!=len(pairs):raise ValueError('Этапы повторяются')
+  tasks=[t for t in tasks if (t['source'],t['dataset']) in set(pairs)]
  if not tasks:raise ValueError('Для выбранных данных схема этой базы пока не сопоставлена')
  return {'tasks':tasks,'date_from':str(start),'date_to':str(finish)}
 
@@ -294,43 +306,62 @@ def start(app,payload,user_id=None):
   raise ValueError('Не удалось запустить процесс импорта')
  return {'ok':True,'job_id':job,'status':'queued'}
 
+def event(app,job,text,task=None):
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute("UPDATE one_c_import.jobs SET events=events||%s::jsonb,current_task=%s WHERE id=%s",(Json([{'time':datetime.now(timezone.utc).isoformat(),'text':text,'marketplace':'one_c'}]),Json(task) if task else None,job))
+
+def stopped(app,job):
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute('SELECT stop_requested FROM one_c_import.jobs WHERE id=%s',(job,));return bool(c.fetchone()['stop_requested'])
+
 def worker(app,job):
  with app.client_registry_connection() as pg:
   with pg.cursor() as c:
    c.execute("UPDATE one_c_import.jobs SET status='running',started_at=now(),pid=%s WHERE id=%s AND status='queued' RETURNING request",(os.getpid(),job));row=c.fetchone()
  if not row:return
- request=row['request'];results=[]
+ request=row['request'];results=[];interrupted=False
+ event(app,job,'1С · Запущено этапов: '+str(len(request['tasks'])))
  for task in request['tasks']:
-  source,database,dataset=task['source'],task['database'],task['dataset']
-  rows=None
+  if stopped(app,job):interrupted=True;break
+  source,database,dataset=task['source'],task['database'],task['dataset'];rows=None
+  label=DATABASES[database]+' · '+LABELS[dataset]
   try:
+   event(app,job,label+' · Чтение источника',task)
    with sql(app,source,database) as db:
     p=require_profile(database);check_schema(db,p)
     start_date=date.fromisoformat(request['date_from']);finish=date.fromisoformat(request['date_to'])
     if dataset=='sales':rows,summary,latest=extract_sales(db,start_date,finish)
     elif dataset=='catalog':rows,summary,latest=extract_catalog(db,p)
     else:rows,summary,latest=extract_prices(db,p)
+   if stopped(app,job):interrupted=True;event(app,job,label+' · Остановлено до публикации');break
+   event(app,job,label+' · Прочитано '+str(len(rows))+' строк, сверка и публикация',task)
    result=publish(app,job,source,database,dataset,rows,summary,latest,start_date,finish)
+   event(app,job,label+' · Готово: '+str(result['row_count'])+' строк'+(' · без изменений' if result['unchanged'] else ''))
   except Exception as exc:
-   # Driver error text can contain credentials: never publish or log it.
    message=str(exc) if isinstance(exc,ValueError) else 'Источник недоступен или импорт не прошёл сверку. Прежние данные сохранены.'
    result={**task,'label':LABELS[dataset],'status':'failed','message':message,'error_class':type(exc).__name__}
+   event(app,job,label+' · Ошибка: '+message)
   finally:
    if isinstance(rows,SnapshotRows):rows.close()
   results.append(result)
   with app.client_registry_connection() as pg:
    with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET result=%s,message=%s WHERE id=%s',(Json(results),'Завершено '+str(len(results))+' из '+str(len(request['tasks'])),job))
  failed=sum(r['status']=='failed' for r in results)
- final='completed' if not failed else 'failed' if failed==len(results) else 'partial'
- # Rebuild crosswalk once after verified publication, scoped to TOPTOP only.
+ final='interrupted' if interrupted else 'completed' if not failed else 'failed' if failed==len(results) else 'partial'
  if any(r['status']=='completed' and r['database']=='1c_retail_prod' for r in results):
   try:
+   event(app,job,'1С · Обновление сопоставления ассортимента')
    import build_catalog
    build_catalog.run('toptop')
   except Exception:
-   final='partial';results.append({'dataset':'crosswalk','status':'failed','message':'Данные 1С загружены, но сопоставление ассортимента не обновилось. Повторите импорт.'})
+   if not interrupted:final='partial'
+   results.append({'dataset':'crosswalk','status':'failed','message':'Данные 1С загружены, но сопоставление ассортимента не обновилось. Повторите импорт.'})
+ message='Импорт остановлен; опубликованные данные сохранены' if interrupted else 'Импорт завершён' if final=='completed' else 'Импорт завершён с ошибками; см. результаты'
+ event(app,job,'1С · '+message)
  with app.client_registry_connection() as pg:
-  with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET status=%s,finished_at=now(),result=%s,message=%s WHERE id=%s',(final,Json(results),'Импорт завершён' if final=='completed' else 'Импорт завершён с ошибками; см. результаты',job))
+  with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET status=%s,finished_at=now(),result=%s,message=%s,current_task=NULL WHERE id=%s',(final,Json(results),message,job))
 
 def source_key(app,dataset='sales'):
  # Resolve from the currently configured source, not an obsolete credential UUID.
@@ -359,7 +390,7 @@ def handle(rt,h,method):
  origin=h.headers.get('Origin') if hasattr(h,'headers') else None
  if method=='POST' and (h.headers.get('Sec-Fetch-Site')=='cross-site' or origin and urlparse(origin).netloc!=h.headers.get('Host')):
   h.send_json({'ok':False,'error':'Недопустимый источник запроса'},status=403);return
- if not identity.get('is_admin') and ('clientOnboarding' not in set(identity.get('admin_sections') or []) or 'toptop' not in identity.get('clients',[])):
+ if not identity.get('is_admin') and (not {'clientOnboarding','allDaily'}.intersection(identity.get('admin_sections') or []) or 'toptop' not in identity.get('clients',[])):
   h.send_json({'ok':False,'error':'Нет доступа к импорту из 1С'},status=403);return
  if parse_qs(parsed.query).get('client',['toptop'])[0]!='toptop':h.send_json({'ok':False,'error':'Подключения 1С доступны в TOPTOP'},status=403);return
  try:
@@ -369,6 +400,11 @@ def handle(rt,h,method):
     h.send_json(preview(app,q),headers={'Cache-Control':'no-store'});return
    h.send_json(status(app),headers={'Cache-Control':'no-store'});return
   payload=h.read_json_body()
+  if payload.get('action')=='stop':
+   ensure(app)
+   with app.client_registry_connection() as pg:
+    with pg.cursor() as c:c.execute("UPDATE one_c_import.jobs SET stop_requested=true,message='Остановка запрошена; текущая операция завершается' WHERE status IN ('queued','running')")
+   h.send_json(status(app));return
   if payload.get('action')=='settings':
    value=str(payload.get('retail_price_type') or '');ensure(app)
    with app.client_registry_connection() as pg:
