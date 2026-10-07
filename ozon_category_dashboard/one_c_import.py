@@ -42,8 +42,7 @@ def capabilities(database):
  if all(n in p for n in ['ЦеныНоменклатуры','ВидыЦен','Валюты']):out.append('prices')
  return out
 
-DDL='''CREATE SCHEMA IF NOT EXISTS one_c_import;
-CREATE TABLE IF NOT EXISTS one_c_import.jobs(id uuid PRIMARY KEY,created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,status text NOT NULL,request jsonb NOT NULL,result jsonb NOT NULL DEFAULT '[]',message text NOT NULL DEFAULT '',pid integer,user_id bigint);
+DDL='''CREATE TABLE IF NOT EXISTS one_c_import.jobs(id uuid PRIMARY KEY,created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,status text NOT NULL,request jsonb NOT NULL,result jsonb NOT NULL DEFAULT '[]',message text NOT NULL DEFAULT '',pid integer,user_id bigint);
 CREATE UNIQUE INDEX IF NOT EXISTS one_c_single_active_job ON one_c_import.jobs((true)) WHERE status IN ('queued','running');
 CREATE TABLE IF NOT EXISTS one_c_import.snapshots(id uuid PRIMARY KEY,database_name text NOT NULL,dataset text NOT NULL,source_key text NOT NULL,loaded_at timestamptz NOT NULL DEFAULT now(),source_latest timestamp,row_count bigint NOT NULL,digest text NOT NULL,summary jsonb NOT NULL);
 CREATE TABLE IF NOT EXISTS one_c_import.active(database_name text NOT NULL,dataset text NOT NULL,snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),PRIMARY KEY(database_name,dataset));
@@ -187,12 +186,13 @@ def publish(app,job,source,database,dataset,rows,summary,latest,start,finish):
    unchanged=bool(old and old['digest']==digest)
    if dataset=='sales':
     # Back up affected rows and replace in one transaction, including corrected/unposted source records.
-    c.execute('INSERT INTO one_c_import.sales_backups(job_id,payload) SELECT %s,to_jsonb(s) FROM retail_1c.sales s WHERE period>=%s AND period<%s',(job,start,finish+timedelta(days=1)))
-    c.execute('DELETE FROM retail_1c.sales WHERE period>=%s AND period<%s',(start,finish+timedelta(days=1)))
-    cols=['period','recorder_id','line_no','product_id','variant_id','product_name','article','store_id','store_name','organization_id','quantity','revenue','vat','revenue_before_discount','open_shift','shift_id','channel']
-    execute_values(c,'INSERT INTO retail_1c.sales('+','.join(cols)+') VALUES %s',[[r[k] for k in cols] for r in rows],page_size=1000)
-    c.execute('DELETE FROM retail_1c.daily_store WHERE day>=%s AND day<=%s',(start,finish))
-    c.execute('''INSERT INTO retail_1c.daily_store SELECT period::date,store_id,MAX(store_name),channel,COUNT(DISTINCT recorder_id),SUM(quantity),SUM(revenue),SUM(vat),SUM(revenue_before_discount-revenue),COUNT(*) FROM retail_1c.sales WHERE period>=%s AND period<%s GROUP BY period::date,store_id,channel''',(start,finish+timedelta(days=1)))
+    c.execute("INSERT INTO one_c_import.sales_backups(job_id,payload) SELECT %s,to_jsonb(s) FROM retail_1c.movements s WHERE recorder_type='000003B5' AND period>=%s AND period<%s",(job,start,finish+timedelta(days=1)))
+    c.execute("DELETE FROM retail_1c.movements WHERE recorder_type='000003B5' AND period>=%s AND period<%s",(start,finish+timedelta(days=1)))
+    values=[]
+    for r in rows:
+     payload={**clean(r),'active':1,'check_posted':1,'check_marked':0,'check_shift_id':r['shift_id']}
+     values.append((r['period'],'000003B5',r['recorder_id'],r['line_no'],Json(payload)))
+    execute_values(c,'INSERT INTO retail_1c.movements(period,recorder_type,recorder_id,line_no,payload) VALUES %s',values,page_size=1000)
     c.execute('SELECT COUNT(*) lines,COUNT(DISTINCT recorder_id) receipts,SUM(quantity) quantity,SUM(revenue) revenue FROM retail_1c.sales WHERE period>=%s AND period<%s',(start,finish+timedelta(days=1)));check=c.fetchone()
     if any(check[k]!=(Decimal(str(summary[k])) if k in {'quantity','revenue'} else summary[k]) for k in ('lines','receipts','quantity','revenue')):raise ValueError('Сверка витрины не прошла; изменения отменены.')
     c.execute('INSERT INTO retail_1c.import_runs(export_sha,metadata,row_count,checked_receipts) VALUES(%s,%s,%s,%s) ON CONFLICT(export_sha) DO UPDATE SET metadata=EXCLUDED.metadata,loaded_at=now()', (digest,Json({**summary,'date_to_exclusive':str(finish+timedelta(days=1)),'table':'_AccumRg44751'}),len(rows),summary['receipts']))
