@@ -349,7 +349,7 @@ class VPSAdminHandler(ActivityMixin, app.DashboardHandler):
         if self._foreign_query():
             return False
         if path.startswith("/api/"):
-            return path in ("/api/offline-sales","/api/channel-sales","/api/retail-bi","/api/retail-planfact") or path in READ_ONLY_API_PATHS or path in ADMIN_GET_PATHS or path in REPORT_WRITE_GET_PATHS or path in {"/api/access/session/status", "/api/access/session/activity.js"}
+            return path in ("/api/offline-sales","/api/channel-sales","/api/retail-bi","/api/retail-planfact","/api/retail-health") or path in READ_ONLY_API_PATHS or path in ADMIN_GET_PATHS or path in REPORT_WRITE_GET_PATHS or path in {"/api/access/session/status", "/api/access/session/activity.js"}
         return (
             path in {"/", "/react", "/login", "/login/"}
             or path in ROOT_ASSETS or path.startswith(("/react/", "/static/"))

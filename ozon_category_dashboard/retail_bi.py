@@ -29,7 +29,7 @@ def period_compare(current,previous,store_ids,start,finish):
  deltas={k:(a[k]/b[k]-1)*100 if same and a[k] is not None and b[k] is not None and b[k]>0 else None for k in ['revenue','quantity','receipts','average_receipt','units_per_receipt','skus']}
  return {'from':start-timedelta(days=days),'to':start-timedelta(days=1),'eligible_stores':[STORES[x] for x in eligible],'excluded_stores':[STORES[x] for x in store_ids if x not in eligible],'matches_current':same,'current':a,'previous':b,'deltas':deltas,'method':'Равные последовательные периоды; сравнение только магазинов с чеками во все дни обоих периодов.'}
 
-def build(app,q,identity,allow_future=False):
+def build(app,q,identity,allow_future=False,include_quality=False):
  get=lambda key,default='':q.get(key,[default])[0]
  sid=get('store')
  if sid and sid not in STORES:raise ValueError('Неизвестный магазин')
@@ -57,6 +57,11 @@ def build(app,q,identity,allow_future=False):
    for s in selected:
     rows=[r for r in current if r['store_id']==s];metrics=aggregate(rows);comp=period_compare(rows,[r for r in previous if r['store_id']==s],[s],start,finish)
     stores.append({'id':s,'name':STORES[s],**metrics,'share':metrics['revenue']/totals['revenue']*100 if metrics['revenue'] is not None and totals['revenue'] else None,'delta':comp['deltas']['revenue'],'last_date':coverage.get(s,{}).get('last_date'),'missing_days':length-metrics['observed_days']})
+   quality=[]
+   if include_quality:
+    for s in selected:
+     source_rows=[r for r in current if r['store_id']==s]
+     quality.append({'id':s,'lines':len(source_rows),'missing_article':sum(not (r['article'] or '').strip() for r in source_rows),'missing_product':sum(not r['product_id'] or not (r['product_name'] or '').strip() for r in source_rows),'nonpositive_quantity':sum(r['quantity']<=0 for r in source_rows),'negative_revenue':sum(r['revenue']<0 for r in source_rows),'zero_revenue':sum(r['revenue']==0 for r in source_rows)})
    stores.sort(key=lambda s:(s['revenue'] is None,-(s['revenue'] or 0)))
    grouped=defaultdict(list)
    for row in current:grouped[row['product_id']].append(row)
@@ -72,7 +77,7 @@ def build(app,q,identity,allow_future=False):
      for v in p['variants']:v['name']=names.get((p['id'],v['id'])) or v['name']
    c.execute("SELECT s.checked_at,s.summary,s.source_key FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.database_name='1c_retail_prod' AND a.dataset='sales'");snapshot=c.fetchone() or {}
  freshness=[{'id':s,'name':name,**coverage.get(s,{'first_date':None,'last_date':None,'observed_days':0}),'days_since_last':(today-coverage[s]['last_date']).days if s in coverage else None} for s,name in STORES.items()]
- return clean({'ok':True,'scope':'Проведённые непомеченные чеки ККМ подтверждённых розничных магазинов','period':{'from':start,'to':finish,'days':length},'store':sid,'today':today,'cutoff':cutoff,'loaded_at':snapshot.get('checked_at'),'checked_through':snapshot.get('summary',{}).get('checked_through'),'kpis':totals,'comparison':comparison,'daily':days,'stores':stores,'products':products,'freshness':freshness,'active_stores':sum(s['receipts'] is not None for s in stores),'selected_stores':len(selected),'definitions':{'revenue':'Сумма выручки активных движений проведённых чеков; возвраты отдельными документами не вычтены.','receipts':'Число уникальных чеков, а не товарных строк.','average_receipt':'Выручка по чекам / число чеков.','units_per_receipt':'Проданные единицы / число чеков.','skus':'Уникальные пары товар/характеристика с продажами.','gaps':'День без строк в источнике показан пропуском; он не считается нулевыми продажами.','comparison':comparison['method']},'limitations':['Возвраты, себестоимость и прибыль не сверены.','История файлов без НДС не включена в показатели по чекам.','Склад Большой не включён: розничный канал не подтверждён.']})
+ return clean({'ok':True,'scope':'Проведённые непомеченные чеки ККМ подтверждённых розничных магазинов','period':{'from':start,'to':finish,'days':length},'store':sid,'today':today,'cutoff':cutoff,'loaded_at':snapshot.get('checked_at'),'checked_through':snapshot.get('summary',{}).get('checked_through'),'quality':quality,'kpis':totals,'comparison':comparison,'daily':days,'stores':stores,'products':products,'freshness':freshness,'active_stores':sum(s['receipts'] is not None for s in stores),'selected_stores':len(selected),'definitions':{'revenue':'Сумма выручки активных движений проведённых чеков; возвраты отдельными документами не вычтены.','receipts':'Число уникальных чеков, а не товарных строк.','average_receipt':'Выручка по чекам / число чеков.','units_per_receipt':'Проданные единицы / число чеков.','skus':'Уникальные пары товар/характеристика с продажами.','gaps':'День без строк в источнике показан пропуском; он не считается нулевыми продажами.','comparison':comparison['method']},'limitations':['Возвраты, себестоимость и прибыль не сверены.','История файлов без НДС не включена в показатели по чекам.','Склад Большой не включён: розничный канал не подтверждён.']})
 
 def handle(app,h,parsed):
  if parsed.path!='/api/retail-bi':return False
