@@ -83,8 +83,10 @@ def handle(app,h,parsed):
   h.send_json({'ok':False,'error':'Слишком много фильтров'},status=400);return True
  if not allowed(app,identity,q.get('client',[''])[0]) or not access(app,identity,'sales'):
   h.send_json({'ok':False,'error':'Нет доступа к источнику 1С Розница'},status=403);return True
- if set(q)-{'client','from','to','store'} or any(len(v)!=1 for v in q.values()):
+ if set(q)-{'client','from','to','store','sales_channel'} or any(len(v)!=1 for v in q.values()):
   h.send_json({'ok':False,'error':'Некорректные фильтры'},status=400);return True
+ if q.get('sales_channel',['retail'])[0]!='retail':
+  h.send_json({'ok':False,'error':'Некорректный канал продаж'},status=400);return True
  try:h.send_json(build(app,q,identity),headers={'Cache-Control':'no-store'})
  except ValueError as exc:h.send_json({'ok':False,'error':str(exc)},status=400)
  except psycopg2.Error:h.send_json({'ok':False,'error':'Данные Розницы временно недоступны'},status=503)
