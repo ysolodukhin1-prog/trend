@@ -29,7 +29,7 @@ def period_compare(current,previous,store_ids,start,finish):
  deltas={k:(a[k]/b[k]-1)*100 if same and a[k] is not None and b[k] is not None and b[k]>0 else None for k in ['revenue','quantity','receipts','average_receipt','units_per_receipt','skus']}
  return {'from':start-timedelta(days=days),'to':start-timedelta(days=1),'eligible_stores':[STORES[x] for x in eligible],'excluded_stores':[STORES[x] for x in store_ids if x not in eligible],'matches_current':same,'current':a,'previous':b,'deltas':deltas,'method':'Равные последовательные периоды; сравнение только магазинов с чеками во все дни обоих периодов.'}
 
-def build(app,q,identity):
+def build(app,q,identity,allow_future=False):
  get=lambda key,default='':q.get(key,[default])[0]
  sid=get('store')
  if sid and sid not in STORES:raise ValueError('Неизвестный магазин')
@@ -43,7 +43,7 @@ def build(app,q,identity):
    default_end=cutoff or today
    try:start=date.fromisoformat(get('from',default_end.replace(day=1).isoformat()));finish=date.fromisoformat(get('to',default_end.isoformat()))
    except ValueError:raise ValueError('Укажите корректный период')
-   if finish<start or (finish-start).days>365 or finish>today:raise ValueError('Выберите период до сегодняшнего дня, не больше года')
+   if finish<start or (finish-start).days>365 or (finish>today and not allow_future):raise ValueError('Выберите корректный период не больше года')
    length=(finish-start).days+1;prev_start=start-timedelta(days=length);selected=[sid] if sid else list(STORES)
    c.execute("SELECT period,recorder_id,line_no,store_id,product_id,variant_id,product_name,article,quantity,revenue FROM retail_1c.sales WHERE channel='retail' AND store_id=ANY(%s) AND period>=%s AND period<%s ORDER BY period,recorder_id,line_no",(selected,prev_start,finish+timedelta(days=1)));facts=[dict(r) for r in c.fetchall()]
    if len({(r['period'],r['recorder_id'],r['line_no']) for r in facts})!=len(facts):raise ValueError('В источнике обнаружены дубли строк чеков')

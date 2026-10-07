@@ -18,6 +18,9 @@ def clean(v):
     if isinstance(v,(list,tuple)):return [clean(x) for x in v]
     return v
 def handle(app,handler,parsed):
+    if parsed.path=='/api/retail-planfact':
+        from retail_planfact import handle as planfact_handle
+        return planfact_handle(app,handler,parsed)
     if parsed.path=='/api/retail-bi':
         from retail_bi import handle as retail_bi_handle
         return retail_bi_handle(app,handler,parsed)
