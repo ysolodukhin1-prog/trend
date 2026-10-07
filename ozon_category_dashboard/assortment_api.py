@@ -90,16 +90,18 @@ def build(app,parsed,identity):
    totals_period={}
    if report=='assortmentPrices':
     from assortment_totals import attach_totals
-    totals_period=attach_totals(c,selected,days,client)
-    for row in selected:
+    # Default page needs metrics for its 50 visible rows only. Global filters/sorts still use all rows.
+    totals_rows=selected if sort_col or column_filters or price_filters else selected[(page-1)*limit:page*limit]
+    totals_period=attach_totals(c,totals_rows,days,client)
+    for row in totals_rows:
      for channel in ['wb','ozon','yandex_market','lamoda']:
       metrics=row.get('channel_totals',{}).get(channel,{})
       for key in ['orders_rub','orders_units','stock_units']:
        kind,unit=key.split('_');row['totals'][kind+'_'+channel+'_'+unit]=metrics.get(key)
     if g('include_margin')=='1' or sort_col.startswith('margin_') or any(k.startswith('margin_') for k in column_filters):
      from assortment_margins import attach_margins
-     attach_prices(c,selected)
-     attach_margins(app,selected,days,client,margin_mode)
+     attach_prices(c,totals_rows)
+     attach_margins(app,totals_rows,days,client,margin_mode)
    for channel,mode in price_filters.items():
     column_filters.setdefault(channel,{'op':mode,'value':''})
    price_maps={}

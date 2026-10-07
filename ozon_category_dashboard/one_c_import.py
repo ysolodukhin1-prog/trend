@@ -231,6 +231,7 @@ def publish(app,job,source,database,dataset,rows,summary,latest,start,finish):
      cols=['snapshot_id','product_id','variant_id']+(['price_type_id'] if dataset=='prices' else [])+['payload']
      vals=([snapshot,r['product_id'],r['variant_id']]+([r['price_type_id']] if dataset=='prices' else [])+[Json(r)] for r in rows)
      execute_values(c,'INSERT INTO one_c_import.'+dataset+'('+','.join(cols)+') VALUES %s',vals,page_size=1000)
+     c.execute('ANALYZE one_c_import.'+dataset)
     c.execute('INSERT INTO one_c_import.active(database_name,dataset,snapshot_id) VALUES(%s,%s,%s) ON CONFLICT(database_name,dataset) DO UPDATE SET snapshot_id=EXCLUDED.snapshot_id',(database,dataset,snapshot))
    else:
     c.execute('UPDATE one_c_import.snapshots SET checked_at=now(),summary=%s,source_key=%s WHERE id=%s',(Json(summary),source,str(old['id'])))
@@ -397,8 +398,11 @@ def preview(app,q):
  with app.client_registry_connection() as pg:
   with pg.cursor() as c:
    c.execute("SET LOCAL statement_timeout='10s'")
-   c.execute('SELECT COUNT(*) total FROM '+name+' d '+join+' WHERE '+where,params);total=c.fetchone()['total']
-   c.execute('SELECT '+item+' item FROM '+name+' d '+join+' WHERE '+where+' ORDER BY d.product_id,d.variant_id'+(',d.price_type_id' if dataset=='prices' else '')+' LIMIT 50 OFFSET %s',params+[(page-1)*50]);rows=[r['item'] for r in c.fetchall()]
+   c.execute('SELECT COUNT(*) total FROM '+name+' d '+(join if search else '')+' WHERE '+where,params);total=c.fetchone()['total']
+   if dataset=='prices' and not search:
+    c.execute('WITH page AS MATERIALIZED (SELECT * FROM '+name+' d WHERE '+where+' ORDER BY d.product_id,d.variant_id,d.price_type_id LIMIT 50 OFFSET %s) SELECT '+item+' item FROM page d '+join+' ORDER BY d.product_id,d.variant_id,d.price_type_id',params+[(page-1)*50])
+   else:c.execute('SELECT '+item+' item FROM '+name+' d '+join+' WHERE '+where+' ORDER BY d.product_id,d.variant_id'+(',d.price_type_id' if dataset=='prices' else '')+' LIMIT 50 OFFSET %s',params+[(page-1)*50])
+   rows=[r['item'] for r in c.fetchall()]
  return {'ok':True,'rows':rows,'total':total,'page':page,'database':source['database'],'dataset':dataset}
 
 if __name__=='__main__':
