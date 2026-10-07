@@ -2674,11 +2674,29 @@ def save_admin_integration(payload):
                 incoming = payload.get("credentials") if isinstance(payload.get("credentials"), dict) else {}
                 if payload.get("value") and len(fields) == 1:
                     incoming[fields[0]["key"]] = payload.get("value")
-                values = {field["key"]: str(incoming.get(field["key"]) or "").strip() for field in fields}
-                if not all(values.values()):
+                values = {}
+                for field in fields:
+                    key = field["key"]
+                    value = str(incoming.get(key) or "")
+                    if key != "password":
+                        value = value.strip()
+                    if value:
+                        values[key] = value
+                saved_keys = set()
+                if payload.get("partial_update"):
+                    cur.execute(
+                        "SELECT credential_key FROM public.bi_service_credentials WHERE service_key=%s",
+                        (service_key,),
+                    )
+                    saved_keys = {row["credential_key"] for row in cur.fetchall()}
+                if any(field["key"] not in values and field["key"] not in saved_keys for field in fields):
                     raise ValueError("Заполните все поля подключения")
+                if not values:
+                    raise ValueError("Введите новые параметры подключения")
                 master_key = client_credentials_master_key(create=True)
                 for field in fields:
+                    if field["key"] not in values:
+                        continue
                     value = values[field["key"]]
                     fingerprint = hashlib.sha256(value.encode("utf-8")).hexdigest()[:10]
                     cur.execute(
@@ -2971,7 +2989,7 @@ def save_admin_connection(payload):
         status, message, http_status = probe_mpstats_connection() if service_key == "mpstats" else probe_1c_connection(service_key)
         record_admin_connection_event(service_key, "check", status, message, http_status)
     elif action in {"save", "delete"}:
-        save_admin_integration(payload)
+        save_admin_integration({**payload, "partial_update": action == "save"})
         record_admin_connection_event(
             service_key, action, "saved" if action == "save" else "deleted",
             "Параметры подключения сохранены" if action == "save" else "Подключение удалено",
