@@ -64,6 +64,7 @@
     "ozon_category_dashboard/health_supporting_market.py": "9c6e2b409b7972ef80b4b02284681d9d79c437d295b6274f2db47bff0d0f6add",
     "ozon_category_dashboard/home_marts.py": "5cfc8c803b4d6499900a2ffd081c40f5c7d39be7a5e343ee74cb0adc5fbe2f35",
     "ozon_category_dashboard/import_1c_discover.py": "838f8eb87be20f826be5c51f2a13feb14dd551912873c66f7d0f6dc63e8703ce",
+    "ozon_category_dashboard/import_1c_profiles.py": "f8f09c442d35c0006d7fe3cb37f26b9ee031c61fb655277ffc134fca6f39c0c1",
     "ozon_category_dashboard/inventory_history.py": "5b222225be6b085aef0a5dee5aaf4366a4ea623fef118ba6de8307a58402c247",
     "ozon_category_dashboard/inventory_management.py": "a3fd80749ed0ecfb32a63e62f9cd6fbbae8f28ddff2744f0fd3d7de1b0daf561",
     "ozon_category_dashboard/km_trade_finance.py": "b1012961e89854ab4bac82d247b95a1bd3191f4dd378d2e85e61fd483ce1e81d",
