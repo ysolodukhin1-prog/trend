@@ -52,8 +52,11 @@ def sources(app,grants):
 def sql_connection(app,source):
     import pymssql
     values={k:app.service_credential(source,k) for k in ('host','port','database','username','password')}
-    if values['host']!='172.19.0.1' or values['port']!='11433' or values['database'] not in DATABASES:raise DatabaseUnavailable('registered_connection_outside_toptop_database_scope')
-    db=pymssql.connect(server=values['host'],port=11433,database=values['database'],user=values['username'],password=values['password'],login_timeout=5,timeout=10,appname='GALACTICA personal read',autocommit=False)
+    from one_c_endpoint import sql_endpoint
+    if values['database'] not in DATABASES:raise DatabaseUnavailable('registered_connection_outside_toptop_database_scope')
+    try:sql_host,sql_port=sql_endpoint(values['host'],values['port'])
+    except ValueError:raise DatabaseUnavailable('registered_connection_outside_toptop_database_scope')
+    db=pymssql.connect(server=sql_host,port=sql_port,database=values['database'],user=values['username'],password=values['password'],login_timeout=5,timeout=10,appname='GALACTICA personal read',autocommit=False)
     try:
         with db.cursor() as c:c.execute('SET LOCK_TIMEOUT 1500')
         yield db

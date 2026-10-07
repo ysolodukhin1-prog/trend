@@ -2749,14 +2749,17 @@ def probe_1c_connection(service_key="1c"):
               ("host", "port", "database", "username", "password")}
     if not all(values.values()):
         return "not_configured", "1С: сначала сохраните все параметры подключения", None
-    if values["host"].strip() != "172.19.0.1" or values["port"].strip() != "11433":
-        return "config_error", "1С: для настроенного SQL-туннеля укажите адрес 172.19.0.1 и порт 11433", None
+    from one_c_endpoint import sql_endpoint
+    try:
+        sql_host, sql_port = sql_endpoint(values["host"], values["port"])
+    except ValueError:
+        return "config_error", "1С: новый сервер — 192.168.50.242, порт 1433. Старый SQL-туннель — 172.19.0.1, порт 11433.", None
     if values["database"].strip() not in {"1c_ut_prod", "1c_retail_prod", "1c_erp_prod"}:
         return "config_error", "1С: выберите одну базу: 1c_ut_prod, 1c_retail_prod или 1c_erp_prod", None
     conn = None
     try:
         conn = pymssql.connect(
-            server="172.19.0.1", port=11433,
+            server=sql_host, port=sql_port,
             user=values["username"], password=values["password"],
             database=values["database"].strip(), login_timeout=5, timeout=5,
             appname="TREND connection check", autocommit=True,
