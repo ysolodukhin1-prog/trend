@@ -316,7 +316,11 @@ def handle(rt,h,method):
   h.send_json({'ok':False,'error':'Нет доступа к импорту из 1С'},status=403);return
  if parse_qs(parsed.query).get('client',['toptop'])[0]!='toptop':h.send_json({'ok':False,'error':'Подключения 1С доступны в TOPTOP'},status=403);return
  try:
-  if method=='GET':h.send_json(status(app),headers={'Cache-Control':'no-store'});return
+  if method=='GET':
+   q=parse_qs(parsed.query)
+   if q.get('view')==['preview']:
+    h.send_json(preview(app,q),headers={'Cache-Control':'no-store'});return
+   h.send_json(status(app),headers={'Cache-Control':'no-store'});return
   payload=h.read_json_body()
   if payload.get('action')=='settings':
    value=str(payload.get('retail_price_type') or '');ensure(app)
@@ -329,6 +333,27 @@ def handle(rt,h,method):
   h.send_json(start(app,payload,identity.get('user_id')),status=202)
  except (ValueError,TypeError):h.send_json({'ok':False,'error':'Проверьте параметры импорта' if not isinstance(sys.exception(),ValueError) else str(sys.exception())},status=400)
  except psycopg2.Error:h.send_json({'ok':False,'error':'Хранилище импорта недоступно'},status=503)
+
+def preview(app,q):
+ get=lambda k,d='':q.get(k,[d])[0]
+ source=next((s for s in sources(app) if s['key']==get('source')),None)
+ dataset=get('dataset')
+ if not source or dataset not in {'catalog','prices'}:raise ValueError('Выберите подключение и вид данных')
+ page=max(1,min(int(get('page','1')),100000));search=get('q')[:120]
+ name='one_c_import.current_'+dataset;params=[source['database']]
+ if dataset=='prices':
+  join="LEFT JOIN one_c_import.current_catalog cat ON cat.database_name=d.database_name AND cat.product_id=d.product_id AND cat.variant_id=d.variant_id"
+  item="d.payload || jsonb_build_object('name',cat.payload->>'name','article',cat.payload->>'article','variant',cat.payload->>'variant')"
+  search_expr="coalesce(cat.payload::text,'')||d.payload::text"
+ else:join='';item='d.payload';search_expr='d.payload::text'
+ where='d.database_name=%s'
+ if search:where+=' AND ('+search_expr+') ILIKE %s';params.append('%'+search+'%')
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute("SET LOCAL statement_timeout='10s'")
+   c.execute('SELECT COUNT(*) total FROM '+name+' d '+join+' WHERE '+where,params);total=c.fetchone()['total']
+   c.execute('SELECT '+item+' item FROM '+name+' d '+join+' WHERE '+where+' ORDER BY d.product_id,d.variant_id'+(',d.price_type_id' if dataset=='prices' else '')+' LIMIT 50 OFFSET %s',params+[(page-1)*50]);rows=[r['item'] for r in c.fetchall()]
+ return {'ok':True,'rows':rows,'total':total,'page':page,'database':source['database'],'dataset':dataset}
 
 if __name__=='__main__':
  import pulse_vps_admin as rt
