@@ -18,6 +18,9 @@ def clean(v):
     if isinstance(v,(list,tuple)):return [clean(x) for x in v]
     return v
 def handle(app,handler,parsed):
+    if parsed.path=='/api/retail-bi':
+        from retail_bi import handle as retail_bi_handle
+        return retail_bi_handle(app,handler,parsed)
     if parsed.path!='/api/channel-sales':return False
     q=parse_qs(parsed.query,keep_blank_values=True,max_num_fields=24)
     get=lambda k,d='':q.get(k,[d])[0]
