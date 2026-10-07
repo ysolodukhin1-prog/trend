@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from datetime import date,datetime,timedelta,timezone
 from contextlib import contextmanager
-import hashlib,json,os,re,subprocess,sys,uuid,threading
+import hashlib,json,os,re,subprocess,sys,uuid,threading,tempfile
 from decimal import Decimal
 import psycopg2,pymssql
 from psycopg2.extras import Json,execute_values,RealDictCursor
@@ -17,6 +17,7 @@ ZERO='0'*32
 MAX_ROWS=600000
 _READY=False
 _SCHEMA_LOCK=threading.Lock()
+_TYPE_CACHE={}
 
 def clean(v):
  if isinstance(v,uuid.UUID):return str(v)
@@ -45,13 +46,14 @@ def capabilities(database):
 DDL='''CREATE TABLE IF NOT EXISTS one_c_import.jobs(id uuid PRIMARY KEY,created_at timestamptz NOT NULL DEFAULT now(),started_at timestamptz,finished_at timestamptz,status text NOT NULL,request jsonb NOT NULL,result jsonb NOT NULL DEFAULT '[]',message text NOT NULL DEFAULT '',pid integer,user_id bigint);
 CREATE UNIQUE INDEX IF NOT EXISTS one_c_single_active_job ON one_c_import.jobs((true)) WHERE status IN ('queued','running');
 CREATE TABLE IF NOT EXISTS one_c_import.snapshots(id uuid PRIMARY KEY,database_name text NOT NULL,dataset text NOT NULL,source_key text NOT NULL,loaded_at timestamptz NOT NULL DEFAULT now(),source_latest timestamp,row_count bigint NOT NULL,digest text NOT NULL,summary jsonb NOT NULL);
+ALTER TABLE one_c_import.snapshots ADD COLUMN IF NOT EXISTS checked_at timestamptz NOT NULL DEFAULT now();
 CREATE TABLE IF NOT EXISTS one_c_import.active(database_name text NOT NULL,dataset text NOT NULL,snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),PRIMARY KEY(database_name,dataset));
 CREATE TABLE IF NOT EXISTS one_c_import.catalog(snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),product_id text NOT NULL,variant_id text NOT NULL,payload jsonb NOT NULL,PRIMARY KEY(snapshot_id,product_id,variant_id));
 CREATE TABLE IF NOT EXISTS one_c_import.prices(snapshot_id uuid NOT NULL REFERENCES one_c_import.snapshots(id),product_id text NOT NULL,variant_id text NOT NULL,price_type_id text NOT NULL,payload jsonb NOT NULL,PRIMARY KEY(snapshot_id,product_id,variant_id,price_type_id));
 CREATE TABLE IF NOT EXISTS one_c_import.settings(key text PRIMARY KEY,value jsonb NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
 CREATE TABLE IF NOT EXISTS one_c_import.sales_backups(job_id uuid NOT NULL,saved_at timestamptz NOT NULL DEFAULT now(),payload jsonb NOT NULL);
-CREATE OR REPLACE VIEW one_c_import.current_catalog AS SELECT c.*,s.database_name,s.source_key,s.loaded_at FROM one_c_import.catalog c JOIN one_c_import.active a ON a.snapshot_id=c.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='catalog';
-CREATE OR REPLACE VIEW one_c_import.current_prices AS SELECT p.*,s.database_name,s.source_key,s.loaded_at FROM one_c_import.prices p JOIN one_c_import.active a ON a.snapshot_id=p.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='prices';
+CREATE OR REPLACE VIEW one_c_import.current_catalog AS SELECT c.*,s.database_name,s.source_key,s.checked_at AS loaded_at FROM one_c_import.catalog c JOIN one_c_import.active a ON a.snapshot_id=c.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='catalog';
+CREATE OR REPLACE VIEW one_c_import.current_prices AS SELECT p.*,s.database_name,s.source_key,s.checked_at AS loaded_at FROM one_c_import.prices p JOIN one_c_import.active a ON a.snapshot_id=p.snapshot_id JOIN one_c_import.snapshots s ON s.id=a.snapshot_id WHERE a.dataset='prices';
 GRANT USAGE ON SCHEMA one_c_import TO pulse_reader;
 GRANT SELECT ON ALL TABLES IN SCHEMA one_c_import TO pulse_reader;'''
 def ensure(app):
@@ -125,22 +127,46 @@ def extract_prices(db,p):
  typ=field(p,name,'ВидЦены' if 'ВидЦены' in f else 'ВидЦен','p')
  cutoff=datetime.combine(date.today()+timedelta(days=1),datetime.min.time());cutoff=cutoff.replace(year=cutoff.year+2000)
  predicate=' AND p._Active=0x01' if '_Active' in obj['columns'] else ''
- raw=query(db,'WITH ranked AS (SELECT p.*,DENSE_RANK() OVER(PARTITION BY '+','.join([product,variant,typ])+' ORDER BY p._Period DESC) rk FROM '+table(p,name)+' p WHERE p._Period<%s'+predicate+') SELECT * FROM ranked WHERE rk=1',(cutoff,))
- if not raw:raise ValueError('Регистр цен пуст. Последний успешный снимок сохранён.')
  types={hexid(r['_IDRRef']):r for r in query(db,'SELECT _IDRRef,_Description,_Marked FROM '+table(p,'ВидыЦен'))}
  currencies={hexid(r['_IDRRef']):str(r['_Code']).strip() for r in query(db,'SELECT _IDRRef,_Code FROM '+table(p,'Валюты'))}
- rows={};latest=None
- for r in raw:
-  pid,vid,tid=(hexid(r[f[k]]) for k in ['Номенклатура','Характеристика','ВидЦены' if 'ВидЦены' in f else 'ВидЦен'])
-  currency=currencies.get(hexid(r[f['Валюта' if 'Валюта' in f else 'ВалютаЦены']]),'')
-  currency={'643':'RUB','810':'RUB','840':'USD','978':'EUR'}.get(currency,currency)
-  active=(r.get(f.get('Актуальность'))!=b'\x00') and types.get(tid,{}).get('_Marked')!=b'\x01'
-  period=normalized(r['_Period']);latest=max(latest,period) if latest else period
-  item={'product_id':pid,'variant_id':vid,'price_type_id':tid,'type':types.get(tid,{}).get('_Description') or tid,'value':str(r[f['Цена']]),'currency':currency,'date':str(period),'active':active,'inherit':r.get(f.get('ВключаяХарактеристики'))==b'\x01'}
-  key=(pid,vid,tid)
-  if key in rows and rows[key]!=item:raise ValueError('Несколько разных цен на одну дату и вид цены. Снимок не опубликован.')
-  rows[key]=item
- return list(rows.values()),{'price_types':sorted({r['type'] for r in rows.values()}),'active_prices':sum(r['active'] for r in rows.values())},latest
+ fd,path=tempfile.mkstemp(prefix='one-c-prices-',suffix='.jsonl',dir='/var/lib/pulse')
+ latest=None;count=0;active_count=0;previous_key=None;previous_item=None;digest=hashlib.sha256();digest.update(b'[');seen_types=set()
+ try:
+  with os.fdopen(fd,'w',encoding='utf-8') as output,db.cursor(as_dict=True) as cursor:
+   order=','.join(ident(f[k]) for k in ['Номенклатура','Характеристика','ВидЦены' if 'ВидЦены' in f else 'ВидЦен'])
+   cursor.execute('WITH ranked AS (SELECT p.*,DENSE_RANK() OVER(PARTITION BY '+','.join([product,variant,typ])+' ORDER BY p._Period DESC) rk FROM '+table(p,name)+' p WHERE p._Period<%s'+predicate+') SELECT * FROM ranked WHERE rk=1 ORDER BY '+order,(cutoff,))
+   while True:
+    batch=cursor.fetchmany(1000)
+    if not batch:break
+    for r in batch:
+     pid,vid,tid=(hexid(r[f[k]]) for k in ['Номенклатура','Характеристика','ВидЦены' if 'ВидЦены' in f else 'ВидЦен'])
+     currency=currencies.get(hexid(r[f['Валюта' if 'Валюта' in f else 'ВалютаЦены']]),'')
+     currency={'643':'RUB','810':'RUB','840':'USD','978':'EUR'}.get(currency,currency)
+     active=(r.get(f.get('Актуальность'))!=b'\x00') and types.get(tid,{}).get('_Marked')!=b'\x01'
+     period=normalized(r['_Period']);latest=max(latest,period) if latest else period
+     item={'product_id':pid,'variant_id':vid,'price_type_id':tid,'type':types.get(tid,{}).get('_Description') or tid,'value':str(r[f['Цена']]),'currency':currency,'date':str(period),'active':active,'inherit':r.get(f.get('ВключаяХарактеристики'))==b'\x01'}
+     key=(pid,vid,tid)
+     if key==previous_key:
+      if item!=previous_item:raise ValueError('Несколько разных цен на одну дату и вид цены. Снимок не опубликован.')
+      continue
+     previous_key=key;previous_item=item
+     text=json.dumps(item,ensure_ascii=False,sort_keys=True,separators=(',',':'))
+     if count:digest.update(b',')
+     digest.update(text.encode());output.write(text+'\n');count+=1;active_count+=active;seen_types.add(item['type'])
+     if count>5000000:raise ValueError('Превышен предел снимка цен. Данные не опубликованы.')
+  digest.update(b']')
+  if not count:raise ValueError('Регистр цен пуст. Последний успешный снимок сохранён.')
+  return SnapshotRows(path,count,digest.hexdigest()),{'price_types':sorted(seen_types),'price_types_details':[{'price_type_id':key,'label':value['_Description']} for key,value in types.items()],'active_prices':active_count},latest
+ except Exception:
+  Path(path).unlink(missing_ok=True);raise
+
+class SnapshotRows:
+ def __init__(self,path,count,digest):self.path=Path(path);self.count=count;self.digest=digest
+ def __len__(self):return self.count
+ def __iter__(self):
+  with self.path.open(encoding='utf-8') as file:
+   for line in file:yield json.loads(line)
+ def close(self):self.path.unlink(missing_ok=True)
 
 def extract_sales(db,start,finish):
  # Existing confirmed retail rule: only active movements of posted, unmarked KKM receipts.
@@ -175,8 +201,11 @@ def extract_sales(db,start,finish):
  return rows,{**clean(actual),'date_from':str(start),'checked_through':str(finish),'source_key':None},latest
 
 def publish(app,job,source,database,dataset,rows,summary,latest,start,finish):
- if dataset in {'catalog','prices'}:rows.sort(key=lambda r:(r['product_id'],r['variant_id'],r.get('price_type_id','')))
- digest=hashlib.sha256(json.dumps(clean(rows),ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest();snapshot=str(uuid.uuid4())
+ if isinstance(rows,SnapshotRows):digest=rows.digest
+ else:
+  if dataset in {'catalog','prices'}:rows.sort(key=lambda r:(r['product_id'],r['variant_id'],r.get('price_type_id','')))
+  digest=hashlib.sha256(json.dumps(clean(rows),ensure_ascii=False,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+ snapshot=str(uuid.uuid4())
  summary={**summary,'database':database,'source_key':source,'date_from':str(start),'checked_through':str(finish)}
  with app.client_registry_connection() as pg:
   with pg.cursor() as c:
@@ -200,12 +229,14 @@ def publish(app,job,source,database,dataset,rows,summary,latest,start,finish):
     c.execute('INSERT INTO one_c_import.snapshots(id,database_name,dataset,source_key,source_latest,row_count,digest,summary) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)',(snapshot,database,dataset,source,latest,len(rows),digest,Json(summary)))
     if dataset in {'catalog','prices'}:
      cols=['snapshot_id','product_id','variant_id']+(['price_type_id'] if dataset=='prices' else [])+['payload']
-     vals=[[snapshot,r['product_id'],r['variant_id']]+([r['price_type_id']] if dataset=='prices' else [])+[Json(r)] for r in rows]
+     vals=([snapshot,r['product_id'],r['variant_id']]+([r['price_type_id']] if dataset=='prices' else [])+[Json(r)] for r in rows)
      execute_values(c,'INSERT INTO one_c_import.'+dataset+'('+','.join(cols)+') VALUES %s',vals,page_size=1000)
     c.execute('INSERT INTO one_c_import.active(database_name,dataset,snapshot_id) VALUES(%s,%s,%s) ON CONFLICT(database_name,dataset) DO UPDATE SET snapshot_id=EXCLUDED.snapshot_id',(database,dataset,snapshot))
+   else:
+    c.execute('UPDATE one_c_import.snapshots SET checked_at=now(),summary=%s,source_key=%s WHERE id=%s',(Json(summary),source,str(old['id'])))
    c.execute('INSERT INTO one_c_import.settings(key,value) VALUES(%s,%s) ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value,updated_at=now()',('source:'+database+':'+dataset,Json(source)))
    if dataset=='prices' and database=='1c_retail_prod':
-    candidates={r['price_type_id'] for r in rows if r['type'].strip().lower() in {'розничная','розничные','розничная цена'}}
+    candidates={r['price_type_id'] for r in summary.get('price_types_details',[]) if r['label'].strip().lower() in {'розничная','розничные','розничная цена'}}
     if len(candidates)==1:c.execute("INSERT INTO one_c_import.settings(key,value) VALUES('retail_price_type',%s) ON CONFLICT DO NOTHING",(Json(next(iter(candidates))),))
  return {'database':database,'source':source,'dataset':dataset,'label':LABELS[dataset],'status':'completed','row_count':len(rows),'source_latest':str(latest or ''),'unchanged':unchanged,'summary':summary}
 
@@ -221,8 +252,13 @@ def status(app):
       os.kill(row['pid'],0)
      except (ProcessLookupError,PermissionError):c.execute("UPDATE one_c_import.jobs SET status='interrupted',finished_at=now(),message='Процесс импорта прерван. Опубликованные данные сохранены; повторите запуск.' WHERE id=%s",(str(row['id']),))
    c.execute('SELECT id,created_at,started_at,finished_at,status,result,message FROM one_c_import.jobs ORDER BY created_at DESC LIMIT 15');jobs=c.fetchall()
-   c.execute('SELECT a.database_name,a.dataset,s.source_key,s.loaded_at,s.source_latest,s.row_count,s.summary FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id ORDER BY a.database_name,a.dataset');snapshots=c.fetchall()
-   c.execute("SELECT DISTINCT price_type_id,payload->>'type' label FROM one_c_import.current_prices WHERE database_name='1c_retail_prod' ORDER BY label");types=c.fetchall()
+   c.execute('SELECT a.database_name,a.dataset,s.source_key,s.checked_at AS loaded_at,s.source_latest,s.row_count,s.summary,s.digest FROM one_c_import.active a JOIN one_c_import.snapshots s ON s.id=a.snapshot_id ORDER BY a.database_name,a.dataset');snapshots=c.fetchall()
+   price_snapshot=next((s for s in snapshots if s['database_name']=='1c_retail_prod' and s['dataset']=='prices'),None)
+   types=[]
+   if price_snapshot:
+    digest=price_snapshot['digest'];types=price_snapshot['summary'].get('price_types_details') or _TYPE_CACHE.get(digest)
+    if types is None:
+     c.execute("SELECT DISTINCT price_type_id,payload->>'type' label FROM one_c_import.current_prices WHERE database_name='1c_retail_prod' ORDER BY label");types=c.fetchall();_TYPE_CACHE[digest]=types
    c.execute("SELECT value FROM one_c_import.settings WHERE key='retail_price_type'");row=c.fetchone()
  return clean({'ok':True,'sources':sources(app),'jobs':jobs,'snapshots':snapshots,'price_types':types,'retail_price_type':row['value'] if row else '', 'default_from':'2026-08-01','default_to':str(date.today())})
 
@@ -265,6 +301,7 @@ def worker(app,job):
  request=row['request'];results=[]
  for task in request['tasks']:
   source,database,dataset=task['source'],task['database'],task['dataset']
+  rows=None
   try:
    with sql(app,source,database) as db:
     p=require_profile(database);check_schema(db,p)
@@ -277,6 +314,8 @@ def worker(app,job):
    # Driver error text can contain credentials: never publish or log it.
    message=str(exc) if isinstance(exc,ValueError) else 'Источник недоступен или импорт не прошёл сверку. Прежние данные сохранены.'
    result={**task,'label':LABELS[dataset],'status':'failed','message':message,'error_class':type(exc).__name__}
+  finally:
+   if isinstance(rows,SnapshotRows):rows.close()
   results.append(result)
   with app.client_registry_connection() as pg:
    with pg.cursor() as c:c.execute('UPDATE one_c_import.jobs SET result=%s,message=%s WHERE id=%s',(Json(results),'Завершено '+str(len(results))+' из '+str(len(request['tasks'])),job))
@@ -295,6 +334,10 @@ def worker(app,job):
 def source_key(app,dataset='sales'):
  # Resolve from the currently configured source, not an obsolete credential UUID.
  current=[s['key'] for s in sources(app) if s['database']=='1c_retail_prod']
+ with app.client_registry_connection() as pg:
+  with pg.cursor() as c:
+   c.execute('SELECT value FROM one_c_import.settings WHERE key=%s',('source:1c_retail_prod:'+dataset,));row=c.fetchone()
+ if row:return row['value'] if row['value'] in current else ''
  return current[0] if len(current)==1 else ''
 def report_tables(dataset='sales'):
  if dataset=='sales':return ('dbo._AccumRg44751','dbo._Document949','dbo._Reference333','dbo._Reference558')
@@ -312,6 +355,9 @@ def handle(rt,h,method):
  app=rt.app;parsed=urlparse(h.path)
  if not h.dashboard_access_granted():h.send_dashboard_access_required(parsed);return
  identity=h.dashboard_access_identity() or {}
+ origin=h.headers.get('Origin') if hasattr(h,'headers') else None
+ if method=='POST' and (h.headers.get('Sec-Fetch-Site')=='cross-site' or origin and urlparse(origin).netloc!=h.headers.get('Host')):
+  h.send_json({'ok':False,'error':'Недопустимый источник запроса'},status=403);return
  if not identity.get('is_admin') and ('clientOnboarding' not in set(identity.get('admin_sections') or []) or 'toptop' not in identity.get('clients',[])):
   h.send_json({'ok':False,'error':'Нет доступа к импорту из 1С'},status=403);return
  if parse_qs(parsed.query).get('client',['toptop'])[0]!='toptop':h.send_json({'ok':False,'error':'Подключения 1С доступны в TOPTOP'},status=403);return
