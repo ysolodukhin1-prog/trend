@@ -26,8 +26,8 @@ def handle(app,handler,parsed):
     identity=app.CURRENT_ACCESS_USER.get() or {}
     if get('channel') in ('','retail') and not identity.get('is_admin'):
         from data_access import permits
-        from trend_retail import SOURCE_KEY,SOURCE_TABLES
-        if not all(permits(identity.get('data_access'),SOURCE_KEY,t) for t in SOURCE_TABLES):
+        from one_c_import import access
+        if not access(app,identity,'sales'):
             handler.send_json({'ok':False,'error':'Нет доступа к источнику 1С Розница'},status=403);return True
     if get('channel') in ('','corners','networks') and not identity.get('is_admin'):
         from data_access import permits

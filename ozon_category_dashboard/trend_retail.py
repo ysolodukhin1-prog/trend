@@ -12,7 +12,7 @@ from psycopg2.extras import RealDictCursor
 
 NOTICE = 'Проверенные продажи по чекам. Возвраты и себестоимость ещё не сверены; чистая выручка и прибыль не рассчитаны.'
 SOURCE = '1С Розница · проведённые чеки · PostgreSQL'
-SOURCE_KEY = '1c:4581e31cb63342fe96b05c3e1cc608b4'
+from one_c_import import source_key, access
 SOURCE_TABLES = ('dbo._AccumRg44751','dbo._Document949','dbo._Reference333','dbo._Reference558')
 STORES = {'817900155D321E0311EA04897619B7D8':'Грибоедова, 18',
  '820900155D321E0311EB362502AF06E2':'Авиапарк',
@@ -71,7 +71,7 @@ def handle(app, handler, parsed):
         handler.send_json({'ok':False,'error':'Канал доступен только в контексте TOPTOP'},status=403); return True
     if not identity.get('is_admin'):
         from data_access import permits
-        if not all(permits(identity.get('data_access'),SOURCE_KEY,table) for table in SOURCE_TABLES):
+        if not access(app,identity,'sales'):
             handler.send_json({'ok':False,'error':'Нет доступа к таблицам источника 1С Розница'},status=403); return True
     if channel!='retail' or parsed.path not in SUPPORTED:
         handler.send_json({'ok':False,'error':'Для этого отчёта данные канала ещё не подключены. Источник маркетплейсов не используется.','sales_channel':channel},status=422); return True
@@ -102,7 +102,7 @@ def build(app,parsed):
           'category_names':list(STORES.values()),'product_names':sorted({r['product_name'] for r in selected})[:500],
           'marketplaces':[{'id':'ozon','label':'Розница'}],
           'stores':[{'id':k,'label':v} for k,v in STORES.items()],
-          'months':[{'month':m+'-01','date_from':m+'-01','date_to':m+f'-{calendar.monthrange(int(m[:4]),int(m[5:]))[1]}'} for m in ['2026-08','2026-09']],
+          'months':[{'month':m+'-01','date_from':m+'-01','date_to':m+f'-{calendar.monthrange(int(m[:4]),int(m[5:]))[1]}'} for m in sorted({r['period'].strftime('%Y-%m') for r in rows}|{start.strftime('%Y-%m')})],
           'loaded_at':str(imported['loaded_at'])}
     if path=='/api/product-options':return {**base,'product_names':sorted({r['product_name'] for r in selected if get('q').lower() in r['product_name'].lower()})[:100]}
     if path.endswith('summary'):

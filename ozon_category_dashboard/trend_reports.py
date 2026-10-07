@@ -137,7 +137,8 @@ def run_report(app,subject,args):
  params=validate_params(args.get('parameters',{}));params.update(client='toptop',dashboard=report)
  if report.startswith('wb'):params['marketplace']='wb'
  if 'sales_channel' in params:
-  from trend_retail import SOURCE_KEY,SOURCE_TABLES
+  from one_c_import import source_key,report_tables
+  SOURCE_KEY=source_key(app);SOURCE_TABLES=report_tables()
   if not all(permits(grants,SOURCE_KEY,t) for t in SOURCE_TABLES):raise SourceDenied()
  # This is the same runtime handler and personal identity as the TREND UI.
  # The worker uses the SELECT-only business connection and no administrator flag.
@@ -160,7 +161,7 @@ def run_report(app,subject,args):
  authorize_report(app,subject,report)
  if 'sales_channel' in params:
   current=authority(app,subject)
-  if not all(permits(current,SOURCE_KEY,t) for t in SOURCE_TABLES):raise SourceDenied()
+  if source_key(app)!=SOURCE_KEY or not all(permits(current,SOURCE_KEY,t) for t in SOURCE_TABLES):raise SourceDenied()
  data,truncated=bound(data,params['limit'])
  unavailable=isinstance(data,dict) and (data.get('available') is False or data.get('status')=='unavailable' or data.get('data_status')=='unavailable' or data.get('ok') is False)
  return {'source':'marketplace:toptop','report':report,'report_operation':operation,'data':data,'availability':'unavailable' if unavailable else 'available','reason_code':data.get('reason_code') or data.get('reason') if unavailable else None,'truncated':truncated,'freshness_status':'inspect_source_timestamps; query time is not refresh time'}

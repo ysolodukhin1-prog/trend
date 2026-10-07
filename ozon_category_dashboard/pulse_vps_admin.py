@@ -373,6 +373,11 @@ class VPSAdminHandler(ActivityMixin, app.DashboardHandler):
             }, headers={'Cache-Control': 'no-store, max-age=0'})
             return
 
+        if urlparse(self.path).path == "/api/admin/one-c-import":
+            from one_c_import import handle
+            handle(__import__(__name__, fromlist=['app']), self, "GET")
+            return
+
         if urlparse(self.path).path == "/api/admin/activity-log":
             from trend_activity_log import handle_read
             handle_read(app, self)
@@ -408,6 +413,11 @@ class VPSAdminHandler(ActivityMixin, app.DashboardHandler):
             from lamoda_accounts import handle
             handle(app, self, "POST")
             return
+        if urlparse(self.path).path == "/api/admin/one-c-import":
+            from one_c_import import handle
+            handle(__import__(__name__, fromlist=['app']), self, "POST")
+            return
+
         if urlparse(self.path).path == "/api/access/password":
             from self_password import handle
             handle(app, self)

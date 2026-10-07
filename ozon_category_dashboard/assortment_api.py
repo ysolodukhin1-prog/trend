@@ -64,8 +64,8 @@ def build(app,parsed,identity):
  include_retail=bool(identity.get('is_admin'))
  if not include_retail:
   from data_access import permits
-  from trend_retail import SOURCE_KEY,SOURCE_TABLES
-  include_retail=all(permits(identity.get('data_access'),SOURCE_KEY,t) for t in SOURCE_TABLES)
+  from one_c_import import access
+  include_retail=access(app,identity,'prices' if report=='assortmentPrices' else 'catalog')
  with psycopg2.connect(**app.read_db_config(client),cursor_factory=RealDictCursor) as conn:
   conn.set_session(readonly=True)
   with conn.cursor() as c:
@@ -137,7 +137,7 @@ def build(app,parsed,identity):
    return {'client':client,'report':report,'rows':selected,'total':total,'page':page,'pages':max(1,math.ceil(total/limit)),
     'counts':counts,'channels':CHANNELS,'retail_access':include_retail,'updated_at':str(run.get('finished_at') or ''),'totals_period':totals_period,
     'limitations':['Связь по уникальному валидному GTIN на уровне размера/варианта. Совпадение названия или артикула не объединяет товары.',
-      'Яндекс: штрихкоды пока не найдены в загруженном справочнике. Для Розницы загружены чеки, но не справочник цен 1С; доступ к её данным также требует отдельного права. Интернет-магазин и опт пока не подключены.',
+      'Яндекс: штрихкоды пока не найдены в загруженном справочнике. Ассортимент и цены Розницы обновляются в разделе «Импорт из 1С». Вид цен для колонки Розницы выбирается там же; доступ требует прав на соответствующие таблицы. Интернет-магазин и опт пока не подключены.',
       'Цены показываются с типом и датой. Сравнительная заливка применяется только к свежим сопоставимым ценам одного варианта в рублях.']}
 
 
@@ -181,7 +181,26 @@ def price_values(c,channel,rows):
   c.execute('''SELECT DISTINCT ON(offer_id) offer_id,price FROM yandex_fact_prices
    WHERE offer_id=ANY(%s) ORDER BY offer_id,snapshot_date DESC''',(keys,))
   return {str(r['offer_id']):Decimal(str(r['price'])) for r in c.fetchall() if r['price'] is not None}
+ if channel=='retail':
+  return {key:Decimal(str(value['value'])) for key,value in retail_prices(c,keys).items()}
  return {}
+
+def retail_prices(c,keys):
+ c.execute("SELECT value FROM one_c_import.settings WHERE key='retail_price_type'")
+ setting=c.fetchone()
+ if not setting or not setting['value']:return {}
+ c.execute("""SELECT product_id,variant_id,payload,loaded_at FROM one_c_import.current_prices
+  WHERE database_name='1c_retail_prod' AND price_type_id=%s AND (product_id||':'||variant_id=ANY(%s) OR variant_id=%s)""",(setting['value'],keys,'0'*32))
+ items={(r['product_id'],r['variant_id']):(r['payload'],r['loaded_at']) for r in c.fetchall()}
+ result={}
+ for key in keys:
+  product,variant=key.split(':',1);item=items.get((product,variant))
+  if not item:
+   base=items.get((product,'0'*32))
+   if base and base[0].get('inherit'):item=base
+  if item and item[0].get('active'):
+   p,loaded=item;result[key]={'value':Decimal(p['value']),'date':p['date'][:10],'checked_date':str(loaded.date()),'currency':p['currency'],'basis':p['type'],'comparable':False}
+ return result
 
 def attach_prices(c,rows):
  keys=defaultdict(list)
@@ -209,13 +228,15 @@ def attach_prices(c,rows):
   c.execute('''SELECT DISTINCT ON(offer_id) offer_id,price,currency,snapshot_date FROM yandex_fact_prices
    WHERE offer_id=ANY(%s) ORDER BY offer_id,snapshot_date DESC''',(keys['yandex_market'],))
   for x in c.fetchall():prices[('yandex_market',x['offer_id'])]={'value':x['price'],'date':str(x['snapshot_date']),'currency':x['currency'],'basis':'Цена продавца','comparable':True}
+ if keys['retail']:
+  for key,value in retail_prices(c,keys['retail']).items():prices[('retail',key)]=value
  for r in rows:
   comparable=[]
   for link in r['links']:
    p=prices.get((link['channel'],link['data']['parent'] if link['channel']=='wb' else link['key']))
    link['price']=p
    if p:
-    p['stale']=(date.today()-date.fromisoformat(p['date'])).days>7
+    p['stale']=(date.today()-date.fromisoformat(p.get('checked_date',p['date']))).days>7
     if p['comparable'] and not p['stale'] and p['currency'] in {'RUB','RUR'} and p['value'] and p['value']>0 and r['status']=='matched':comparable.append(p)
   if len(comparable)>1:
    low=min(x['value'] for x in comparable);high=max(x['value'] for x in comparable)

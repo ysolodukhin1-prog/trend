@@ -43,6 +43,10 @@ def collect(c,client):
     if client=='toptop':
         c.execute('SELECT DISTINCT ON(product_id,variant_id) product_id,variant_id,product_name,article,period FROM retail_1c.sales ORDER BY product_id,variant_id,period DESC')
         for r in c.fetchall():add('retail',r['product_id']+':'+r['variant_id'],r['product_name'],r['article'],r['variant_id'],[],r['period'])
+        c.execute("SELECT product_id,variant_id,payload,loaded_at FROM one_c_import.current_catalog WHERE database_name='1c_retail_prod'")
+        for r in c.fetchall():
+            p=r['payload']
+            add('retail',r['product_id']+':'+r['variant_id'],p['name'],p['article'],p['variant'],p['barcodes'],r['loaded_at'])
     # A duplicate source key must not create a second entity.
     unique={}
     for r in result:
@@ -88,21 +92,24 @@ def run(client):
               id bigserial PRIMARY KEY,finished_at timestamptz NOT NULL DEFAULT now(),summary jsonb NOT NULL)''')
             c.execute('SELECT channel,source_key,master_id FROM assortment_master.links')
             previous={(r['channel'],r['source_key']):str(r['master_id']) for r in c.fetchall()}
-            linked=0
+            linked=0; variant_ids=set(); link_rows=[]
             for ids in groups:
                 old={previous[(rows[i]['channel'],rows[i]['key'])] for i in ids if (rows[i]['channel'],rows[i]['key']) in previous}
                 # Never silently merge two established masters when a new barcode arrives.
                 split=len(old)>1
                 master=next(iter(old)) if len(old)==1 else str(uuid.uuid4())
-                c.execute('INSERT INTO assortment_master.variants(master_id) VALUES(%s) ON CONFLICT DO NOTHING',(master,))
+                variant_ids.add(master)
                 for i in ids:
                     r=rows[i]; chosen=previous.get((r['channel'],r['key']),master) if split else master
                     status='conflict' if split or i in conflicts else 'matched' if len(ids)>1 else 'unmatched'
                     linked+=status=='matched'
-                    c.execute('''INSERT INTO assortment_master.links(channel,source_key,master_id,payload,status)
-                      VALUES(%s,%s,%s,%s,%s) ON CONFLICT(channel,source_key) DO UPDATE SET
-                      payload=EXCLUDED.payload,status=EXCLUDED.status,updated_at=now()''',
-                      (r['channel'],r['key'],chosen,Json(r),status))
+                    link_rows.append((r['channel'],r['key'],chosen,Json(r),status))
+            execute_values(c,'INSERT INTO assortment_master.variants(master_id) VALUES %s ON CONFLICT DO NOTHING',[(v,) for v in variant_ids],page_size=2000)
+            execute_values(c,'''INSERT INTO assortment_master.links(channel,source_key,master_id,payload,status)
+                VALUES %s ON CONFLICT(channel,source_key) DO UPDATE SET payload=EXCLUDED.payload,status=EXCLUDED.status,updated_at=now()''',link_rows,page_size=2000)
+            if client=='toptop':
+                current_retail=[r['key'] for r in rows if r['channel']=='retail']
+                c.execute("DELETE FROM assortment_master.links WHERE channel='retail' AND NOT(source_key=ANY(%s))",(current_retail,))
             summary={'client':client,'source_variants':len(rows),'groups':len(groups),'matched_links':linked,'conflict_links':len(conflicts),'channels':dict(Counter(r['channel'] for r in rows)),'method':'unique valid GTIN, variant grain; no name/article fuzzy joins'}
             c.execute('INSERT INTO assortment_master.runs(summary) VALUES(%s)',(Json(summary),))
             c.execute('GRANT USAGE ON SCHEMA assortment_master TO pulse_reader; GRANT SELECT ON ALL TABLES IN SCHEMA assortment_master TO pulse_reader')
