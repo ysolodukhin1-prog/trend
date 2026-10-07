@@ -87,6 +87,7 @@
     "ozon_category_dashboard/planfact_sales_plan.py": "405c1fe26224b40be49369d975bf56dd676c36626f88dd1b4a3361bb95630e61",
     "ozon_category_dashboard/pulse_daily_scheduler.py": "ba476111a633ad3f1c4e2806d84eabaa0cadff180a017411f66bccad600ff451",
     "ozon_category_dashboard/pulse_financial_model.py": "1fadf1343f1acddf8ee43b06201aa22caa28b866b5c1d07c90986a5a828ef441",
+    "ozon_category_dashboard/pulse_home_refresh_20261007.py": "8725909f55004cd3c1db3d666d02ebcac8356cec47175042e7d1e9432cc5167b",
     "ozon_category_dashboard/pulse_laptop_scoped.py": "9844b736271648054613f300f72acd691ac1a46d72e4d909602d0bce83aaee87",
     "ozon_category_dashboard/pulse_portfolio.py": "73d33f912833cce1e796255e5214bdb28d28729cca517ae09be453b70d2026a3",
     "ozon_category_dashboard/pulse_report_cache.py": "035faca44471ee88e02715a38eb4977351b4f01710d314071ed74c95fb19aa0e",
