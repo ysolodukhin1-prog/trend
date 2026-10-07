@@ -24,11 +24,11 @@ def assess(payload):
   missing=[d for d in due_dates if d not in seen]
   state='unknown' if not first or not due_dates else 'warning' if missing else 'pass'
   add(sid,'coverage','Покрытие периода',state,len(missing) if due_dates else None,'Проверяются завершённые календарные дни выбранного периода, начиная с первой даты источника.','Нет чеков за '+str(len(missing))+' дней. Это пробел источника или календаря работы, а не подтверждённые нулевые продажи.' if missing else 'Во все проверяемые дни есть чеки.' if due_dates else 'В выбранном периоде ещё нет завершённых дней с известным источником.')
-  delta=store['delta'];state='unknown' if delta is None else 'warning' if delta<=DROP_WARNING else 'pass'
-  add(sid,'sales_change','Изменение выручки',state,delta,'Внимание при снижении на 20% и более. Равные последовательные периоды, чеки во все дни обоих периодов.','Недостаточное покрытие для сопоставимого сравнения.' if delta is None else 'Изменение суммы чеков относительно предыдущего равного периода; причина изменения не установлена.')
+  q=quality[sid];comparison=q.get('comparison');delta=comparison['delta'] if comparison else None;state='unknown' if delta is None else 'warning' if delta<=DROP_WARNING else 'pass'
+  add(sid,'sales_change','Изменение выручки',state,delta,'Внимание при снижении на 20% и более; чеки во все дни обоих периодов. '+('Периоды: '+comparison['current_from']+' — '+comparison['current_to']+' и '+comparison['previous_from']+' — '+comparison['previous_to']+'.' if comparison else 'Нет завершённого периода источника.'),'Недостаточное покрытие для сопоставимого сравнения.' if delta is None else 'Изменение суммы чеков относительно предыдущего равного периода; причина изменения не установлена.')
   q=quality[sid];issues=sum(q[k] for k in ['missing_article','missing_product','nonpositive_quantity','negative_revenue','zero_revenue']);state='unknown' if not q['lines'] else 'warning' if issues else 'pass'
   add(sid,'line_quality','Проверка строк чеков',state,issues if q['lines'] else None,'Пустой артикул/товар, количество ≤ 0, выручка ≤ 0 требуют сверки.','Проверено '+str(q['lines'])+' строк. Счётчик — срабатывания правил, одна строка может нарушать несколько; исправления не выполнялись.')
-  stores.append({**store,'days_since_last':lag,'completed_days':len(due_dates),'observed_completed_days':len(due_dates)-len(missing),'missing_dates':missing,'quality':q})
+  stores.append({**store,'delta':delta,'days_since_last':lag,'completed_days':len(due_dates),'observed_completed_days':len(due_dates)-len(missing),'missing_dates':missing,'quality':q})
  order={'critical':0,'warning':1,'unknown':2,'pass':3}
  checks.sort(key=lambda x:(order[x['status']],x['store'],x['key']))
  alerts=[x for x in checks if x['status'] in ('critical','warning')]

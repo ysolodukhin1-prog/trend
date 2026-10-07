@@ -62,6 +62,14 @@ def build(app,q,identity,allow_future=False,include_quality=False):
     for s in selected:
      source_rows=[r for r in current if r['store_id']==s]
      quality.append({'id':s,'lines':len(source_rows),'missing_article':sum(not (r['article'] or '').strip() for r in source_rows),'missing_product':sum(not r['product_id'] or not (r['product_name'] or '').strip() for r in source_rows),'nonpositive_quantity':sum(r['quantity']<=0 for r in source_rows),'negative_revenue':sum(r['revenue']<0 for r in source_rows),'zero_revenue':sum(r['revenue']==0 for r in source_rows)})
+   if include_quality:
+    comparison_end=min(finish,cutoff or finish,today-timedelta(days=1))
+    for item in quality:
+     sid=item['id'];item['comparison']=None
+     if comparison_end>=start:
+      previous_start=start-timedelta(days=(comparison_end-start).days+1)
+      comp=period_compare([r for r in facts if r['store_id']==sid and start<=r['period'].date()<=comparison_end],[r for r in facts if r['store_id']==sid and previous_start<=r['period'].date()<start],[sid],start,comparison_end)
+      item['comparison']={'current_from':start,'current_to':comparison_end,'previous_from':comp['from'],'previous_to':comp['to'],'delta':comp['deltas']['revenue']}
    stores.sort(key=lambda s:(s['revenue'] is None,-(s['revenue'] or 0)))
    grouped=defaultdict(list)
    for row in current:grouped[row['product_id']].append(row)
