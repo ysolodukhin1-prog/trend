@@ -106,6 +106,10 @@ def attach_multi_model(config,payload,raw_tax=None):
             for r in cur.fetchall():
                 group='promotion' if r['line_kind']=='advertising' or 'advertis' in r['label'].lower() else 'marketplace'
                 add(r['dt'],r['label'],group,r['amount'])
+                from ozon_article_labels import article_label
+                key=group+'_'+hashlib.sha1(r['label'].encode()).hexdigest()[:12]
+                arts[key]['label']=article_label(r['label'],r['line_kind'])
+                arts[key]['source_code']=r['label']
             # Operational spending is separate from posted financial charges.
             cur.execute("""SELECT report_date dt,sum(expense_rub) amount
                 FROM ozon_adv_daily_raw WHERE report_date BETWEEN %s AND %s

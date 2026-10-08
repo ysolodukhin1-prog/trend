@@ -37,7 +37,11 @@ def ledger(config,client,market,start,end):
     def add(m,dt,label,group,impact,identity,**extra):
         if str(dt) not in daily:return
         key=article_key(m,group,label)
-        articles.setdefault(key,dict(key=key,label=label,group=group,marketplace=m))
+        source_label=label
+        if m=='ozon' and extra.get('source_kind')=='Начисление':
+            from ozon_article_labels import article_label
+            label=article_label(label)
+        articles.setdefault(key,dict(key=key,label=label,group=group,marketplace=m,source_code=source_label))
         operations.append(dict(id=m+':'+str(identity),date=str(dt),key=key,marketplace=m,group=group,
             label=label,impact=None if impact is None else D(impact),**extra))
     with closing(connect_km(config)) as conn,conn,conn.cursor() as cur:

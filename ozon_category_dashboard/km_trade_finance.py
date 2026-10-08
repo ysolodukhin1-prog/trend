@@ -46,6 +46,8 @@ def row_numbers(row: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
+from ozon_article_labels import article_label
+
 def unit_row_sort_key(row: dict[str, Any]) -> tuple[int, float, str]:
     missing_dimensions = bool(row.get("dimension_missing_reason"))
     try:
@@ -377,7 +379,8 @@ def unit_cost_structure(cur, date_from: date, date_to: date) -> dict[str, Any]:
         sku_amount = decimal_value(row["sku_amount"])
         details.append({
             "line_kind": row["line_kind"],
-            "type_name": row["type_name"],
+            "type_name": article_label(row["type_name"], row["line_kind"]),
+            "source_type_name": row["type_name"],
             "amount": number(amount),
             "share_of_revenue_pct": number(abs(amount) / revenue * 100 if revenue else None),
             "sku_amount_coverage_pct": number(abs(sku_amount) / abs(amount) * 100 if amount else None),
