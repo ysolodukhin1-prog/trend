@@ -18,6 +18,10 @@ def clean(v):
 
 def report_id(parsed):
  p=parse_qs(parsed.query);r=p.get('dashboard',['assortmentProducts'])[0]
+ 
+ if p.get('unified')==['1']:
+  from unified_products import REPORTS as unified_reports
+  if r in unified_reports:return 'assortmentProducts' if r=='home' else 'funnel' if r=='orderFeed' else r
  return r if r in REPORTS else 'assortmentProducts'
 
 def handle(app,h,parsed):
@@ -29,6 +33,9 @@ def handle(app,h,parsed):
  return True
 
 def build(app,parsed,identity):
+ if parse_qs(parsed.query).get('unified')==['1']:
+  from unified_products import build as unified_build
+  return unified_build(app,parsed,identity)
  q=parse_qs(parsed.query);g=lambda key,default='':q.get(key,[default])[0]
  client=app.current_client_key();report=report_id(parsed)
  page=max(1,int(g('page','1')));limit=50;search=g('q').strip()[:120];status=g('status');market=g('market','wb')

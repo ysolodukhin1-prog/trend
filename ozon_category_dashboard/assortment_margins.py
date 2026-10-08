@@ -23,9 +23,9 @@ def facts(config,client,start,end):
    if _cache[k][0]<time.monotonic():del _cache[k]
   return result
 
-def attach_margins(app,rows,days,client,mode):
- end=datetime.now(ZoneInfo('Europe/Moscow')).date()-timedelta(days=1)
- start=end-timedelta(days=days-1)
+def attach_margins(app,rows,days,client,mode,period_start=None,period_end=None):
+ end=period_end or datetime.now(ZoneInfo('Europe/Moscow')).date()-timedelta(days=1)
+ start=period_start or end-timedelta(days=days-1)
  if mode=='actual':result=facts(app.read_db_config(client),client,start,end)
  else:
   with psycopg2.connect(**app.read_db_config(client),cursor_factory=RealDictCursor) as conn:
@@ -69,6 +69,10 @@ def attach_margins(app,rows,days,client,mode):
       if groups and all(p.get('contribution_actual') is not None for p in groups):
        revenue=sum(Decimal(str(p['revenue'] or 0)) for p in groups)
        rub=sum(Decimal(str(p['contribution_actual'])) for p in groups)
+       units=sum(Decimal(str(p['units'])) for p in groups)
+       cogs=sum(Decimal(str(p['units']))*Decimal(str(p['cogs']['amount'])) for p in groups)
+       market_cost=sum(Decimal(str(p['revenue'] or 0))-Decimal(str(p['net'])) for p in groups)
+       metric.update(units=units,cogs_total=cogs,market_cost=market_cost,unit_revenue=revenue/units if units>0 else None,unit_cogs=cogs/units if units>0 else None,unit_market_cost=market_cost/units if units>0 else None,unit_profit=rub/units if units>0 else None)
        metric.update(rub=rub,pct=rub/revenue*100 if revenue>0 else None,revenue=revenue,
         detail='За период '+str(start)+' — '+str(end)+'; по учтённым затратам, до налогов и внешних расходов. Последняя операция '+max(p['last_date'] for p in groups))
      else:
