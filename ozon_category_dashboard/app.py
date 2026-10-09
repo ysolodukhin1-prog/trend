@@ -8675,7 +8675,8 @@ def managed_user_access_enabled():
     try:
         from user_registry import active_user_count
         with client_registry_connection() as conn:
-            return active_user_count(conn) > 0
+            # Authentication reads only; schema setup belongs to bootstrap.
+            return active_user_count(conn, prepare_schema=False) > 0
     except Exception:
         return False
 

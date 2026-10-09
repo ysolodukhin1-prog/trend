@@ -121,8 +121,9 @@ def list_users(conn, *, prepare_schema: bool = True) -> list[dict]:
     return [_serialize(row) for row in rows]
 
 
-def active_user_count(conn) -> int:
-    ensure_schema(conn)
+def active_user_count(conn, *, prepare_schema: bool = True) -> int:
+    if prepare_schema:
+        ensure_schema(conn)
     with conn.cursor() as cur:
         cur.execute("SELECT count(*) FROM public.bi_users WHERE is_active")
         row = cur.fetchone()
