@@ -29,7 +29,8 @@ def handle(app,h,parsed):
  identity=app.CURRENT_ACCESS_USER.get() or {};client=app.current_client_key()
  if not identity.get('is_admin') and client not in identity.get('clients',[]):h.send_json({'ok':False,'error':'Нет доступа к аккаунту'},status=403);return True
  try:h.send_json(clean(build(app,parsed,identity)))
- except (ValueError,psycopg2.Error):h.send_json({'ok':False,'error':'Не удалось прочитать отчёт ассортимента. Проверьте период и доступность источников.'},status=400)
+ except ValueError as exc:h.send_json({'ok':False,'error':str(exc)},status=400)
+ except psycopg2.Error:h.send_json({'ok':False,'error':'Не удалось прочитать отчёт ассортимента. Проверьте период и доступность источников.'},status=400)
  return True
 
 def build(app,parsed,identity):
@@ -94,6 +95,16 @@ def build(app,parsed,identity):
     if status and row['status']!=status:continue
     if search and search.casefold() not in json.dumps(row['links'],ensure_ascii=False).casefold():continue
     selected.append(row)
+   if report!='assortmentPrices':
+    from table_query import parse as parse_columns, apply as apply_columns
+    columns={'product':('text',lambda row:row['links'][0]['data'].get('name') or 'Без наименования'),
+             'status':('text',lambda row:{'matched':'Связан','unmatched':'Без связи','conflict':'Конфликт'}[row['status']])}
+    for channel in allowed:
+     columns[channel]=('text',lambda row,ch=channel:' · '.join(str(v) for link in row['links'] if link['channel']==ch for v in [link['data'].get('name'),link['data'].get('article'),link['key'],*link['data'].get('barcodes',[])] if v))
+    # Unauthorized/absent sources remain empty columns and never trigger reads.
+    for channel in CHANNELS:columns.setdefault(channel,('text',lambda row:None))
+    cg=lambda key,default='':g({'sort_col':'table_sort','sort_dir':'table_dir','column_filters':'table_filters'}.get(key,key),default)
+    selected=apply_columns(selected,columns,parse_columns(cg,columns,'product','asc'))
    totals_period={}
    if report=='assortmentPrices':
     from assortment_totals import attach_totals
@@ -141,7 +152,7 @@ def build(app,parsed,identity):
     selected=available+missing
    elif sort_col in {'product','status'}:
     selected.sort(key=lambda row:(str(row['status'] if sort_col=='status' else row['links'][0]['data'].get('name') or '').casefold(),row['master_id']),reverse=sort_dir=='desc')
-   total=len(selected);selected=selected[(page-1)*limit:page*limit]
+   total=len(selected);page=min(page,max(1,math.ceil(total/limit)));selected=selected[(page-1)*limit:page*limit]
    if report=='assortmentPrices':attach_prices(c,selected)
    return {'client':client,'report':report,'rows':selected,'total':total,'page':page,'pages':max(1,math.ceil(total/limit)),
     'counts':counts,'channels':CHANNELS,'retail_access':include_retail,'updated_at':str(run.get('finished_at') or ''),'totals_period':totals_period,
@@ -293,7 +304,13 @@ def classify(c,client,report,g,include_retail):
  search=g('q').casefold();selected=[r for r in results if not search or search in (str(r['sku'])+' '+str(r['article'])+' '+str(r['name'])).casefold()]
  status=g('status')
  if status:selected=[r for r in selected if (r['abc'] if report=='assortmentABC' else r['xyz'] or 'unknown')==status]
- page=max(1,int(g('page','1')))
+ from table_query import parse as parse_columns, apply as apply_columns
+ columns={key:('number' if key in {'revenue','units','share','cv','days'} else 'text',lambda row,k=key:row.get(k)) for key in ['revenue','units','share','cv','abc','xyz','days']}
+ columns['product']=('text',lambda row:row.get('name') or 'Без наименования')
+ columns['sku']=('text',lambda row:' · '.join(str(value) for value in [row['sku'],row.get('article')] if value))
+ cg=lambda key,default='':g({'sort_col':'table_sort','sort_dir':'table_dir','column_filters':'table_filters'}.get(key,key),default)
+ selected=apply_columns(selected,columns,parse_columns(cg,columns,'revenue'))
+ page=min(max(1,int(g('page','1'))),max(1,math.ceil(len(selected)/50)))
  return {'client':client,'report':report,'market':market,'date_from':str(start),'date_to':str(finish),'rows':selected[(page-1)*50:page*50],
   'total':len(selected),'page':page,'pages':max(1,math.ceil(len(selected)/50)),
   'counts':{'sku':len(results),'classified_xyz':sum(r['xyz'] is not None for r in results),'duplicate_sku':sum(r['duplicate'] for r in results)},

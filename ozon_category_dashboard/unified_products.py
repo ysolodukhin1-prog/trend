@@ -1,3 +1,4 @@
+from table_query import parse as parse_columns, apply as apply_columns, product_columns, order_sql
 """Read-only, client-local product matrix. Missing data never becomes zero."""
 import math, hashlib, threading, time
 from collections import defaultdict, Counter
@@ -238,6 +239,8 @@ def all_brands_directory(app, parsed, identity, start, end, get):
     rows.sort(key=lambda row:(row['sales_total'] is None,-(row['sales_total'] or 0),row['master_id']))
     search=get('q').strip().casefold()[:120];status=get('status')
     selected=[row for row in rows if (not status or row['status']==status) and (not search or any(search in str(value or '').casefold() for link in row['links'] for value in [link['key'],link['data'].get('name'),link['data'].get('article'),link['data'].get('variant'),*link['data'].get('barcodes',[])]))]
+    columns=product_columns(active,warehouses)
+    selected=apply_columns(selected,columns,parse_columns(get,columns,'sales_total'))
     count=len(selected);pages=max(1,math.ceil(count/50));page=min(max(1,int(get('page','1'))),pages)
     summary={'revenue':total(row['sales_total'] for row in rows),'units':total(row['units_total'] for row in rows),'stock':total(row['stock_total'] for row in rows),'products':len(rows),'partial':True}
     return {'ok':True,'client':app.current_client_key(),'brands':brands,'all_brands':True,'report':'assortmentProducts','scope':'all',
@@ -245,6 +248,18 @@ def all_brands_directory(app, parsed, identity, start, end, get):
             'counts':dict(Counter(row['status'] for row in rows)),'summary':summary,'financial':None,
             'warehouses':warehouses,'coverage':coverage,'coverage_labels':coverage_labels,'period':{'from':str(start),'to':str(end)},
             'limitations':warnings+LIMITATIONS}
+
+
+def attach_unit_columns(app,target,start,end,client,active,flags):
+    from assortment_margins import attach_margins
+    for row in target:row['totals']={}
+    if flags[4]:
+        attach_margins(app,target,(end-start).days+1,client,'actual',period_start=start,period_end=end)
+        for row in target:
+            known=[v for ch,v in row['margins']['channels'].items() if ch in active and v.get('rub') is not None]
+            revenue=total(v.get('revenue') for v in known);rub=total(v.get('rub') for v in known)
+            units=total(v.get('units') for v in known)
+            row['margins']['total']={'rub':rub,'unit_profit':rub/units if rub is not None and units and units>0 else None,'pct':rub/revenue*100 if rub is not None and revenue and revenue>0 else None,'partial':True,'detail':'По подтверждённой себестоимости выбранных каналов; полный результат не подтверждён'}
 
 
 def build(app,parsed,identity):
@@ -270,17 +285,17 @@ def build(app,parsed,identity):
         r['xyz']=None
     counts=Counter(r['status'] for r in allrows)
     selected=[r for r in allrows if (not status or r['status']==status) and (not search or any(search in str(v or '').casefold() for l in r['links'] for v in [l['key'],l['data'].get('name'),l['data'].get('article'),l['data'].get('variant'),*l['data'].get('barcodes',[])]))]
+    warehouses={k:v for k,v in raw[5].items() if k.split(':')[0] in active}
+    columns=product_columns(active,warehouses);column_query=parse_columns(get,columns,'sales_total')
+    margin_keys={'unit_profit','margin_total','margin_pct',*('margin_'+ch for ch in active)}
+    global_margin=report=='unitEconomics' and (column_query[0] in margin_keys or any(key in margin_keys for key in column_query[2]))
+    if global_margin:
+        selected=[dict(row) for row in selected]
+        attach_unit_columns(app,selected,start,end,client,active,flags)
+    selected=apply_columns(selected,columns,column_query)
     total_rows=len(selected);page=min(page,max(1,math.ceil(total_rows/50)));visible=[dict(r) for r in selected[(page-1)*50:page*50]]
-    if report=='unitEconomics':
-        from assortment_margins import attach_margins
-        for row in visible:row['totals']={}
-        if flags[4]:
-            attach_margins(app,visible,(end-start).days+1,client,'actual',period_start=start,period_end=end)
-            for row in visible:
-                known=[v for ch,v in row['margins']['channels'].items() if ch in active and v.get('rub') is not None]
-                revenue=total(v.get('revenue') for v in known);rub=total(v.get('rub') for v in known)
-                units=total(v.get('units') for v in known)
-                row['margins']['total']={'rub':rub,'unit_profit':rub/units if rub is not None and units and units>0 else None,'pct':rub/revenue*100 if rub is not None and revenue and revenue>0 else None,'partial':True,'detail':'По подтверждённой себестоимости выбранных каналов; полный результат не подтверждён'}
+    if report=='unitEconomics' and not global_margin:
+        attach_unit_columns(app,visible,start,end,client,active,flags)
     summary={'revenue':total(r['sales_total'] for r in allrows),'units':total(r['units_total'] for r in allrows),'stock':total(r['stock_total'] for r in allrows),'products':len(allrows),'partial':True}
     financial=None
     if report in {'profitLoss','unitEconomics'} and flags[4]:
@@ -335,8 +350,10 @@ def order_feed(app,client,start,end,active,flags,get):
                 coverage.setdefault(ch,'Нет загруженной ленты заказов. Агрегаты продаж не подставляются вместо заказов.')
             if not parts:return {'ok':True,'rows':[],'total':0,'page':1,'pages':1,'coverage':coverage,'channels':{k:CHANNELS[k] for k in active},'period':{'from':str(start),'to':str(end)},'order_feed':True}
             base='WITH feed AS ('+' UNION ALL '.join(parts)+') '
-            where="WHERE concat_ws(' ',order_id,article,product) ILIKE %s" if search else ''
-            if search:args.append('%'+search+'%')
+            conditions,filter_args,order_by,order_args=order_sql(get,{key:CHANNELS[key] for key in active})
+            if search:conditions.insert(0,"concat_ws(' ',order_id,article,product) ILIKE %s");args.append('%'+search+'%')
+            args.extend(filter_args)
+            where='WHERE '+' AND '.join('('+condition+')' for condition in conditions) if conditions else ''
             c.execute(base+'SELECT count(*) n FROM feed '+where,args);n=c.fetchone()['n'];page=min(page,max(1,math.ceil(n/50)))
-            c.execute(base+'SELECT * FROM feed '+where+' ORDER BY ordered_at DESC NULLS LAST,channel,key LIMIT 50 OFFSET %s',args+[(page-1)*50]);rows=[dict(x) for x in c.fetchall()]
+            c.execute(base+'SELECT * FROM feed '+where+' ORDER BY '+order_by+' LIMIT 50 OFFSET %s',args+order_args+[(page-1)*50]);rows=[dict(x) for x in c.fetchall()]
     return {'ok':True,'order_feed':True,'rows':rows,'total':n,'page':page,'pages':max(1,math.ceil(n/50)),'coverage':coverage,'channels':{k:CHANNELS[k] for k in active},'period':{'from':str(start),'to':str(end)}}

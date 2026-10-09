@@ -232,8 +232,6 @@ def int_param(params: dict[str, list[str]], key: str, default: int, minimum: int
     except (TypeError, ValueError):
         return default
 
-
-
 def has_dashboard_filters(params: dict[str, list[str]]) -> bool:
     repeated_keys = (
         "categories", "wb_entrance_section", "wb_entrance_point", *SPORTMASTER_FILTERS,
@@ -245,6 +243,12 @@ def has_dashboard_filters(params: dict[str, list[str]]) -> bool:
     )
 
 
+
+def detail_filter(params):
+    from table_query import sql_filters
+    get=lambda key,default='':params.get(key,[default])[0]
+    return sql_filters(get,DETAIL_COLUMNS,'ordered_units')
+
 def handle_full_period_dashboard(
     cur: Any,
     page_size: int,
@@ -255,7 +259,9 @@ def handle_full_period_dashboard(
     nulls: str,
     date_from: str,
     date_to: str,
+    column_params=None,
 ) -> dict[str, Any]:
+    column_where,column_args=detail_filter(column_params or {})
     cur.execute(
         """
         SELECT
@@ -338,18 +344,18 @@ def handle_full_period_dashboard(
     )
     top_products = normalize_rows(cur.fetchall())
 
-    cur.execute("SELECT count(*) AS total FROM public.mv_wb_entrance_entry_period")
+    cur.execute(labeled_cte+f"SELECT count(*) AS total FROM labeled WHERE {column_where}",column_args)
     total = int(cur.fetchone()["total"] or 0)
     total_pages = max(1, math.ceil(total / page_size))
     page = min(page, total_pages)
     cur.execute(
         labeled_cte
         + f"""
-        SELECT * FROM labeled
+        SELECT * FROM labeled WHERE {column_where}
         ORDER BY {sort_col} {direction} {nulls}, section_name, entry_point
         LIMIT %s OFFSET %s
         """,
-        [page_size, (page - 1) * page_size],
+        column_args + [page_size, (page - 1) * page_size],
     )
     rows = normalize_rows(cur.fetchall())
     return {
@@ -390,7 +396,8 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
     default_dir = "asc" if sort_col in {"section_name", "entry_point"} else "desc"
     sort_dir = "asc" if params.get("sort_dir", [default_dir])[0].lower() == "asc" else "desc"
     direction = "ASC" if sort_dir == "asc" else "DESC"
-    nulls = "NULLS FIRST" if sort_dir == "asc" else "NULLS LAST"
+    nulls = "NULLS LAST"
+    column_where,column_args=detail_filter(params)
 
     with get_conn() as conn, conn.cursor() as cur:
         if not relation_exists(cur, "wb_entrance_daily"):
@@ -411,7 +418,7 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
             and all(relation_exists(cur, view) for view in period_views)
         ):
             return handle_full_period_dashboard(
-                cur, page_size, page, sort_col, sort_dir, direction, nulls, date_from, date_to,
+                cur, page_size, page, sort_col, sort_dir, direction, nulls, date_from, date_to, params,
             )
         where, values = raw_where(params, date_from, date_to)
         with_base = f"WITH base AS MATERIALIZED (SELECT * FROM public.wb_entrance_daily r WHERE {where})"
@@ -526,7 +533,14 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
         )
         top_products = normalize_rows(cur.fetchall())
 
-        cur.execute(f"{with_base}, period AS ({period_sql}) SELECT count(*) AS total FROM period", values)
+        detail_cte=with_base+f""", period AS ({period_sql}), totals AS (
+            SELECT sum(card_visits) card_visits,sum(ordered_units) ordered_units FROM period
+        ), labeled AS (
+            SELECT p.*,round(p.card_visits::numeric/nullif(t.card_visits,0)*100,2) visit_share_pct,
+                round(p.ordered_units::numeric/nullif(t.ordered_units,0)*100,2) order_share_pct
+            FROM period p CROSS JOIN totals t
+        ) """
+        cur.execute(detail_cte+f"SELECT count(*) AS total FROM labeled WHERE {column_where}",values+column_args)
         total = int(cur.fetchone()["total"] or 0)
         total_pages = max(1, math.ceil(total / page_size))
         page = min(page, total_pages)
@@ -540,11 +554,11 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
                     round(p.ordered_units::numeric / nullif(t.ordered_units, 0) * 100, 2) AS order_share_pct
                 FROM period p CROSS JOIN totals t
             )
-            SELECT * FROM labeled
+            SELECT * FROM labeled WHERE {column_where}
             ORDER BY {sort_col} {direction} {nulls}, section_name, entry_point
             LIMIT %s OFFSET %s
             """,
-            values + [page_size, (page - 1) * page_size],
+            values + column_args + [page_size, (page - 1) * page_size],
         )
         rows = normalize_rows(cur.fetchall())
 

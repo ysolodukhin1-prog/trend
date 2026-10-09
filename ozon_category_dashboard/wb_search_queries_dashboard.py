@@ -917,6 +917,23 @@ def category_rank_source(
     )
 
 
+
+def column_detail_filter(params):
+    from table_query import sql_filters
+    quote=lambda value:"'"+value.replace("'","''")+"'"
+    def labels(field,mapping,fallback):
+        return 'CASE '+field+' '+ ' '.join('WHEN '+quote(key)+' THEN '+quote(value) for key,value in mapping.items())+' ELSE '+quote(fallback)+' END'
+    expressions={
+        'brand_class_label':labels('brand_class',BRAND_CLASS_LABELS,'Не размечено'),
+        'brand_name_label':'brand_name',
+        'query_type_label':labels('query_type',QUERY_TYPE_LABELS,'Не размечено'),
+        'audience_label':labels('audience',AUDIENCE_LABELS,'Не указана'),
+        'specificity_label':labels('specificity',SPECIFICITY_LABELS,''),
+        'scenario_labels':"(SELECT string_agg("+labels('tag',SCENARIO_LABELS,'')+", ', ' ORDER BY ord) FROM unnest(scenario_tags) WITH ORDINALITY AS scenario(tag,ord))",
+    }
+    get=lambda key,default='':params.get(key,[default])[0]
+    return sql_filters(get,DETAIL_COLUMNS,'category_rank',expressions)
+
 def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) -> dict[str, Any]:
     if client_key not in SUPPORTED_CLIENTS:
         return empty_dashboard("Отчет недоступен для выбранного клиента")
@@ -930,7 +947,8 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
     default_sort_dir = "asc" if sort_col in {"subject_name", "frequency_tier", "category_rank"} else "desc"
     sort_dir = "asc" if params.get("sort_dir", [default_sort_dir])[0].lower() == "asc" else "desc"
     direction = "ASC" if sort_dir == "asc" else "DESC"
-    nulls = "NULLS FIRST" if sort_dir == "asc" else "NULLS LAST"
+    nulls = "NULLS LAST"
+    column_where,column_args=column_detail_filter(params)
     if sort_col in {"frequency_tier", "category_rank"}:
         detail_order = (
             f"subject_name ASC, {sort_expression} {direction} {nulls}, "
@@ -1146,7 +1164,7 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
                 JOIN selected_frequency_queries f USING (subject_name, search_query)
             ),
             detail_rows AS MATERIALIZED (
-                SELECT * FROM category_labeled
+                SELECT * FROM category_labeled WHERE {column_where}
             ),
             frequency_tier_daily AS MATERIALIZED (
                 SELECT
@@ -1169,7 +1187,7 @@ def handle_dashboard(parsed: Any, get_conn: Callable[[], Any], client_key: str) 
                     SELECT * FROM frequency_tier_daily ORDER BY report_date
                 ) tier_day) AS frequency_tier_daily
             """,
-            detail_values + [page_size, (page - 1) * page_size],
+            detail_values + column_args + [page_size, (page - 1) * page_size],
         )
         detail_payload = cur.fetchone()
         detail_rows = [enrich_classification_row(row) for row in (detail_payload["rows"] or [])]
