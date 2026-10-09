@@ -1,0 +1,4 @@
+.up-table.up-warehouse-tree .up-location-label{display:block;line-height:1.35}
+.up-table.up-warehouse-tree .up-location-name{display:block;font-weight:600}
+.up-table.up-warehouse-tree .up-location-label small{display:block;margin-top:4px;font-size:10px;font-weight:400;color:#667085}
+.up-table.up-warehouse-tree .up-warehouse-labels th:has(.up-location-label){min-width:175px;max-width:210px;height:90px}

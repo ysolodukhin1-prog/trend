@@ -40,7 +40,7 @@ def access_flags(app,identity,client,report):
     pricing=admin or ('assortmentPrices' in identity.get('reports',[]) and report_permitted(identity,client,'assortmentPrices'))
     return catalog,retail,files,ut,sales,prices,pricing
 
-def read_data(app,client,start,end,flags):
+def read_data(app,client,start,end,flags,locations=False):
     catalog,retail,files,ut,finance,retail_prices,pricing=flags
     rows=[];sales={};stocks={};dims={};coverage={};warehouses={};warnings=[]
     with psycopg2.connect(**app.read_db_config(client),cursor_factory=RealDictCursor) as conn:
@@ -123,9 +123,18 @@ def read_data(app,client,start,end,flags):
                 c.execute('SELECT channel,min(sale_date) first,max(sale_date) last,string_agg(DISTINCT revenue_basis,\', \') basis FROM channel_sales.sales WHERE channel=ANY(%s) GROUP BY channel',(offline,))
                 for x in c.fetchall():coverage[x['channel']]=dict(x)
             # Current imported warehouse snapshot. Schemes/unspecified warehouses are labelled explicitly.
-            c.execute("SELECT sku::text sku,warehouse_name warehouse,sum(available_to_sell) units,max(imported_at)::date stamp FROM ozon_stock_product_warehouses GROUP BY 1,2")
-            for x in c.fetchall():
-                wh='ozon:'+str(x['warehouse'] or 'Без разбивки');warehouses[wh]={'label':'Ozon · '+str(x['warehouse'] or 'без разбивки'),'date':str(x['stamp'])};stocks['ozon',x['sku'],wh]=dict(x)
+            c.execute("SELECT sku::text sku,warehouse_name warehouse,sum(available_to_sell) units,max(imported_at)::date stamp,max(imported_at) AT TIME ZONE 'UTC' observed_at FROM ozon_stock_product_warehouses GROUP BY 1,2")
+            ozon_stocks=list(c.fetchall());ozon_warehouses={}
+            if locations:
+                from ozon_stock_locations import report_stocks
+                ozon_stocks,ozon_warehouses,location_warnings=report_stocks(c,ozon_stocks)
+                warnings.extend(location_warnings)
+            for x in ozon_stocks:
+                wh='ozon:'+str(x['warehouse'] or 'Без разбивки')
+                warehouses[wh]=ozon_warehouses.get(x['warehouse'],{'label':'Ozon · '+str(x['warehouse'] or 'без разбивки'),'date':str(x['stamp'])})
+                stocks['ozon',x['sku'],wh]=dict(x)
+            if locations:
+                warehouses=dict(sorted(warehouses.items(),key=lambda pair:(pair[1].get('scheme')!='FBO',pair[1].get('cluster',''),pair[1].get('warehouse_name',''),pair[0])))
             c.execute("SELECT offer_id sku,warehouse,sum(available_for_order) units,max(snapshot_date) stamp FROM yandex_inventory_current WHERE client_key=%s GROUP BY 1,2",(client,))
             for x in c.fetchall():
                 wh='yandex_market:'+str(x['warehouse']);warehouses[wh]={'label':'ЯМ · '+str(x['warehouse'] or 'без разбивки'),'date':str(x['stamp'])};stocks['yandex_market',x['sku'],wh]=dict(x)
@@ -154,12 +163,12 @@ def read_data(app,client,start,end,flags):
                 row['prices']=prices
     return rows,sales,stocks,dims,coverage,warehouses,wb_parents,warnings
 
-def cached_data(app,client,start,end,flags):
-    key=(client,str(start),str(end),flags)
+def cached_data(app,client,start,end,flags,locations=False):
+    key=(client,str(start),str(end),flags,locations)
     with _lock:
         hit=_cache.get(key)
         if hit and hit[0]>time.monotonic():return hit[1]
-        value=read_data(app,client,start,end,flags)
+        value=read_data(app,client,start,end,flags,locations=locations)
         if len(_cache)>=4:_cache.pop(next(iter(_cache)))
         _cache[key]=(time.monotonic()+300,value)
         return value
@@ -175,7 +184,9 @@ def cached_matrix(raw,active):
 
 def materialize(raw,active):
     rows,sales,stocks,dims,coverage,warehouses,wb_parents,warnings=raw
-    out=[]
+    out=[];stock_index=defaultdict(list)
+    for (channel,sku,warehouse),metric in stocks.items():
+        if warehouse in warehouses:stock_index[channel,sku].append((warehouse,metric))
     for source in rows:
         links=source['links'];metrics={};stock={};notes=[]
         for ch in active:
@@ -191,10 +202,8 @@ def materialize(raw,active):
                     candidates=[v for v in candidates if v and v.get('owner_master_id')==source['master_id']]
                     if candidates:metrics[ch]={'units':total(v['units'] for v in candidates),'rub':total(v['rub'] for v in candidates),'stamp':max(v['stamp'] for v in candidates)}
                 elif (ch,key) in sales and sales[ch,key].get('owner_master_id')==source['master_id']:metrics[ch]=sales[ch,key]
-                for wh in warehouses:
-                    if not wh.startswith(ch+':'):continue
-                    if ch=='wb' and len(wb_parents[key])!=1:continue
-                    if (ch,key,wh) in stocks:stock[wh]=stocks[ch,key,wh]
+                if ch!='wb' or len(wb_parents[key])==1:
+                    for wh,metric in stock_index.get((ch,key),[]):stock[wh]=metric
             elif matched:notes.append(CHANNELS[ch]+': конфликт связи')
         relevant=any(l['channel'] in active for l in links) or bool(metrics)
         if not relevant:continue
@@ -214,7 +223,7 @@ def all_brands_directory(app, parsed, identity, start, end, get):
     for client,label in labels.items():
         try:flags=access_flags(app,identity,client,'assortmentProducts')
         except ValueError:continue
-        raw=cached_data(app,client,start,end,flags)
+        raw=cached_data(app,client,start,end,flags,locations=True)
         brands.append(client)
         for row in cached_matrix(raw,active):
             rows.append(dict(row,master_id=client+':'+row['master_id'],source_master_id=row['master_id'],source_client=client,

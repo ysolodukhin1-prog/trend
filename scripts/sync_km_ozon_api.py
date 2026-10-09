@@ -3400,12 +3400,26 @@ def main() -> int:
                     )
                 elif step == "stock":
                     rows, _ = fetch_stock(api)
+                    location_snapshot = None
+                    if CLIENT_KEY in ("toptop", "lera_nena"):
+                        from ozon_stock_locations import fetch_snapshot, store_snapshot
+                        def location_post(path, payload):
+                            return api.request("POST", SELLER_BASE_URL + path,
+                                headers=seller_headers(), payload=payload,
+                                bucket="seller-stock", interval=SELLER_DEFAULT_INTERVAL,
+                                context="FBO: реальные склады и кластеры").json()
+                        location_snapshot = fetch_snapshot(location_post,
+                            [row["sku"] for row in rows if row.get("stock_type") == "fbo"])
                     loaded = store_stock(
                         conn,
                         rows,
                         dry_run=args.dry_run,
                         snapshot_date=step_to,
                     )
+                    if location_snapshot is not None:
+                        count = store_snapshot(conn, location_snapshot, dry_run=args.dry_run)
+                        if not args.dry_run: conn.commit()
+                        print(f"FBO: физических складских строк {count:,}; страниц {location_snapshot['pages']}", flush=True)
                 elif step == "advertising":
                     loaded, _ = sync_advertising_incremental(
                         conn,
