@@ -11,6 +11,7 @@ from psycopg2.extras import RealDictCursor
 CHANNELS={'wb':'WB','ozon':'Ozon','yandex_market':'Яндекс Маркет','lamoda':'Lamoda','online':'Интернет-магазин','retail':'Розница','corners':'Корнеры','wholesale':'Опт','networks':'Сети'}
 SCOPES={'all':list(CHANNELS),'ecom':['wb','ozon','yandex_market','lamoda','online'],'marketplaces':['wb','ozon','yandex_market','lamoda'],'online':['online'],'offline':['retail','corners','wholesale','networks'],'retail':['retail'],'corners':['corners'],'wholesale':['wholesale'],'networks':['networks']}
 REPORTS={'home','planfact','orderFeed','assortmentProducts','assortmentABC','assortmentXYZ','profitLoss','unitEconomics','inventoryHistory'}
+LIMITATIONS=['Итоги — только подтверждённые значения. Прочерк означает отсутствие данных, а не нулевые продажи или остатки.','WB/Ozon/ЯМ — реализация минус возвраты по дате финансовой операции; офлайн — учтённая выручка источника. Базы НДС каналов могут отличаться.','Связь вариантов — по существующему справочнику или уникальному валидному GTIN. Артикул и название не объединяют каналы.','Lamoda: продажи по SKU не подтверждены. Интернет-магазин, опт и часть офлайна имеют устаревшее покрытие. Проверяйте даты источников.','WB: текущий остаток без разбивки по складам; не распределяется на размеры. Lamoda FBO/FBS — остаток каталога по схеме. Центральный склад и магазины пока без подключённых остатков.','ABC — предварительный, по положительной учтённой выручке за период. XYZ не рассчитан: нет подтверждённого полного ряда продаж всех каналов.','ЮНИТ/PL — по учтённым финансовым операциям и подтверждённой себестоимости, до налогов и внешних расходов. Полный общий PL и прибыль пока не подтверждены.']
 _cache={};_matrix={};_lock=threading.RLock()
 
 def total(values):
@@ -159,16 +160,17 @@ def cached_data(app,client,start,end,flags):
         hit=_cache.get(key)
         if hit and hit[0]>time.monotonic():return hit[1]
         value=read_data(app,client,start,end,flags)
-        _cache.clear();_matrix.clear()
+        if len(_cache)>=4:_cache.pop(next(iter(_cache)))
         _cache[key]=(time.monotonic()+300,value)
         return value
 
 def cached_matrix(raw,active):
     key=(id(raw),tuple(active))
     with _lock:
-        if key in _matrix:return _matrix[key]
+        if key in _matrix:return _matrix[key][1]
         value=materialize(raw,active)
-        _matrix.clear();_matrix[key]=value
+        if len(_matrix)>=4:_matrix.pop(next(iter(_matrix)))
+        _matrix[key]=(raw,value)
         return value
 
 def materialize(raw,active):
@@ -205,6 +207,37 @@ def materialize(raw,active):
     out.sort(key=lambda r:(r['sales_total'] is None,-(r['sales_total'] or 0),r['master_id']))
     return out
 
+def all_brands_directory(app, parsed, identity, start, end, get):
+    """One sorted directory across permitted accounts, preserving source identities."""
+    labels={'toptop':'TOPTOP','lera_nena':'LERA NENA'}
+    active=SCOPES['all']; rows=[]; warehouses={}; coverage={}; coverage_labels={}; warnings=[]; brands=[]
+    for client,label in labels.items():
+        try:flags=access_flags(app,identity,client,'assortmentProducts')
+        except ValueError:continue
+        raw=cached_data(app,client,start,end,flags)
+        brands.append(client)
+        for row in cached_matrix(raw,active):
+            rows.append(dict(row,master_id=client+':'+row['master_id'],source_master_id=row['master_id'],source_client=client,
+                             stocks={client+':'+key:value for key,value in row['stocks'].items()}))
+        for key,info in raw[5].items():
+            if key.split(':')[0] in active:warehouses[client+':'+key]=dict(info,label=label+' · '+info['label'])
+        for channel in active:
+            if channel in raw[4]:
+                key=client+':'+channel;coverage[key]=raw[4][channel];coverage_labels[key]=label+' · '+CHANNELS[channel]
+        warnings.extend(label+': '+warning for warning in raw[7])
+    if not brands:raise ValueError('Нет доступа к справочнику товаров')
+    rows.sort(key=lambda row:(row['sales_total'] is None,-(row['sales_total'] or 0),row['master_id']))
+    search=get('q').strip().casefold()[:120];status=get('status')
+    selected=[row for row in rows if (not status or row['status']==status) and (not search or any(search in str(value or '').casefold() for link in row['links'] for value in [link['key'],link['data'].get('name'),link['data'].get('article'),link['data'].get('variant'),*link['data'].get('barcodes',[])]))]
+    count=len(selected);pages=max(1,math.ceil(count/50));page=min(max(1,int(get('page','1'))),pages)
+    summary={'revenue':total(row['sales_total'] for row in rows),'units':total(row['units_total'] for row in rows),'stock':total(row['stock_total'] for row in rows),'products':len(rows),'partial':True}
+    return {'ok':True,'client':app.current_client_key(),'brands':brands,'all_brands':True,'report':'assortmentProducts','scope':'all',
+            'channels':{key:CHANNELS[key] for key in active},'rows':selected[(page-1)*50:page*50],'total':count,'page':page,'pages':pages,
+            'counts':dict(Counter(row['status'] for row in rows)),'summary':summary,'financial':None,
+            'warehouses':warehouses,'coverage':coverage,'coverage_labels':coverage_labels,'period':{'from':str(start),'to':str(end)},
+            'limitations':warnings+LIMITATIONS}
+
+
 def build(app,parsed,identity):
     q=parse_qs(parsed.query);get=lambda k,d='':q.get(k,[d])[0]
     client=app.current_client_key();report=get('dashboard','assortmentProducts');scope=get('scope','all')
@@ -213,6 +246,8 @@ def build(app,parsed,identity):
     end=date.fromisoformat(get('to')) if get('to') else datetime.now(ZoneInfo('Europe/Moscow')).date()-timedelta(days=1)
     start=date.fromisoformat(get('from')) if get('from') else end-timedelta(days=28)
     if start>end or (end-start).days>366:raise ValueError('Выберите период не длиннее года')
+    if report=='assortmentProducts' and scope=='all' and get('brands')=='all':
+        return all_brands_directory(app,parsed,identity,start,end,get)
     if report=='orderFeed':return order_feed(app,client,start,end,SCOPES[scope],flags,get)
     page=max(1,int(get('page','1')));search=get('q').strip().casefold()[:120];status=get('status');active=SCOPES[scope]
     raw=cached_data(app,client,start,end,flags);allrows=cached_matrix(raw,active)
@@ -253,7 +288,7 @@ def build(app,parsed,identity):
     warehouses={k:v for k,v in raw[5].items() if k.split(':')[0] in active}
     coverage={k:raw[4].get(k,{'first':None,'last':None,'basis':'Источник недоступен или не подключён'}) for k in active}
     return {'ok':True,'client':client,'report':report,'scope':scope,'channels':{k:CHANNELS[k] for k in active},'rows':visible,'total':total_rows,'page':page,'pages':max(1,math.ceil(total_rows/50)),'counts':dict(counts),'summary':summary,'financial':financial,'warehouses':warehouses,'coverage':coverage,'period':{'from':str(start),'to':str(end)},
-      'limitations':raw[7]+['Итоги — только подтверждённые значения. Прочерк означает отсутствие данных, а не нулевые продажи или остатки.','WB/Ozon/ЯМ — реализация минус возвраты по дате финансовой операции; офлайн — учтённая выручка источника. Базы НДС каналов могут отличаться.','Связь вариантов — по существующему справочнику или уникальному валидному GTIN. Артикул и название не объединяют каналы.','Lamoda: продажи по SKU не подтверждены. Интернет-магазин, опт и часть офлайна имеют устаревшее покрытие. Проверяйте даты источников.','WB: текущий остаток без разбивки по складам; не распределяется на размеры. Lamoda FBO/FBS — остаток каталога по схеме. Центральный склад и магазины пока без подключённых остатков.','ABC — предварительный, по положительной учтённой выручке за период. XYZ не рассчитан: нет подтверждённого полного ряда продаж всех каналов.','ЮНИТ/PL — по учтённым финансовым операциям и подтверждённой себестоимости, до налогов и внешних расходов. Полный общий PL и прибыль пока не подтверждены.']}
+      'limitations':raw[7]+LIMITATIONS}
 
 def order_feed(app,client,start,end,active,flags,get):
     """Merge only order-level facts; daily aggregates/monthly sales are not orders."""

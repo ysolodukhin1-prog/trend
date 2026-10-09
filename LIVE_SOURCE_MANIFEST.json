@@ -1,5 +1,5 @@
 {
-  "image": "toptop-trend:all-home-source-fix-20261009",
+  "image": "toptop-trend:unified-all-brands-20261009",
   "scope": "Live TREND code; excludes credentials, runtime data, unrelated client scripts. Frontend is compiled runtime.",
   "sha256": {
     "Dockerfile": "79e0a0ba5ac100d58931791a1caaa16c81907cbe0d24bfcb8ef7d22e7c3da8db",
@@ -278,6 +278,7 @@
     "ozon_category_dashboard/static/react/assets/index-retail-planfact-r2-20261007.js": "fb5a797c2340d50a936a91e4d4db391d658b2590f070ad71471d06200b9c9bb0",
     "ozon_category_dashboard/static/react/assets/index-self-password-ce061.js": "c3f62807192682f5738d318a170d6ba19a1d2902168cf1560653c11cadf696ed",
     "ozon_category_dashboard/static/react/assets/index-sql-migration-20261007.js": "20b800e21ec9667b1e6a801c1eea5da14a6ee0dde18c1dc3070e8397ff8eaa96",
+    "ozon_category_dashboard/static/react/assets/index-unified-all-brands-20261009.js": "14efaaf0f3168fdc2cc5798ee63f359b17ab049bcdf05d968302ac4a12d52dfd",
     "ozon_category_dashboard/static/react/assets/index-unified-products-20261008.js": "8a90f784321fb64705134c38eadc732d3b7621fd8d54bfbd2b3103d2585bd00e",
     "ozon_category_dashboard/static/react/assets/index-xkmNLQ8P.js": "ef4fb187929082f0b29968ec81fdd327c0c2fe04958d3ead2aa6da6fdb68aa6a",
     "ozon_category_dashboard/static/react/assets/kokoc-brand-0lwsgPnX.css": "f0e9f4445a22b5d81cfee8bf19ca7a0b5364dbd205df60163791f30dba93c64e",
@@ -306,7 +307,7 @@
     "ozon_category_dashboard/static/react/assets/unified-products-20261008.css": "37ed53b7dbbafd68df6b45e196edc74779864292064a3fef547720f4e7d0ab3e",
     "ozon_category_dashboard/static/react/assets/user-profile-r161.css": "1ef8a432bb2aad4482405aae3ee75a33b63bbf33d6d3efffaad6f3a38a20d29f",
     "ozon_category_dashboard/static/react/channels.html": "00c8e6de94a7386aa122286eae377847fe4780f67fc56a2dde8c417871546868",
-    "ozon_category_dashboard/static/react/index.html": "11b7f5c241b31a142e6779fc73266caf6137e5c5859975586b0dca2f756e4dff",
+    "ozon_category_dashboard/static/react/index.html": "54be8ad3d6a811afaad0dc5c30ee9d9adb5928854ae1a6a0d3f128f6b14da559",
     "ozon_category_dashboard/static/responsive-system-v3.css": "b8f98e80a93f53b1f8339fb46377b8cdaaf986e3c86d0b613866f5a8991699e3",
     "ozon_category_dashboard/static/seo_project_builder.css": "3fc73d02b76e45e890232db84ceaad0de2d67538d9ab055be266e7bcd28c0b86",
     "ozon_category_dashboard/static/seo_projects.css": "128c1de910f97e8b080064aa32a3b921dd5147800c05d1f905cd719da1d4e09b",
@@ -332,7 +333,7 @@
     "ozon_category_dashboard/trend_retail.py": "a941932065f471fed34d39cdefada11c61d8ea0137fc0e566a81052397e21e4b",
     "ozon_category_dashboard/trend_runtime/sitecustomize.py": "3290e2cabfe341531ba68e9c9834416834846ded919f63d929545e5c8c4b0489",
     "ozon_category_dashboard/trend_views.py": "68b95a16bca08bf507cf8094a9bdc3d99774be7706976e154e7a49e0bd2eec79",
-    "ozon_category_dashboard/unified_products.py": "24e7cbb3a046a556ed89a5f571f27ab9615eb9e1a163c7a3a07cd93ee3d873d4",
+    "ozon_category_dashboard/unified_products.py": "e7c1b953a9104c7ea15eea3fa2f0ceff445cc6d02400c95759efa642050edf08",
     "ozon_category_dashboard/unit_contributions.py": "82792efa02bf60fd0ead68ec3f7df0d76dbe3411e6ac45b9a45d7ef9ca1cd8d1",
     "ozon_category_dashboard/unit_cost_allocation.py": "0ca495242f5783c968c6bc1d5ece99423d94f3587de177d753e61f0be3b402ea",
     "ozon_category_dashboard/unit_cost_basis.py": "1b57b85fdd75571e70e81dc3fb600d1cfc083bb6d844097b5f79aefa2993952a",
