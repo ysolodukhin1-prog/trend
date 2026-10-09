@@ -77,7 +77,7 @@ def build(app,get):
     with psycopg2.connect(**app.read_db_config('toptop'),cursor_factory=RealDictCursor) as conn:
         with conn.cursor() as c:
             c.execute('SET TRANSACTION READ ONLY');c.execute("SET LOCAL statement_timeout='5s'")
-            if get('home')=='1' and channel=='online':
+            if get('home')=='1' and channel:
                 c.execute("SELECT channel,min(sale_date) first_date,max(sale_date) last_date,count(*) rows FROM channel_sales.sales WHERE channel=%s GROUP BY channel",[channel]);coverage=[dict(x) for x in c.fetchall()]
                 c.execute('SELECT s.revenue_basis,sum(s.quantity) quantity,sum(s.revenue) revenue,count(*) rows FROM channel_sales.sales s WHERE '+predicate+' GROUP BY s.revenue_basis ORDER BY s.revenue_basis',params);totals=[dict(x) for x in c.fetchall()]
                 c.execute('SELECT s.sale_date AS date,s.revenue_basis,sum(s.revenue) revenue,sum(s.quantity) quantity FROM channel_sales.sales s WHERE '+predicate+' GROUP BY 1,2 ORDER BY 1,2',params);daily=[dict(x) for x in c.fetchall()]
