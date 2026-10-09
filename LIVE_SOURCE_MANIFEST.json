@@ -1,5 +1,5 @@
 {
-  "image": "toptop-trend:channel-scope-fix-20261009",
+  "image": "toptop-trend:ecom-online-20261009",
   "scope": "Live TREND code; excludes credentials, runtime data, unrelated client scripts. Frontend is compiled runtime.",
   "sha256": {
     "Dockerfile": "79e0a0ba5ac100d58931791a1caaa16c81907cbe0d24bfcb8ef7d22e7c3da8db",
@@ -198,6 +198,7 @@
     "ozon_category_dashboard/static/react/assets/index-admin-form-a9d5.js": "33d0f759a5d2fcc880178ac558adba49a8f1942f02734c1594022ba007a088b6",
     "ozon_category_dashboard/static/react/assets/index-channel-scope-fix-20261009.js": "7da41160fe073211bab033271cff56c855cf57ed3907cc59006bd0740314923c",
     "ozon_category_dashboard/static/react/assets/index-credentials-edit-20261007.js": "a24839685ba4b28e7d3aea4330f857eca3054ce2203d2d5bbc30bc54915664d8",
+    "ozon_category_dashboard/static/react/assets/index-ecom-online-20261009.js": "68d734ca0f7544856490ad5c9e9040f87cf04bcb60fbdbaf1ecb7a6c82435de3",
     "ozon_category_dashboard/static/react/assets/index-history-buttons.js": "cb7449ee66f9439084a0cf04b4edc29dff7933f69a6e13a86cdcc561b1df3eae",
     "ozon_category_dashboard/static/react/assets/index-lzTR0pWi.css": "e8d2f4f7c58834f766fc18d7e47dbc6899c2a2300d8b740fbbc8a42e6636bb3b",
     "ozon_category_dashboard/static/react/assets/index-one-c-import-20261007.js": "e75335deef4da0178dd4467dfe6c09f3c7347e7f43e96222f5da464c5d6efe55",
@@ -301,7 +302,7 @@
     "ozon_category_dashboard/static/react/assets/unified-products-20261008.css": "37ed53b7dbbafd68df6b45e196edc74779864292064a3fef547720f4e7d0ab3e",
     "ozon_category_dashboard/static/react/assets/user-profile-r161.css": "1ef8a432bb2aad4482405aae3ee75a33b63bbf33d6d3efffaad6f3a38a20d29f",
     "ozon_category_dashboard/static/react/channels.html": "00c8e6de94a7386aa122286eae377847fe4780f67fc56a2dde8c417871546868",
-    "ozon_category_dashboard/static/react/index.html": "4d1f2b1aa81518f7c03977c06a44a113eaa67e71594d591427cdfeb3711e26d3",
+    "ozon_category_dashboard/static/react/index.html": "8c7ba5ad2ce3b21c1ab60396b82bd5b3ecdd53ff5c66328a1319563fba82928b",
     "ozon_category_dashboard/static/responsive-system-v3.css": "b8f98e80a93f53b1f8339fb46377b8cdaaf986e3c86d0b613866f5a8991699e3",
     "ozon_category_dashboard/static/seo_project_builder.css": "3fc73d02b76e45e890232db84ceaad0de2d67538d9ab055be266e7bcd28c0b86",
     "ozon_category_dashboard/static/seo_projects.css": "128c1de910f97e8b080064aa32a3b921dd5147800c05d1f905cd719da1d4e09b",
@@ -313,7 +314,7 @@
     "ozon_category_dashboard/static/yandex_market_dashboard.js": "5f9510bd2d709deb713d684e0b57f4ac6894f9a3bd1fef617b23825211bdd336",
     "ozon_category_dashboard/test_assortment_route.py": "9a9d15d7137e9f3fcb5306705bb680fa8e0351953542b778748e2147383e59e7",
     "ozon_category_dashboard/trend_activity_log.py": "35a23bd22f5f3733abac8387e99ff53c571615a24c47804ffd928fd967209f7a",
-    "ozon_category_dashboard/trend_channel_sales.py": "9c408d2bf6ac760a33296fd122a8ff55c7c51d38da8871d756a944fbfd32fdf9",
+    "ozon_category_dashboard/trend_channel_sales.py": "fdfa4e64f6f0eb661e5c41d0d65e30eb4955f1c32e8d547c2fa0931ee1cf6bd0",
     "ozon_category_dashboard/trend_daily.py": "c4a02cd8597e0ac8aa622d1c90079b854906c1b3f22e953e59f54c196ac5b5a0",
     "ozon_category_dashboard/trend_database.py": "131f5b8daad25ec5067efe3d6167c39a616a278dcfc9fe31cf94b2d1b89f0146",
     "ozon_category_dashboard/trend_database_worker.py": "932999c80b73df2bf5eeef197c1bf4e2cf8fe912b7fa82491f5d45f79dd798df",
