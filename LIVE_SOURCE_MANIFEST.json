@@ -1,5 +1,5 @@
 {
-  "image": "toptop-trend:ozon-stock-locations-20261009",
+  "image": "toptop-trend:directory-calendar-20261009",
   "scope": "Live TREND code; excludes credentials, runtime data, unrelated client scripts. Frontend is compiled runtime.",
   "sha256": {
     "Dockerfile": "79e0a0ba5ac100d58931791a1caaa16c81907cbe0d24bfcb8ef7d22e7c3da8db",
@@ -177,6 +177,7 @@
     "ozon_category_dashboard/static/react/assets/channels-BoeXqPmb.js": "5b9166f95dc126515c6a8781a2338b3aec27f9cfc76830c4d074b8d9d4c70e05",
     "ozon_category_dashboard/static/react/assets/channels-mGGwUahy.js": "f02075e12c6a5872363fcc2ec6df81196a9501dcc18b5eed6631e0cc6a0add3d",
     "ozon_category_dashboard/static/react/assets/credentials-edit-20261007.css": "7b28a7752e59b73ea3aecd771d91cd1b6ab8f5c9de507a34283942896ffa1841",
+    "ozon_category_dashboard/static/react/assets/directory-calendar-20261009.css": "d68264fa534899bc4dc840460e6dd7958180d07a9d2da9d59a425f136e2fcfcf",
     "ozon_category_dashboard/static/react/assets/index-41_nHfTK.js": "a6a4da6a176a324c75ecef86b738c725ac84358786f7d9cd9328cb5383956bb1",
     "ozon_category_dashboard/static/react/assets/index-BHfETHbJ.js": "b0efe3134a76c245f6ff0da68cfbc87eb08bd6bd4b52b22c792c22e665e57e25",
     "ozon_category_dashboard/static/react/assets/index-BarPreA1.css": "57e4a7c3b176192d57b5dc56ee63dee611a2325f9c9c9e8263a937f69ccdcc74",
@@ -203,6 +204,7 @@
     "ozon_category_dashboard/static/react/assets/index-channel-scope-fix-20261009.js": "7da41160fe073211bab033271cff56c855cf57ed3907cc59006bd0740314923c",
     "ozon_category_dashboard/static/react/assets/index-channel-tree-20261009.js": "813c09c87ae58e4bdfb83838fb0219544f8f771eb5a93a637157f09f02e7eb00",
     "ozon_category_dashboard/static/react/assets/index-credentials-edit-20261007.js": "a24839685ba4b28e7d3aea4330f857eca3054ce2203d2d5bbc30bc54915664d8",
+    "ozon_category_dashboard/static/react/assets/index-directory-calendar-20261009.js": "b1d1563c59ea8d30879cbf64930e6d6f5e3902b20fb57beac9c30b953fc49a78",
     "ozon_category_dashboard/static/react/assets/index-ecom-online-20261009.js": "68d734ca0f7544856490ad5c9e9040f87cf04bcb60fbdbaf1ecb7a6c82435de3",
     "ozon_category_dashboard/static/react/assets/index-history-buttons.js": "cb7449ee66f9439084a0cf04b4edc29dff7933f69a6e13a86cdcc561b1df3eae",
     "ozon_category_dashboard/static/react/assets/index-lzTR0pWi.css": "e8d2f4f7c58834f766fc18d7e47dbc6899c2a2300d8b740fbbc8a42e6636bb3b",
@@ -312,7 +314,7 @@
     "ozon_category_dashboard/static/react/assets/user-profile-r161.css": "1ef8a432bb2aad4482405aae3ee75a33b63bbf33d6d3efffaad6f3a38a20d29f",
     "ozon_category_dashboard/static/react/assets/warehouse-folders-20261009.css": "aad68a71a92e87b2fbf96b423a0e079f64caf928496f95933ed46d598387386b",
     "ozon_category_dashboard/static/react/channels.html": "00c8e6de94a7386aa122286eae377847fe4780f67fc56a2dde8c417871546868",
-    "ozon_category_dashboard/static/react/index.html": "4c8694d183acc4b88b95749170f363ec271a8ebbe61635ae055f5fe37b8754d5",
+    "ozon_category_dashboard/static/react/index.html": "22a11b623d3d5cb1018fd66571415ba7683a36d8d6798f54a734db33c15d5fad",
     "ozon_category_dashboard/static/responsive-system-v3.css": "b8f98e80a93f53b1f8339fb46377b8cdaaf986e3c86d0b613866f5a8991699e3",
     "ozon_category_dashboard/static/seo_project_builder.css": "3fc73d02b76e45e890232db84ceaad0de2d67538d9ab055be266e7bcd28c0b86",
     "ozon_category_dashboard/static/seo_projects.css": "128c1de910f97e8b080064aa32a3b921dd5147800c05d1f905cd719da1d4e09b",
