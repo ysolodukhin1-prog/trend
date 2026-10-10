@@ -455,6 +455,7 @@
     "scripts/rebuild_wb_assortment_views.py": "27f672780716912c8dda5e763d72a34973a270e8f31cf4785f62a2b42b1fa7d6",
     "scripts/rebuild_wb_dashboard_views.py": "139994f1548e010e01128a059db9f88c51b3feec17b37c22313603bb8c82dd74",
     "scripts/refine_unit_planned_ui.py": "29b99e90debb4718909d1f02927744a8bfd1cf8c03aab5b41f9398b8d94643a1",
+    "scripts/run_registered_ozon_stock.py": "2073c7360f33f69aac14208f7c0232a0b44dfbe51d4af1eb4f7302b19db51831",
     "scripts/run_seo_generation_keyword_analysis.py": "2aca4fd3b899e5f5c0aa029c0a03e13034793e07a8c543dd0f2462ed72bca3d5",
     "scripts/run_seo_generation_product_intents.py": "bae147e88ab38d5a0492e1dcbbf3f219bfa667b02f983e0020f72d08ad2236cc",
     "scripts/smoke_legacy_dashboard_matrix.py": "e999332cbd504b2dae012927ef8ad321eba14948fa97e91dcc45bfbd423a8efb",
