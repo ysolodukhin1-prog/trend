@@ -28,6 +28,9 @@ ENDPOINT = "/api/admin/ff-platform"
 MAX_BYTES = 32 * 1024 * 1024
 MAX_ROWS = 200000
 MAX_SCOPES = 100
+# Candidate product types from the provider's Swagger Nomenclature.prodType.
+# Every filter is checked against the returned type; none means 'all'.
+SOURCE_TYPES = ('universal', 'g', 'p', 'p_box_mix', 'box', 'p_mono', 'p_box_mono')
 _LOCK = threading.Lock()
 _READY = False
 
@@ -204,7 +207,7 @@ def parse_warehouses(payload):
     return result
 
 
-def parse_stocks(payload, warehouse, requested_type):
+def parse_stocks(payload, warehouse, requested_type, allow_empty=False):
     rows = collection(payload, ("data", "items", "stocks", "result"))
     result = []
     seen = set()
@@ -235,13 +238,55 @@ def parse_stocks(payload, warehouse, requested_type):
         result.append({"nomenclature_id": nid, "client_article": row["clientArticul"][:500],
                        "name": row["name"][:2000], "nomenclature_type": source_type,
                        "available_qty": quantities[0], "defect_qty": quantities[1], "at_work_qty": quantities[2]})
-    if not result:
+    if not result and not allow_empty:
         raise ImportErrorSafe("API вернул пустой остаток. Прежние данные сохранены; проверьте склад и тип номенклатуры")
     # Exact type matching prevents mixing filter meanings before supplier confirms
     # an 'all' filter. Unknown broad filters need a separate validated adapter.
     if any(row["nomenclature_type"] != requested_type for row in result):
         raise ImportErrorSafe("Типы в ответе не совпадают с фильтром. Укажите отдельные типы номенклатуры")
     return result
+
+
+def automatic_batches(token, warehouses, progress=lambda message: None):
+    """Discover actual types, then verify each documented candidate separately.
+
+    timestamp=0 is the epoch in both seconds and milliseconds. The changed
+    endpoint is only a discovery source; quantities always come from /stocks.
+    """
+    batches, discovered, count = [], set(), 0
+    if not warehouses or len(warehouses) * len(SOURCE_TYPES) > MAX_SCOPES:
+        raise ImportErrorSafe('Число складов превышает предел автоматической загрузки')
+    for warehouse in warehouses:
+        changes = collection(request_json(token, '/changed_stocks', {'sklad_id': warehouse, 'timestamp': 0}),
+                             ('data', 'items', 'stocks', 'result'))
+        observed_types = set()
+        for row in changes:
+            nomenclature = row.get('nomenclature') if isinstance(row, dict) else None
+            kind = nomenclature.get('prodType') if isinstance(nomenclature, dict) else None
+            if not isinstance(kind, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', kind):
+                raise ImportErrorSafe('Не удалось автоматически распознать виды товаров в ответе фулфилмента')
+            if identifier(row.get('skladId')) != warehouse:
+                raise ImportErrorSafe('Источник вернул товары другого склада; прежние остатки сохранены')
+            observed_types.add(kind)
+        kinds = sorted(set(SOURCE_TYPES) | observed_types)
+        if len(kinds) > 20 or len(batches) + len(kinds) > MAX_SCOPES:
+            raise ImportErrorSafe('Объём автоматической загрузки превышает допустимый предел')
+        for kind in kinds:
+            payload = request_json(token, '/stocks', {'skladId': warehouse, 'isGetZeroStock': 'true', 'typeNomenclature': kind})
+            rows = parse_stocks(payload, warehouse, kind, allow_empty=True)
+            # A type observed in discovery must not silently disappear entirely.
+            if kind in observed_types and not rows:
+                raise ImportErrorSafe('Источник вернул неполные остатки; прежние данные сохранены')
+            if rows:
+                discovered.add(kind)
+            count += len(rows)
+            if count > MAX_ROWS:
+                raise ImportErrorSafe('Превышен общий предел строк импорта; данные не заменены')
+            batches.append((warehouse, kind, datetime.now(timezone.utc), rows))
+            progress('Загружено выборок: ' + str(len(batches)))
+    if not count:
+        raise ImportErrorSafe('Фулфилмент не вернул товары. Прежние остатки сохранены')
+    return batches, sorted(discovered)
 
 
 def token_value(app, client):
@@ -268,7 +313,8 @@ def guard_idle(cur, client):
 
 
 def save(app, client, payload):
-    config = settings(payload)
+    # The cabinet controls its warehouses/types; no technical form settings.
+    config = {'warehouse_ids': [], 'nomenclature_types': [], 'automatic': True}
     token = payload.get("token", "")
     if not isinstance(token, str) or len(token) > 8192 or any(ch in token for ch in ("\n", "\r", "\x00")):
         raise ImportErrorSafe("Некорректный API-токен")
@@ -293,7 +339,8 @@ def save(app, client, payload):
             cur.execute("SELECT settings FROM ff_platform.connections WHERE client_key=%s", (client,))
             previous = cur.fetchone()
             if previous and not token:
-                config["warehouses"] = previous["settings"].get("warehouses", [])
+                config = dict(previous['settings'])
+                config['automatic'] = True
             cur.execute("""INSERT INTO ff_platform.connections(client_key,settings) VALUES(%s,%s)
              ON CONFLICT(client_key) DO UPDATE SET settings=EXCLUDED.settings,
              check_status=CASE WHEN %s THEN 'untested' ELSE ff_platform.connections.check_status END,
@@ -316,6 +363,8 @@ def check(app, client):
             try:
                 warehouses = parse_warehouses(request_json(token_value(app, client), "/sklads"))
                 config["warehouses"] = warehouses
+                config['warehouse_ids'] = [w['id'] for w in warehouses]
+                config['automatic'] = True
                 message = "Доступ подтверждён; складов: " + str(len(warehouses))
                 status = "connected"
             except ImportErrorSafe as exc:
@@ -399,9 +448,10 @@ def start(app, client, identity):
             row = cur.fetchone()
             if not row or row["check_status"] != "connected":
                 raise ImportErrorSafe("Сначала сохраните и проверьте подключение")
-            config = settings(row["settings"])
-            if not config["warehouse_ids"] or not config["nomenclature_types"]:
-                raise ImportErrorSafe("Выберите склады и укажите подтверждённые типы номенклатуры")
+            config = dict(row['settings'])
+            config['automatic'] = True
+            if not config.get('warehouse_ids'):
+                raise ImportErrorSafe('Сначала проверьте доступ к кабинету')
             discovered = {v["id"] for v in row["settings"].get("warehouses", [])}
             if not set(config["warehouse_ids"]).issubset(discovered):
                 raise ImportErrorSafe("Выбранные склады не подтверждены проверкой подключения")
@@ -432,7 +482,8 @@ def publish(app, job, client, batches):
                 digest = hashlib.sha256(json.dumps(rows, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
                 cur.execute("INSERT INTO ff_platform.scopes VALUES(%s,%s,%s,%s,%s,%s,%s)",
                             (job, client, warehouse, kind, observed, len(rows), digest))
-                execute_values(cur, """INSERT INTO ff_platform.stocks
+                if rows:
+                    execute_values(cur, """INSERT INTO ff_platform.stocks
                  (batch_id,client_key,warehouse_id,nomenclature_type,nomenclature_id,
                  client_article,name,available_qty,defect_qty,at_work_qty) VALUES %s""",
                                [(job, client, warehouse, kind, r["nomenclature_id"], r["client_article"], r["name"],
@@ -441,9 +492,13 @@ def publish(app, job, client, batches):
                  ON CONFLICT(client_key,warehouse_id,nomenclature_type) DO UPDATE SET batch_id=EXCLUDED.batch_id""",
                             (client, warehouse, kind, job))
                 total += len(rows)
+            detected = sorted({kind for warehouse, kind, observed, rows in batches if rows})
+            cur.execute("UPDATE ff_platform.connections SET settings=settings || %s::jsonb WHERE client_key=%s",
+                        (Json({'nomenclature_types': detected, 'automatic': True}), client))
             cur.execute("""UPDATE ff_platform.jobs SET status='completed',finished_at=now(),heartbeat_at=now(),
              result=%s,message='Остатки импортированы' WHERE id=%s AND status='running'""",
                         (Json({"rows": total, "scopes": len(batches), "mode": "full", "zero_stock_requested": True,
+                               "detected_types": detected, "automatic": True,
                                "completeness": "shape_checked_supplier_limits_unconfirmed"}), job))
             if cur.rowcount != 1:
                 raise ImportErrorSafe("Состояние задания изменилось; данные не опубликованы")
@@ -461,20 +516,12 @@ def worker(app, job):
     try:
         client, config = row["client_key"], row["request"]
         token = token_value(app, client)
-        batches = []
-        count = 0
-        for warehouse in config["warehouse_ids"]:
-            for kind in config["nomenclature_types"]:
-                data = request_json(token, "/stocks", {"skladId": warehouse, "isGetZeroStock": "true", "typeNomenclature": kind})
-                rows = parse_stocks(data, warehouse, kind)
-                count += len(rows)
-                if count > MAX_ROWS:
-                    raise ImportErrorSafe("Превышен общий предел строк импорта; данные не заменены")
-                batches.append((warehouse, kind, datetime.now(timezone.utc), rows))
-                with app.client_registry_connection() as conn:
-                    with conn.cursor() as cur:
-                        cur.execute("UPDATE ff_platform.jobs SET heartbeat_at=now(),message=%s WHERE id=%s",
-                                    ("Получено выборок: " + str(len(batches)), job))
+        def progress(message):
+            with app.client_registry_connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute('UPDATE ff_platform.jobs SET heartbeat_at=now(),message=%s WHERE id=%s', (message, job))
+        warehouses = parse_warehouses(request_json(token, '/sklads'))
+        batches, detected = automatic_batches(token, [w['id'] for w in warehouses], progress)
         publish(app, job, client, batches)
     except Exception as exc:
         message = str(exc) if isinstance(exc, ImportErrorSafe) else "Импорт не завершён. Прежние остатки сохранены"
