@@ -110,10 +110,15 @@ class LamodaClient:
                     return json.loads(body.decode()) if body else {}
             except HTTPError as exc:
                 self.requests_made += 1
-                detail = exc.read().decode("utf-8", "replace")[:500]
+                exc.read()  # Never put server response bodies or account details into logs.
                 if exc.code not in {429, 500, 502, 503, 504} or attempt == 5:
-                    raise RuntimeError(f"Lamoda API HTTP {exc.code}: {detail}") from exc
-                time.sleep(min(2 ** (attempt - 1), 30))
+                    raise RuntimeError(f"Lamoda API HTTP {exc.code}") from None
+                retry_after = exc.headers.get("Retry-After", "")
+                try:
+                    delay = max(min(2 ** (attempt - 1), 30), min(float(retry_after), 300))
+                except ValueError:
+                    delay = min(2 ** (attempt - 1), 30)
+                time.sleep(delay)
             except (URLError, TimeoutError) as exc:
                 if attempt == 5:
                     raise RuntimeError(f"Lamoda API unavailable: {exc}") from exc
@@ -134,7 +139,8 @@ class LamodaClient:
             raise RuntimeError("Lamoda v2 did not return access_token")
 
     def get(self, path, params=None):
-        if path not in READ_ONLY_PATHS:
+        from scripts.lamoda_order_details import DETAIL_PATH
+        if path not in READ_ONLY_PATHS and not DETAIL_PATH.fullmatch(path):
             raise RuntimeError(f"Lamoda read-only policy blocked GET {path}")
         query = urlencode(params or {}, doseq=True)
         url = API_BASE + path + (("?" + query) if query else "")
@@ -273,7 +279,7 @@ def main():
     parser.add_argument("--database-name", required=True)
     parser.add_argument("--date-from", type=date.fromisoformat, required=True)
     parser.add_argument("--date-to", type=date.fromisoformat, required=True)
-    parser.add_argument("--step", choices=(*SOURCES, "finance"), required=True)
+    parser.add_argument("--step", choices=(*SOURCES, "finance", "order_items"), required=True)
     parser.add_argument("--account-id")
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--overwrite", action="store_true")
@@ -328,7 +334,7 @@ def import_account(app, args, account, client_id, secret, seller_id):
     db = dict(app.read_db_config(args.client_key))
     db["database"] = args.database_name
     api = LamodaClient(client_id, secret, seller_id)
-    path, names = SOURCES[args.step]
+    path, names = SOURCES.get(args.step, ("/orders/{id}", ()))
     params = {"country": "RU"} if args.step in {"catalog", "prices"} else {}
     period_start = datetime.combine(args.date_from, dt_time.min, tzinfo=timezone.utc)
     period_end = datetime.combine(args.date_to + timedelta(days=1), dt_time.min, tzinfo=timezone.utc)
@@ -344,6 +350,8 @@ def import_account(app, args, account, client_id, secret, seller_id):
 
     with psycopg2.connect(**db) as conn:
         ensure_schema(conn)
+        from scripts.lamoda_order_details import ensure_detail_schema, sync_details, cached_headers
+        ensure_detail_schema(conn)
         with conn.cursor() as cur:
             cur.execute("""INSERT INTO public.lamoda_api_runs(step,date_from,date_to,details)
                 VALUES(%s,%s,%s,%s) RETURNING id""", (
@@ -355,7 +363,9 @@ def import_account(app, args, account, client_id, secret, seller_id):
         total = 0
         try:
             api.authenticate()
-            if args.step == "stock":
+            if args.step == "order_items":
+                rows = cached_headers(conn, account["account_id"], args.date_from, args.date_to)
+            elif args.step == "stock":
                 # /stocks-summary is one aggregate object, not a paginated list.
                 rows = stock_rows(api.get(path, {"sellerId": seller_id}))
             else:
@@ -373,7 +383,19 @@ def import_account(app, args, account, client_id, secret, seller_id):
                 rows = [row for row in rows if in_period(row.get("returnDate"))]
             elif args.step == "fbo_shipments":
                 rows = [row for row in rows if in_period(row.get("plannedDate"))]
-            total = store_entities(conn, args.step, rows, account["account_id"], account["fulfillment"])
+            if args.step != "order_items":
+                total = store_entities(conn, args.step, rows, account["account_id"], account["fulfillment"])
+            if args.step in {"orders", "order_items"}:
+                def checkpoint(detail):
+                    with conn.cursor() as cur:
+                        cur.execute("UPDATE public.lamoda_api_runs SET details=details || %s::jsonb,requests_made=%s,rows_loaded=%s WHERE id=%s",
+                            (Json(detail), api.requests_made+detail["detail_requests"], detail["items_loaded"] if args.step == "order_items" else total, run_id))
+                    conn.commit()
+                detail = sync_details(conn,api,rows,account["account_id"],account["fulfillment"],progress=checkpoint)
+                if args.step == "order_items":
+                    total = detail["items_loaded"]
+                if detail["errors"]:
+                    raise RuntimeError("Lamoda order details incomplete; rerun resumes failed orders")
             with conn.cursor() as cur:
                 cur.execute("""UPDATE public.lamoda_api_runs SET status='ok',requests_made=%s,
                     rows_loaded=%s,finished_at=now() WHERE id=%s""", (api.requests_made, total, run_id))
