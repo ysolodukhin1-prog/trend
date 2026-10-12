@@ -23,14 +23,14 @@ import psycopg2
 import requests
 from psycopg2.extras import Json, execute_values
 
-API = "https://lk.ff-platform.ru/client_api/v1"
+API = "https://ff-platform.ru/lk/4/client_api/v1"
 ENDPOINT = "/api/admin/ff-platform"
 MAX_BYTES = 32 * 1024 * 1024
 MAX_ROWS = 200000
 MAX_SCOPES = 100
-# Candidate product types from the provider's Swagger Nomenclature.prodType.
-# Every filter is checked against the returned type; none means 'all'.
-SOURCE_TYPES = ('universal', 'g', 'p', 'p_box_mix', 'box', 'p_mono', 'p_box_mono')
+# Verified provider request filter -> returned product type. Packaging is a
+# separate stock domain; prodType enum values are NOT request filter values.
+STOCK_FILTERS = {'Goods': 'g'}
 _LOCK = threading.Lock()
 _READY = False
 
@@ -196,7 +196,7 @@ def parse_warehouses(payload):
         if wid in seen:
             raise ImportErrorSafe("API вернул повторяющиеся склады")
         seen.add(wid)
-        name = row.get("name") or row.get("title") or row.get("skladName") or ("Склад " + wid)
+        name = row.get("name") or row.get("title") or row.get("skladName") or row.get('description') or ("Склад " + wid)
         if not isinstance(name, str):
             raise ImportErrorSafe("Неизвестный формат названия склада")
         result.append({"id": wid, "name": name[:200]})
@@ -248,35 +248,14 @@ def parse_stocks(payload, warehouse, requested_type, allow_empty=False):
 
 
 def automatic_batches(token, warehouses, progress=lambda message: None):
-    """Discover actual types, then verify each documented candidate separately.
-
-    timestamp=0 is the epoch in both seconds and milliseconds. The changed
-    endpoint is only a discovery source; quantities always come from /stocks.
-    """
+    """Full product inventory using verified filter aliases and API warehouses."""
     batches, discovered, count = [], set(), 0
-    if not warehouses or len(warehouses) * len(SOURCE_TYPES) > MAX_SCOPES:
+    if not warehouses or len(warehouses) * len(STOCK_FILTERS) > MAX_SCOPES:
         raise ImportErrorSafe('Число складов превышает предел автоматической загрузки')
     for warehouse in warehouses:
-        changes = collection(request_json(token, '/changed_stocks', {'sklad_id': warehouse, 'timestamp': 0}),
-                             ('data', 'items', 'stocks', 'result'))
-        observed_types = set()
-        for row in changes:
-            nomenclature = row.get('nomenclature') if isinstance(row, dict) else None
-            kind = nomenclature.get('prodType') if isinstance(nomenclature, dict) else None
-            if not isinstance(kind, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,64}', kind):
-                raise ImportErrorSafe('Не удалось автоматически распознать виды товаров в ответе фулфилмента')
-            if identifier(row.get('skladId')) != warehouse:
-                raise ImportErrorSafe('Источник вернул товары другого склада; прежние остатки сохранены')
-            observed_types.add(kind)
-        kinds = sorted(set(SOURCE_TYPES) | observed_types)
-        if len(kinds) > 20 or len(batches) + len(kinds) > MAX_SCOPES:
-            raise ImportErrorSafe('Объём автоматической загрузки превышает допустимый предел')
-        for kind in kinds:
-            payload = request_json(token, '/stocks', {'skladId': warehouse, 'isGetZeroStock': 'true', 'typeNomenclature': kind})
+        for filter_name, kind in STOCK_FILTERS.items():
+            payload = request_json(token, '/stocks', {'skladId': warehouse, 'isGetZeroStock': 'true', 'typeNomenclature': filter_name})
             rows = parse_stocks(payload, warehouse, kind, allow_empty=True)
-            # A type observed in discovery must not silently disappear entirely.
-            if kind in observed_types and not rows:
-                raise ImportErrorSafe('Источник вернул неполные остатки; прежние данные сохранены')
             if rows:
                 discovered.add(kind)
             count += len(rows)
@@ -418,7 +397,7 @@ def status_payload(app, client):
             summary = serialized(cur.fetchone())
     return {"ok": True, "client": client, "saved": saved, "connection": connection,
             "jobs": jobs, "summary": summary, "api_url": API,
-            "notice": "Полная выгрузка с нулевыми остатками. Типы нужно подтвердить у поставщика; дельта пока не используется."}
+            "notice": "Товарные остатки по всем доступным складам, включая нулевые. Упаковка и расходные материалы в этот импорт не входят."}
 
 
 def preview(app, client, query):
@@ -498,7 +477,7 @@ def publish(app, job, client, batches):
             cur.execute("""UPDATE ff_platform.jobs SET status='completed',finished_at=now(),heartbeat_at=now(),
              result=%s,message='Остатки импортированы' WHERE id=%s AND status='running'""",
                         (Json({"rows": total, "scopes": len(batches), "mode": "full", "zero_stock_requested": True,
-                               "detected_types": detected, "automatic": True,
+                               "detected_types": detected, "automatic": True, "domain": "goods", "request_filters": list(STOCK_FILTERS),
                                "completeness": "shape_checked_supplier_limits_unconfirmed"}), job))
             if cur.rowcount != 1:
                 raise ImportErrorSafe("Состояние задания изменилось; данные не опубликованы")
