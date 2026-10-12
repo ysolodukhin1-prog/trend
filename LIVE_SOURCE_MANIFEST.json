@@ -108,6 +108,7 @@
     "ozon_category_dashboard/pulse_supply.py": "fe9f5de8e3aa7e58926ae565a76c8ed5a4f5cc247fa6cde3f6e46d77c4a2b1f3",
     "ozon_category_dashboard/pulse_vps_admin.py": "3d1c3dc38e498306bc61b31af6a7e6159539a79cb40d610c6b4421f4473c9a07",
     "ozon_category_dashboard/pulse_vps_scoped.py": "1854e381867a993ec1e905aa05c1cceb191101f5832106a5db9ffb0e30a388d0",
+    "ozon_category_dashboard/qa_ff_real.py": "2030c2df4d1a1cc3e15dd63a1e43b1a8389b21ed9baeab1b7a8d8d0d7d839393",
     "ozon_category_dashboard/refresh_materialized_views.py": "b9211503413ce2ae2c82417eec3d498151a72603877e30698282f00c9361551e",
     "ozon_category_dashboard/retail_bi.py": "7225849537427209c296096fe8fe2d978f0261979dafd2fe952ed0a72b1c8423",
     "ozon_category_dashboard/retail_freshness_now.py": "b5733d4372f274927617938c4512526d73c8d00620dac1c8a1e16d33815a38f4",
