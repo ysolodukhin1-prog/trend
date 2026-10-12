@@ -506,6 +506,8 @@ class VPSAdminHandler(ActivityMixin, app.DashboardHandler):
 def main() -> None:
     configure_scope()
     print("PULSE VPS | TOPTOP + LERA NENA | auth + scoped updates | port 8062", flush=True)
+    from ff_platform import start_server
+    start_server(__import__(__name__, fromlist=["app"]))
     server = ThreadingHTTPServer(("0.0.0.0", 8062), VPSAdminHandler)
     if os.environ.get("PULSE_DAILY_SCHEDULE_ENABLED", "1") == "1":
         from pulse_daily_scheduler import start_in_reader
