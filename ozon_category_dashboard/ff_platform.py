@@ -494,9 +494,15 @@ def handle(rt, handler, method):
         handler.send_dashboard_access_required(parsed)
         return
     identity = handler.dashboard_access_identity() or {}
-    # Shared credentials are privileged; require full admin, not report grants.
-    if not identity.get("is_admin"):
-        handler.send_json({"ok": False, "error": "Настройка фулфилмента доступна администратору"}, status=403)
+    access_context = app.CURRENT_ACCESS_USER.set(identity)
+    try:
+        permitted = bool(identity.get("is_admin")) or bool(
+            {"integrations", "clientOnboarding"}.intersection(app.current_admin_section_ids()))
+        allowed_clients = {item["key"] for item in app.dashboard_clients_payload()}
+    finally:
+        app.CURRENT_ACCESS_USER.reset(access_context)
+    if not permitted:
+        handler.send_json({"ok": False, "error": "Нет права на настройку подключений"}, status=403)
         return
     if method == "POST":
         origin = handler.headers.get("Origin")
@@ -509,6 +515,9 @@ def handle(rt, handler, method):
         if not isinstance(payload, dict):
             raise ImportErrorSafe("Некорректный запрос")
         client = client_key(app, payload.get("client") or query.get("client", ["toptop"])[0])
+        if client not in allowed_clients:
+            handler.send_json({"ok": False, "error": "Нет доступа к выбранному аккаунту"}, status=403)
+            return
         ensure(app)
         if method == "GET":
             result = preview(app, client, query) if query.get("view") == ["preview"] else status_payload(app, client)

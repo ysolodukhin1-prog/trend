@@ -45,7 +45,7 @@
     "ozon_category_dashboard/dashboard_access_navigation.py": "97623c7b32bd1bb7fc9225a26777bf736243a455ff332de1218162f22fee3afd",
     "ozon_category_dashboard/data_access.py": "5d6589fd92623961cdac5c8bd94b338f4daa3f0a90826c5aa32f2b0d2fea8fd7",
     "ozon_category_dashboard/export_data.py": "f46f9f68b32b62e3c13951639aa55e46da4309f94805e1c3efe2286cbf000a85",
-    "ozon_category_dashboard/ff_platform.py": "2338fde9271b97157e54290c0b3583e027a2eb7a63ce57d3c70d47ba2cbde414",
+    "ozon_category_dashboard/ff_platform.py": "a6dcf70996c341af299129d88b85fbbdb6f47a6bb750e17a624d53bb9d9c3c2d",
     "ozon_category_dashboard/galactica_authorization_codes.py": "93cb9d0f8cfcc272b638d4d4b3174e0c292f1df47f58104107bfd7ec248226bb",
     "ozon_category_dashboard/galactica_code_exchange.py": "f1a641efcba0772ee8b698465ed6a9927ead1d2f52d40eb262a231f3b8335a51",
     "ozon_category_dashboard/galactica_consent.py": "149e3cd3845b7a909b233adc256f1ad48738523a1bad8c9653555d652f346a2e",
