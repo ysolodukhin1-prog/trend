@@ -78,11 +78,11 @@ def ensure_detail_schema(conn):
             o.created_at,o.created_at::date AS order_date,o.updated_at,o.status AS order_status,
             i.item_key,i.seller_sku,i.lamoda_sku,i.payload->>'description' AS product_name,
             i.payload->>'size' AS size,i.status AS item_status,i.quantity,
-            i.amount AS paid_price_minor,i.amount/100 AS paid_price_rub,i.currency,
-            (i.payload#>>'{basePrice,amount}')::numeric/100 AS base_price_rub,
-            (i.payload#>>'{salePrice,amount}')::numeric/100 AS sale_price_rub,
-            (o.payload#>>'{fullSum,amount}')::numeric/100 AS header_amount_rub,
-            i.synced_at
+            i.amount AS paid_price_minor,CASE WHEN i.currency='RUB' THEN i.amount/100 END AS paid_price_rub,i.currency,
+            CASE WHEN i.payload#>>'{basePrice,currency}'='RUB' THEN (i.payload#>>'{basePrice,amount}')::numeric/100 END AS base_price_rub,
+            CASE WHEN i.payload#>>'{salePrice,currency}'='RUB' THEN (i.payload#>>'{salePrice,amount}')::numeric/100 END AS sale_price_rub,
+            CASE WHEN o.payload#>>'{fullSum,currency}'='RUB' THEN (o.payload#>>'{fullSum,amount}')::numeric/100 END AS header_amount_rub,
+            i.synced_at,i.amount/100 AS paid_price_native
           FROM public.lamoda_orders o JOIN public.lamoda_order_detail_state s USING(order_key)
           JOIN public.lamoda_order_items i ON i.order_key=o.order_key AND s.item_keys ? i.item_key;
         COMMENT ON VIEW public.v_lamoda_order_items_v2 IS

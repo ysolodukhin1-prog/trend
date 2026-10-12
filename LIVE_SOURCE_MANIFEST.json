@@ -131,7 +131,7 @@
     "ozon_category_dashboard/scripts/bootstrap_vps_superuser.py": "3934d0602ab19f988918878d953f5e7949f09cbc51827f818919b2694fe3dd47",
     "ozon_category_dashboard/scripts/build_ozon_crossdock_snapshot.py": "1e85836d5fa6d23559b075c33bf04ae9cbc8bcc9e6a2df59619b7429432bd004",
     "ozon_category_dashboard/scripts/import_vps_scoped_registry.py": "062ade6fb1c7128fcadcb338724da7d26bac606a95c059ef04dd75031ace8a07",
-    "ozon_category_dashboard/scripts/lamoda_order_details.py": "ef26e255729fa18d52620a903ccf5ecf9e6429308a403e6b9eaa84f273352d55",
+    "ozon_category_dashboard/scripts/lamoda_order_details.py": "cb244d1d12ee86d2300506ad95ebf44e76792594830deebe304330e7ad666e40",
     "ozon_category_dashboard/scripts/rebuild_lamoda_views.py": "02928d1e1245783d61886799f5c718aa0be8f635b205a8f8f81e8fd18a829e6e",
     "ozon_category_dashboard/scripts/repair_local_login_origin.py": "62b6f251fed02adeb288b2d001a3512fe6e0d4fa0a7ce4ae65d344fddfc21809",
     "ozon_category_dashboard/scripts/run_client_pipeline.py": "7f922a04cd7df6cd74dd246a6f5e077a0a0ce8e074fbe432e794fe2f380a0b2f",
