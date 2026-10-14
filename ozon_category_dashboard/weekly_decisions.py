@@ -5,10 +5,11 @@ from io import BytesIO
 from urllib.parse import parse_qs, urlencode
 import math
 
-FUNNEL_FIELDS = ("ordered_amount_rub", "ordered_units", "card_visits", "cart_adds", "bought_units", "bought_amount_rub")
+FUNNEL_FIELDS = ("ordered_amount_rub", "ordered_units", "impressions_total", "card_visits", "cart_adds", "bought_units", "bought_amount_rub")
 AD_FIELDS = {"adv_expense_rub": "expense_rub", "adv_orders_amount_rub": "orders_amount_rub", "adv_orders": "orders_qty",
              "adv_clicks": "clicks", "adv_impressions": "impressions"}
 RATIOS = {"card_visit_to_order_pct": ("ordered_units", "card_visits", 100),
+          "total_impression_to_card_visit_pct": ("card_visits", "impressions_total", 100),
           "card_visit_to_cart_pct": ("cart_adds", "card_visits", 100),
           "cart_to_order_pct": ("ordered_units", "cart_adds", 100),
           "ordered_amount_per_unit_rub": ("ordered_amount_rub", "ordered_units", 1),
@@ -230,25 +231,26 @@ def export_report(report):
         meta.append(("Фильтр: " + key, ", ".join(values)))
     kpi = wb.create_sheet("Показатели")
     kpi.append(["Метрика", "Было", "Стало", "Изменение", "Изменение, %", "Покрытие"])
-    labels = {"ordered_amount_rub": "Заказы, ₽", "ordered_units": "Заказано, шт", "card_visits": "Переходы",
+    labels = {"ordered_amount_rub": "Заказы, ₽", "ordered_units": "Заказано, шт", "impressions_total": "Показы товаров", "card_visits": "Переходы",
+              "total_impression_to_card_visit_pct": "Показы → карточка, %",
               "card_visit_to_order_pct": "Карточка → заказ, %", "ordered_amount_per_unit_rub": "Средняя сумма, ₽/ед.",
               "tacos_pct": "TACoS, %", "acos_pct": "ACoS, %"}
     for field, label in labels.items():
         ch = report["changes"][field]
         kpi.append([label, report["previous"][field], report["current"][field], ch["delta"], ch["pct"], report["current"]["coverage"][field]["status"]])
     trend = wb.create_sheet("Недели")
-    trend.append(["Начало", "Конец", "Полная неделя", "Заказы, ₽", "Заказано, шт", "Переходы", "Карточка → заказ, %"])
+    trend.append(["Начало", "Конец", "Полная неделя", "Заказы, ₽", "Заказано, шт", "Переходы", "Карточка → заказ, %", "Показы товаров", "Показы → карточка, %"])
     for week in report["weeks"]:
-        trend.append([week["from"], week["to"], week["full"], *[week["totals"][k] for k in ("ordered_amount_rub", "ordered_units", "card_visits", "card_visit_to_order_pct")]])
+        trend.append([week["from"], week["to"], week["full"], *[week["totals"][k] for k in ("ordered_amount_rub", "ordered_units", "card_visits", "card_visit_to_order_pct", "impressions_total", "total_impression_to_card_visit_pct")]])
     for kind, title in (("category", "Категории"), ("sku", "SKU")):
         sheet = wb.create_sheet(title)
-        sheet.append(["Ключ", "Название", "Было, ₽", "Стало, ₽", "Δ, ₽", "Δ, %", "Остаток, шт", "Дата остатка", "Покрытие текущего окна", "Покрытие предыдущего окна", "Трафик, Δ %", "Конверсия, Δ п.п."])
+        sheet.append(["Ключ", "Название", "Было, ₽", "Стало, ₽", "Δ, ₽", "Δ, %", "Остаток, шт", "Дата остатка", "Покрытие текущего окна", "Покрытие предыдущего окна", "Трафик, Δ %", "Конверсия, Δ п.п.", "Показы: было", "Показы: стало"])
         for r in report["entities"][kind]:
             # Excel text is explicitly typed below to prevent formula injection from product names.
             sheet.append([r["key"], r["label"], r["previous"]["ordered_amount_rub"], r["current"]["ordered_amount_rub"],
                           r["change"]["delta"], r["change"]["pct"], r["stock_qty"], r["stock_date"],
                           r["current"]["coverage"]["ordered_amount_rub"]["status"], r["previous"]["coverage"]["ordered_amount_rub"]["status"],
-                          r["traffic_change"]["pct"], r["conversion_change"]["delta"]])
+                          r["traffic_change"]["pct"], r["conversion_change"]["delta"], r["previous"]["impressions_total"], r["current"]["impressions_total"]])
     for sheet in wb:
         sheet.freeze_panes = "A2"
         sheet.auto_filter.ref = sheet.dimensions
