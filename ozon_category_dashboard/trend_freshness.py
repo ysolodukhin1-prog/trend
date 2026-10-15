@@ -187,6 +187,15 @@ def extend_plan(app, plan):
                 lag = max(known_lags, default=None)
                 if state["missing_relations"]:
                     status, label = "queued", "Нет витрины"
+                elif key == "yandex_view_finance" and any(
+                    item.get("client") == client["key"]
+                    and item.get("key") == "api_yandex_realization"
+                    and item.get("initial_status") == "queued"
+                    for item in tasks
+                ):
+                    # Event max-date can stay unchanged when a corrected monthly
+                    # document changes amounts. Refresh after the source task.
+                    status, label = "queued", "Обновить реализацию"
                 elif state["fresh"] and not dependencies["missing_days"] and not dependencies["limited"]:
                     status, label = "ok", "Актуально"
                 elif state["fresh"]:

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import os
 import sys
 import time
@@ -43,7 +44,14 @@ def expected_jobs(client, source, day):
     else:
         end = day
         start = day.replace(day=1) if source in {'payments', 'services'} else day
-    return [job for job in plan(client, start, end) if job[4] == source]
+    jobs = [job for job in plan(client, start, end) if job[4] == source]
+    if source == 'realization':
+        # The previous month's document can arrive or be corrected after the
+        # first download. Refresh it once per business day; resume that exact
+        # refresh on retries. The typed report view selects the newest snapshot.
+        jobs = [(hashlib.sha256((job[0] + ':refresh:' + str(day)).encode()).hexdigest(),
+                 *job[1:]) for job in jobs]
+    return jobs
 
 
 def read_jobs(conn, keys):

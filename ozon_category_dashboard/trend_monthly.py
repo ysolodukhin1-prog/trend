@@ -61,6 +61,14 @@ def yandex_days(cur, client, key, expected):
     table = 'yandex_market_history_windows' if base else 'yandex_analytics_jobs'
     if not _relation_exists(cur, table):
         return set()
+    if source == 'realization':
+        # An old complete/empty report or monthly ledger is not evidence that
+        # today's corrected financial document was downloaded.
+        jobs = expected_jobs(client, source, marketplace_today() - timedelta(days=1))
+        cur.execute("SELECT job_key FROM yandex_analytics_jobs WHERE client_key=%s AND source_key='realization' AND state='completed' AND job_key=ANY(%s)",
+                    (client['key'], [job[0] for job in jobs]))
+        complete = {row[0] for row in cur.fetchall()}
+        return set(expected) if jobs and all(job[0] in complete for job in jobs) else set()
     if base:
         from yandex_market_history import enabled_stores
         stores = enabled_stores(client)
@@ -110,7 +118,7 @@ def audit(conn, client, key, today=None):
         cur.execute("SET LOCAL statement_timeout='15000ms'")
         ranges=ledger_ranges(cur,key)
         limitations=limited_ranges(cur,key)
-        covered={d for d in expected if any(a<=d<=b for a,b in ranges)}
+        covered=set() if key=='yandex_realization' else {d for d in expected if any(a<=d<=b for a,b in ranges)}
         if key.startswith('yandex_'):
             covered |= yandex_days(cur,client,key,expected)
         elif key in API_COMPLETENESS_SPECS or key=='ozon_prices':
