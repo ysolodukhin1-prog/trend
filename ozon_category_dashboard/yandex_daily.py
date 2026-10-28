@@ -30,6 +30,8 @@ SOURCES = {
     'prices': 'Цены Яндекс Маркета',
     'prices_report': 'Отчёт о ценах Яндекс Маркета',
     'catalog': 'Каталог Яндекс Маркета',
+    'orders_report': 'Заказы и взаиморасчёты Яндекс Маркета',
+    'returns_report': 'Отчёт по возвратам Яндекс Маркета',
 }
 BASE_SOURCES = ('yandex_orders', 'yandex_order_stats', 'yandex_returns')
 PENDING = {'queued', 'retry', 'polling'}
@@ -37,13 +39,17 @@ LIMITED = {'unavailable', 'limited'}
 
 
 def expected_jobs(client, source, day):
+    if source in {'orders_report','returns_report'} and client['key']!='toptop':return []
     # Financial documents use calendar months. Open-month realization is not final.
     if source == 'realization':
         end = day.replace(day=1) - timedelta(days=1)
         start = end.replace(day=1)
+        # Refresh the open month as well: NO_DATA is retried daily, not treated
+        # as a permanent completed zero. The report coverage guard remains.
+        if client['key']=='toptop':end=day
     else:
         end = day
-        start = day.replace(day=1) if source in {'payments', 'services'} else day
+        start = day.replace(day=1) if source in {'payments', 'services','orders_report','returns_report'} else day
     jobs = [job for job in plan(client, start, end) if job[4] == source]
     if source == 'realization':
         # The previous month's document can arrive or be corrected after the
@@ -107,6 +113,7 @@ def extend_plan(app, daily_plan, allowed_clients):
             states = {}
             error = type(exc).__name__
         for index, (source, label) in enumerate(SOURCES.items()):
+            if source in {'orders_report','returns_report'} and client_key!='toptop':continue
             status, text, detail = task_status(jobs_by_source[source], states, day)
             if error:
                 status, text, detail = 'queued', 'Статус неизвестен', 'Проверка загрузки недоступна: ' + error

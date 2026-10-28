@@ -30,13 +30,15 @@ REPORTS = {
     'payments': ('united-netting',120),
     'services': ('united-marketplace-services',120),
     'realization': ('goods-realization',120),
+    'orders_report': ('united-orders',120),
+    'returns_report': ('united-returns',120),
     'movement': ('goods-movement',120),
     'turnover': ('goods-turnover',120),
     'stocks': ('stocks-on-warehouses',120),
     'prices_report': ('goods-prices',120),
 }
 DIRECT = {'catalog': ('offer-mappings','offerMappings'), 'prices': ('offer-prices','offers')}
-SUBSCRIPTION_REPORTS=('sales_funnel','boost_sales','boost_shows','banners','shelves','movement','turnover','prices_report')
+SUBSCRIPTION_REPORTS=('sales_funnel','boost_sales','boost_shows','banners','shelves','movement','turnover','prices_report','orders_report','returns_report')
 MAX_FILE = 256 * 1024 * 1024
 
 DDL = """
@@ -87,7 +89,7 @@ def plan(client,start,end):
             if source in ('boost_shows','shelves'):body['attributionType']='CLICKS'
             add(source,business,'',start,end,body)
         for a,b in months(start,end):
-            for source in ['payments','services']:
+            for source in ['payments','services']+(['orders_report','returns_report'] if client['key']=='toptop' else []):
                 add(source,business,'',a,b,{'businessId':business,'campaignIds':ids,'dateFrom':a.isoformat(),'dateTo':b.isoformat()})
         add('prices_report',business,'',date.today(),date.today(),{'businessId':business})
         for store in stores:
