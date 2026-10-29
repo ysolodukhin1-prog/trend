@@ -89,7 +89,7 @@ def plan(client,start,end):
             if source in ('boost_shows','shelves'):body['attributionType']='CLICKS'
             add(source,business,'',start,end,body)
         for a,b in months(start,end):
-            for source in ['payments','services']+(['orders_report','returns_report'] if client['key']=='toptop' else []):
+            for source in ['payments','services','orders_report','returns_report']:
                 add(source,business,'',a,b,{'businessId':business,'campaignIds':ids,'dateFrom':a.isoformat(),'dateTo':b.isoformat()})
         add('prices_report',business,'',date.today(),date.today(),{'businessId':business})
         for store in stores:

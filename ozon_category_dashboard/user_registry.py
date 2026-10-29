@@ -130,6 +130,22 @@ def active_user_count(conn, *, prepare_schema: bool = True) -> int:
     return int((row[0] if not isinstance(row, dict) else next(iter(row.values()))) or 0)
 
 
+def _normalize_user_grants(value, catalog, existing):
+    """Allow only unchanged grants from this locked user's previous row."""
+    from data_access import normalize_grants
+    allowed = list(catalog)
+    known = {x['key'] for x in catalog}
+    prior = {g.get('source'):g for g in (existing or []) if isinstance(g,dict) and isinstance(g.get('source'),str)}
+    for grant in value if isinstance(value,list) else []:
+        if not isinstance(grant,dict): continue
+        source = grant.get('source')
+        if not isinstance(source,str) or source in known: continue
+        old = prior.get(source)
+        if old and grant.get('resources') == old.get('resources'):
+            allowed.append({'key':source,'resources':[{'id':v} for v in old['resources']]})
+    return normalize_grants(value,allowed)
+
+
 def save_user(
     conn,
     payload: dict,
@@ -153,7 +169,15 @@ def save_user(
         if str(value).strip()
     })
     from data_access import normalize_grants
-    data_access = normalize_grants(payload.get('data_access', []), allowed_data_sources or []) if 'data_access' in payload else None
+    existing_grants = []
+    if 'data_access' in payload and int(payload.get('user_id') or 0):
+        with conn.cursor() as cur:
+            cur.execute('SELECT data_access FROM public.bi_users WHERE user_id=%s FOR UPDATE', (int(payload['user_id']),))
+            saved = cur.fetchone()
+            if not saved:
+                raise ValueError('Пользователь не найден')
+            existing_grants = saved.get('data_access', []) if isinstance(saved, dict) else saved[0]
+    data_access = _normalize_user_grants(payload.get('data_access', []), allowed_data_sources or [], existing_grants) if 'data_access' in payload else None
     is_active = bool(payload.get("is_active", True))
     if not USERNAME_RE.fullmatch(username):
         raise ValueError("Логин: 3–64 латинских символа, цифры, точка, дефис или _")

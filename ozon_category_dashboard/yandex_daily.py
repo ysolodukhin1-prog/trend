@@ -39,14 +39,13 @@ LIMITED = {'unavailable', 'limited'}
 
 
 def expected_jobs(client, source, day):
-    if source in {'orders_report','returns_report'} and client['key']!='toptop':return []
     # Financial documents use calendar months. Open-month realization is not final.
     if source == 'realization':
         end = day.replace(day=1) - timedelta(days=1)
         start = end.replace(day=1)
         # Refresh the open month as well: NO_DATA is retried daily, not treated
         # as a permanent completed zero. The report coverage guard remains.
-        if client['key']=='toptop':end=day
+        end=day
     else:
         end = day
         start = day.replace(day=1) if source in {'payments', 'services','orders_report','returns_report'} else day
@@ -113,7 +112,6 @@ def extend_plan(app, daily_plan, allowed_clients):
             states = {}
             error = type(exc).__name__
         for index, (source, label) in enumerate(SOURCES.items()):
-            if source in {'orders_report','returns_report'} and client_key!='toptop':continue
             status, text, detail = task_status(jobs_by_source[source], states, day)
             if error:
                 status, text, detail = 'queued', 'Статус неизвестен', 'Проверка загрузки недоступна: ' + error
