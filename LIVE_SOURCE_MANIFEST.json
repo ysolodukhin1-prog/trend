@@ -108,6 +108,7 @@
     "ozon_category_dashboard/pulse_vps_scoped.py": "1854e381867a993ec1e905aa05c1cceb191101f5832106a5db9ffb0e30a388d0",
     "ozon_category_dashboard/refresh_materialized_views.py": "b9211503413ce2ae2c82417eec3d498151a72603877e30698282f00c9361551e",
     "ozon_category_dashboard/repair_home_contract_20261031.py": "70d7e6ba2b7f062637c1e0708e226d16d1dd5dee79f8f3faa4962af4900dfacc",
+    "ozon_category_dashboard/repair_home_finance_contract_20261031.py": "37a692cbd7538e4ef88fe2ec153c1918f8bdad2e1e7f9ec4fa4ef5500b5b10e4",
     "ozon_category_dashboard/repair_home_routes_20261031.py": "c1e277b3fd13121ac0cfb343228dbbf07d68d71ca13a19392968631d84182c90",
     "ozon_category_dashboard/repair_planfact_payload_probe_20261031.py": "d3186d5d56750395ff591aee0a3ed7d62dfb9c7f081237797f3abc9e845d40bd",
     "ozon_category_dashboard/repair_report_functions_20261031.py": "ff3a5dc77a89ba58b75481da6d1f745fd491fb0e31fa1d51313f3ac34468d924",
