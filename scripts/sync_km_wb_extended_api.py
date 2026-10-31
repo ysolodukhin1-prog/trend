@@ -197,6 +197,8 @@ def api_request(
             detail = exc.read().decode("utf-8", "replace")[:800]
             if exc.code == 204:
                 return [], 204, {}
+            if exc.code == 429 and "daily response limit" in detail.lower():
+                raise RuntimeError(f"WB daily report quota exhausted {path}: {detail}") from exc
             if exc.code in {429, 500, 502, 503, 504} and attempt < MAX_RETRIES:
                 raw_wait = exc.headers.get("X-Ratelimit-Retry") or exc.headers.get("Retry-After")
                 try:
@@ -1844,8 +1846,24 @@ def fetch_search_analytics(
     return main_payload, main_status, main_body, detail_pages, requests, period_from
 
 
+def select_stock_history_report(records, date_from, date_to):
+    # Reuse only an exact period and an explicitly named stock-history report.
+    matches = [r for r in records if isinstance(r, dict)
+               and str(r.get("startDate", ""))[:10] == date_from.isoformat()
+               and str(r.get("endDate", ""))[:10] == date_to.isoformat()
+               and any(label in str(r.get("name", "")).lower() for label in ("stock_history", "stock history"))
+               and str(r.get("status", "")).upper() in {"SUCCESS", "NEW", "CREATED", "PENDING", "PROCESSING"}
+               and r.get("id")]
+    return max(matches, key=lambda r: (str(r.get("status", "")).upper() == "SUCCESS", str(r.get("createdAt", ""))), default=None)
+
+
 def fetch_stock_history_csv(token: str, date_from: date, date_to: date) -> tuple[list[dict[str, str]], uuid.UUID, int, Path]:
-    report_id = uuid.uuid4()
+    payload, _, _ = api_request(
+        "https://seller-analytics-api.wildberries.ru", "/api/v2/nm-report/downloads",
+        token, request_label="готовые отчёты истории остатков",
+    )
+    existing = select_stock_history_report(rows_from_payload(payload), date_from, date_to)
+    report_id = uuid.UUID(str(existing["id"])) if existing else uuid.uuid4()
     body = {
         "id": str(report_id),
         "reportType": "STOCK_HISTORY_DAILY_CSV",
@@ -1857,13 +1875,17 @@ def fetch_stock_history_csv(token: str, date_from: date, date_to: date) -> tuple
             "timezone": "Europe/Moscow", "skipDeletedNm": False,
         },
     }
-    _, _, _ = api_request(
-        "https://seller-analytics-api.wildberries.ru", "/api/v2/nm-report/downloads",
-        token, method="POST", body=body, request_label="создание истории остатков",
-    )
     requests = 1
-    status = ""
-    for poll in range(1, 91):
+    status = str(existing.get("status", "")).upper() if existing else ""
+    if existing:
+        print(f"ПРОГРЕСС: история остатков | повторное использование report_id={report_id} | status={status}", flush=True)
+    else:
+        api_request(
+            "https://seller-analytics-api.wildberries.ru", "/api/v2/nm-report/downloads",
+            token, method="POST", body=body, request_label="создание истории остатков",
+        )
+        requests += 1
+    for poll in ([] if status == "SUCCESS" else range(1, 91)):
         sleep_progress(20, f"история остатков | ожидание готовности | poll={poll}")
         query = urlencode({"filter[downloadIds][]": str(report_id)})
         payload, _, _ = api_request(
