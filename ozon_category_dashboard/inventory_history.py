@@ -359,6 +359,21 @@ def publish_wb_stock_history_csv(
                 """,
                 (date_from, date_to),
             )
+        # An authoritative all-products CSV is at warehouse grain. Do not add
+        # the previous product-total snapshot to its warehouse rows.
+        cur.execute(
+            """
+            DELETE FROM public.inventory_history_daily AS old
+            WHERE old.marketplace = 'wb' AND old.source_type = 'wb_stock_api'
+              AND old.warehouse_name = '' AND old.cluster_name = ''
+              AND old.snapshot_date BETWEEN %s AND %s
+              AND EXISTS (
+                SELECT 1 FROM public.wb_inventory_history_daily_csv AS history
+                WHERE history.snapshot_date = old.snapshot_date AND history.nm_id IS NOT NULL
+              )
+            """,
+            (date_from, date_to),
+        )
         cur.execute(
             """
             INSERT INTO public.inventory_history_daily (
