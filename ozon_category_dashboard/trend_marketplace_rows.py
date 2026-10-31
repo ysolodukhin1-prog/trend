@@ -27,7 +27,10 @@ def run(runner, internal, only_clients=None):
         runner._append_log_locked('ПЛАН: 4 площадки параллельно; 2 клиента в строке; витрины после импорта своей площадки', 'start')
         runner._save_locked(force=True)
     tasks = [t for tid, t in internal.items() if tid in ids]
-    locks = {t['client']: threading.Lock() for t in tasks}
+    # Plan/fact joins WB and Ozon: publish only after every market lane settles.
+    final_tasks = [t for t in tasks if t.get('key') == 'api_ozon_view_planfact']
+    tasks = [t for t in tasks if t not in final_tasks]
+    locks = {t['client']: threading.Lock() for t in tasks + final_tasks}
     view_slots = threading.Semaphore(runner.max_view_workers)
 
     def execute_client(group):
@@ -87,11 +90,18 @@ def run(runner, internal, only_clients=None):
                 return
             if not all(results):
                 with runner.lock:
-                    runner._append_log_locked(f'{name}: следующие строки и витрины ожидают успешного завершения {row_key[2]}', 'warning')
+                    runner._append_log_locked(f'{name}: строка {row_key[2]} не завершена; ошибка сохранена, независимые строки и пересчёт имеющихся данных продолжаются', 'warning')
                     runner._save_locked(force=True)
-                return
+                # Do not let a price/stock API failure freeze already loaded sales.
+                # Views retain source cutoffs; a failed import is never marked successful.
+                continue
     # Validate every task before any process is launched.
-    for task in tasks:
+    for task in tasks + final_tasks:
         market(task)
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    with ThreadPoolExecutor(max_workers=len(MARKETS)) as pool:
         list(pool.map(lane, MARKETS))
+
+    for task in final_tasks:
+        if runner.stop_requested:
+            break
+        execute_client([task])

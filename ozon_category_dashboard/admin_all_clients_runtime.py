@@ -251,7 +251,7 @@ class AllClientsDailyRunner:
                     previous = {task.get("id"): task for task in self.state.get("tasks") or []}
                     for task in tasks:
                         old = previous.get(task.get("id"))
-                        if old and old.get("status") not in {"running", "stopping"} and not (self.marketplace_rows and ":monthly:" in task["id"]):
+                        if old and old.get("status") not in {"running", "stopping"} and not (self.marketplace_rows and ":monthly:" in task["id"] and not (old.get("status") == "error" and task.get("status") != "ok")):
                             task.update({
                                 "status": old.get("status") or task.get("status"),
                                 "detail": old.get("detail") or task.get("detail"),

@@ -186,6 +186,8 @@ def refresh_group(client: str, key: str) -> None:
                 conn.commit()
     finally:
         v._USE_WRITER_CONFIG.reset(token)
+    from home_marts import bump_cache_generation
+    bump_cache_generation()
     print(f"ИТОГ: {label} | витрин={len(relations)} errors=0 elapsed={time.monotonic()-started:.1f}с", flush=True)
 
 
